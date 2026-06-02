@@ -124,9 +124,9 @@ def unpublish_blog_posts(modeladmin, request, queryset):
 
 @admin.register(BlogPost)
 class BlogPostAdmin(admin.ModelAdmin):
-    list_display = ("title", "status", "published_at", "updated_at")
-    list_filter = ("status", "content_image_placement", "published_at")
-    search_fields = ("title", "excerpt", "body")
+    list_display = ("title", "category", "author_name", "status", "published_at", "updated_at")
+    list_filter = ("status", "category", "content_image_placement", "published_at")
+    search_fields = ("title", "category", "author_name", "author_role", "excerpt", "body")
     prepopulated_fields = {"slug": ("title",)}
     readonly_fields = ("created_at", "updated_at")
     actions = [publish_blog_posts, unpublish_blog_posts]

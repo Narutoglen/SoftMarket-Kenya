@@ -184,6 +184,9 @@ class BlogPost(TimeStampedModel):
 
     title = models.CharField(max_length=180)
     slug = models.SlugField(max_length=200, unique=True)
+    category = models.CharField(max_length=80, blank=True, default="")
+    author_name = models.CharField(max_length=120, blank=True, default="")
+    author_role = models.CharField(max_length=160, blank=True, default="")
     excerpt = models.TextField(max_length=420)
     body = models.TextField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
@@ -201,6 +204,12 @@ class BlogPost(TimeStampedModel):
 
     def __str__(self):
         return self.title
+
+    @property
+    def author_display(self):
+        if self.author_name and self.author_role:
+            return f"{self.author_name}, {self.author_role}"
+        return self.author_name or self.author_role
 
     @property
     def is_published(self):

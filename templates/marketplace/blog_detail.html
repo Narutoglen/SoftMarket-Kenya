@@ -1,4 +1,5 @@
 {% extends "marketplace/base.html" %}
+{% load marketplace_extras %}
 
 {% block title %}{{ post.title }} | SoftMarket Kenya{% endblock %}
 {% block meta_description %}{{ post.excerpt }}{% endblock %}
@@ -6,8 +7,14 @@
 {% block content %}
   <article class="blog-detail">
     <header class="page-hero blog-detail-hero">
-      <div class="eyebrow reveal">Blog</div>
+      <div class="eyebrow reveal">{{ post.category|default:"Blog" }}</div>
       <h1 class="reveal">{{ post.title }}</h1>
+      <p class="blog-detail-meta reveal">
+        {{ post.published_at|date:"F j, Y" }}
+        {% if post.author_display %}
+          <span>by {{ post.author_display }}</span>
+        {% endif %}
+      </p>
       <p class="page-hero-copy reveal">{{ post.excerpt }}</p>
       {% if post.main_image %}
         <div class="blog-hero-image reveal">
@@ -23,7 +30,7 @@
         </figure>
       {% endif %}
 
-      {{ post.body|linebreaks }}
+      {{ post.body|article_body }}
 
       {% if post.content_image and post.content_image_placement == "end" %}
         <figure>

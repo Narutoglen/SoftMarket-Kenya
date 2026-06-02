@@ -22,9 +22,18 @@
               </a>
             {% endif %}
             <div class="blog-card-content">
-              <p>{{ post.published_at|date:"M j, Y" }}</p>
+              {% if post.category %}
+                <span class="blog-card-category">{{ post.category }}</span>
+              {% endif %}
+              <p class="blog-card-meta">
+                {{ post.published_at|date:"F j, Y" }}
+                {% if post.author_display %}
+                  <span>by {{ post.author_display }}</span>
+                {% endif %}
+              </p>
               <h2><a href="{% url 'marketplace:blog_detail' post.slug %}">{{ post.title }}</a></h2>
-              <p>{{ post.excerpt }}</p>
+              <p class="blog-card-excerpt">{{ post.excerpt }}</p>
+              <a class="blog-read-link" href="{% url 'marketplace:blog_detail' post.slug %}">Read article</a>
             </div>
           </article>
         {% endfor %}
