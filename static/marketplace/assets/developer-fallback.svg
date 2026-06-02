@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Developer review illustration</title>
+  <desc id="desc">A local fallback illustration for the developer network section.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eef7f3"/>
+      <stop offset="1" stop-color="#f7ddcb"/>
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="1200" fill="url(#bg)"/>
+  <rect x="120" y="130" width="760" height="500" rx="34" fill="#17211f"/>
+  <rect x="170" y="190" width="660" height="360" rx="18" fill="#f7fbf9"/>
+  <path d="M230 270h240M230 335h390M230 400h315M230 465h455" stroke="#0f5c4d" stroke-width="28" stroke-linecap="round"/>
+  <rect x="220" y="720" width="560" height="130" rx="28" fill="#0f5c4d"/>
+  <rect x="220" y="895" width="410" height="72" rx="22" fill="#dc6547"/>
+  <rect x="660" y="895" width="120" height="72" rx="22" fill="#f4bc4b"/>
+  <circle cx="710" cy="295" r="70" fill="#7a4932"/>
+  <path d="M665 370c24-30 68-30 92 0" stroke="#17211f" stroke-width="16" stroke-linecap="round" fill="none"/>
+  <circle cx="820" cy="325" r="58" fill="#c48a62"/>
+  <path d="M785 390c18-24 52-24 72 0" stroke="#17211f" stroke-width="14" stroke-linecap="round" fill="none"/>
+</svg>

@@ -1,0 +1,39 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Blog | SoftMarket Kenya{% endblock %}
+
+{% block content %}
+  <section class="page-hero">
+    <div class="eyebrow reveal">Blog</div>
+    <h1 class="reveal">Software notes for clients building in Kenya.</h1>
+    <p class="page-hero-copy reveal">
+      Practical posts on pricing, planning, developer matching, and digital product decisions.
+    </p>
+  </section>
+
+  <section class="section">
+    {% if posts %}
+      <div class="blog-grid">
+        {% for post in posts %}
+          <article class="blog-card reveal">
+            {% if post.main_image %}
+              <a class="blog-card-image" href="{% url 'marketplace:blog_detail' post.slug %}">
+                <img src="{{ post.main_image.url }}" alt="{{ post.title }}" />
+              </a>
+            {% endif %}
+            <div class="blog-card-content">
+              <p>{{ post.published_at|date:"M j, Y" }}</p>
+              <h2><a href="{% url 'marketplace:blog_detail' post.slug %}">{{ post.title }}</a></h2>
+              <p>{{ post.excerpt }}</p>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state reveal">
+        <h2>No published posts yet.</h2>
+        <p>Create and publish posts from Django admin to show them here.</p>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

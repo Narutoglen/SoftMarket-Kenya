@@ -1,0 +1,165 @@
+{% extends "marketplace/base.html" %}
+{% load static %}
+
+{% block content %}
+  <section class="hero">
+    <div class="hero-content reveal">
+      <div class="eyebrow">Software marketplace based in Kenya</div>
+      <h1>Find trusted software developers in Kenya.</h1>
+
+      <div class="hero-bottom">
+        <a href="#contact" class="primary-btn">Start a project &rarr;</a>
+        <a href="{% url 'marketplace:work' %}" class="secondary-btn">View work</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="services">
+    <div class="section-head">
+      <h2 class="reveal">Build faster with vetted digital talent.</h2>
+      <p class="section-desc reveal">
+        SoftMarket connects businesses with reliable developers, designers, and digital specialists for websites,
+        apps, dashboards, and automation systems.
+      </p>
+    </div>
+
+    <div class="services-grid">
+      <article class="service-card reveal">
+        <span class="number">01</span>
+        <h3>Web Development</h3>
+        <p>Clean, responsive websites for businesses, startups, brands, and online platforms.</p>
+      </article>
+
+      <article class="service-card reveal">
+        <span class="number">02</span>
+        <h3>Mobile Apps</h3>
+        <p>Modern app interfaces and full-stack mobile solutions for Android and cross-platform projects.</p>
+      </article>
+
+      <article class="service-card reveal">
+        <span class="number">03</span>
+        <h3>Systems &amp; Automation</h3>
+        <p>Dashboards, workflows, databases, and smart tools that help teams work faster.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section work-section" id="work">
+    <div class="section-head">
+      <h2 class="reveal">Selected project styles.</h2>
+      <p class="section-desc reveal">
+        Hover over the images to see the subtle zoom effect, similar to the Studio reference.
+      </p>
+    </div>
+
+    <div class="work-grid">
+      <article class="project reveal">
+        <div class="image-wrapper">
+          <img
+            src="https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&amp;w=1200&amp;auto=format&amp;fit=crop"
+            alt="A diverse software team planning a business website project"
+            onerror="this.onerror=null;this.src='{% static 'marketplace/assets/hero-fallback.svg' %}';"
+          />
+        </div>
+        <div class="project-content">
+          <h3>Business Website</h3>
+          <p>Premium online presence for companies that need clean design and strong conversion.</p>
+        </div>
+      </article>
+
+      <article class="project reveal">
+        <div class="image-wrapper">
+          <img
+            src="https://images.unsplash.com/photo-1551434678-e076c223a692?q=80&amp;w=1200&amp;auto=format&amp;fit=crop"
+            alt="A software team collaborating around a digital workspace"
+            onerror="this.onerror=null;this.src='{% static 'marketplace/assets/developer-fallback.svg' %}';"
+          />
+        </div>
+        <div class="project-content">
+          <h3>Custom Software</h3>
+          <p>Internal systems, dashboards, booking tools, portals, and marketplace platforms.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="dark-section reveal" id="contact">
+    <div class="contact-copy">
+      <h2>Tell us about your next project.</h2>
+      <p>
+        Get matched with the right software talent for your budget, timeline, and business goals.
+      </p>
+    </div>
+
+    <form class="quote-form" id="quoteForm" name="project-brief" method="POST" action="{% url 'marketplace:home' %}">
+      {% csrf_token %}
+      <input type="hidden" name="form-name" value="project-brief" />
+      <input type="hidden" name="utm_source" />
+      <input type="hidden" name="utm_medium" />
+      <input type="hidden" name="utm_campaign" />
+
+      <div class="form-grid">
+        <label>
+          <span>Name</span>
+          <input type="text" name="name" autocomplete="name" required />
+        </label>
+
+        <label>
+          <span>Email</span>
+          <input type="email" name="email" autocomplete="email" required />
+        </label>
+
+        <label>
+          <span>Phone or WhatsApp</span>
+          <input type="tel" name="phone" autocomplete="tel" required />
+        </label>
+
+        <label>
+          <span>Service</span>
+          <select name="service" required>
+            <option value="">Choose service</option>
+            <option value="Business website">Business website</option>
+            <option value="Ecommerce website">Ecommerce website</option>
+            <option value="Web app">Web app</option>
+            <option value="Android app">Android app</option>
+            <option value="Cross-platform app">Cross-platform app</option>
+            <option value="Business system">Business system</option>
+            <option value="Maintenance/support">Maintenance/support</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Budget</span>
+          <select name="budget" required>
+            <option value="">Choose budget</option>
+            <option value="KSh 20,000-80,000">KSh 20,000-80,000</option>
+            <option value="KSh 50,000-500,000">KSh 50,000-500,000</option>
+            <option value="KSh 100,000-600,000">KSh 100,000-600,000</option>
+            <option value="KSh 150,000-800,000">KSh 150,000-800,000</option>
+            <option value="KSh 150,000-1,000,000">KSh 150,000-1,000,000</option>
+            <option value="More than KSh 1,000,000">More than KSh 1,000,000</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Timeline</span>
+          <select name="timeline" required>
+            <option value="">Choose timeline</option>
+            <option value="Urgent">Urgent</option>
+            <option value="Within 1 month">Within 1 month</option>
+            <option value="Within 1-2 months">Within 1-2 months</option>
+            <option value="Still exploring">Still exploring</option>
+          </select>
+        </label>
+      </div>
+
+      <label>
+        <span>Project details</span>
+        <textarea name="details" rows="5" required></textarea>
+      </label>
+
+      <button class="light-btn" type="submit">Request a quote &rarr;</button>
+      <p class="form-note" id="quoteResult" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+{% endblock %}

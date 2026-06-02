@@ -1,0 +1,72 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SoftMarket Analytics</title>
+    <link rel="stylesheet" href="{% static 'marketplace/styles.css' %}" />
+  </head>
+  <body>
+    <main class="section section-light">
+      <div class="section-inner">
+        <div class="section-heading">
+          <p class="eyebrow">Admin analytics</p>
+          <h1>SoftMarket performance</h1>
+          <p>Lead, payment, service, and campaign source summary.</p>
+        </div>
+        <div class="marketing-grid">
+          <article>
+            <h3>{{ summary.total_projects }}</h3>
+            <p>Project requests</p>
+          </article>
+          <article>
+            <h3>{{ summary.total_developers }}</h3>
+            <p>Developer profiles</p>
+          </article>
+          <article>
+            <h3>{{ summary.paid_deposit_count }}</h3>
+            <p>Paid deposits</p>
+          </article>
+          <article>
+            <h3>KSh {{ summary.paid_deposit_total }}</h3>
+            <p>Deposit value</p>
+          </article>
+        </div>
+        <div class="pricing-layout" style="margin-top: 32px">
+          <section>
+            <h2>Popular services</h2>
+            <table class="pricing-table">
+              <thead><tr><th>Service</th><th>Requests</th></tr></thead>
+              <tbody>
+                {% for item in summary.popular_services %}
+                  <tr><th scope="row">{{ item.service_label|default:"Unknown" }}</th><td>{{ item.total }}</td></tr>
+                {% empty %}
+                  <tr><td colspan="2">No project requests yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </section>
+          <section>
+            <h2>Campaign sources</h2>
+            <table class="pricing-table">
+              <thead><tr><th>Source</th><th>Requests</th></tr></thead>
+              <tbody>
+                {% for item in summary.campaign_sources %}
+                  <tr><th scope="row">{{ item.utm_source|default:"Direct/unknown" }}</th><td>{{ item.total }}</td></tr>
+                {% empty %}
+                  <tr><td colspan="2">No campaign data yet.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </section>
+        </div>
+        <p style="margin-top: 28px">
+          <a class="button button-primary" href="{% url 'marketplace:export_project_requests_xlsx' %}">Export leads Excel</a>
+          <a class="button button-secondary" href="{% url 'marketplace:export_project_requests' %}">Export leads CSV</a>
+          <a class="button button-secondary" href="{% url 'admin:index' %}">Back to admin</a>
+        </p>
+      </div>
+    </main>
+  </body>
+</html>

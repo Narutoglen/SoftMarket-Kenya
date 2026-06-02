@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">SoftMarket Kenya workspace illustration</title>
+  <desc id="desc">A local fallback illustration of a software planning workspace.</desc>
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d7ece4"/>
+      <stop offset="1" stop-color="#fff7e4"/>
+    </linearGradient>
+    <linearGradient id="desk" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0f5c4d"/>
+      <stop offset="1" stop-color="#dc6547"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#wall)"/>
+  <rect y="650" width="1600" height="350" fill="#17312d"/>
+  <rect x="140" y="595" width="1320" height="160" rx="26" fill="url(#desk)"/>
+  <rect x="290" y="310" width="430" height="270" rx="20" fill="#17211f"/>
+  <rect x="320" y="338" width="370" height="205" rx="10" fill="#eaf6f1"/>
+  <path d="M360 386h120M360 426h240M360 466h185M360 506h270" stroke="#0f5c4d" stroke-width="18" stroke-linecap="round"/>
+  <rect x="790" y="272" width="250" height="350" rx="125" fill="#9b5f3f"/>
+  <circle cx="915" cy="352" r="58" fill="#17211f"/>
+  <path d="M760 622c32-100 106-150 155-150s123 50 155 150" fill="#dc6547"/>
+  <rect x="1080" y="288" width="230" height="334" rx="115" fill="#6d3f2f"/>
+  <circle cx="1195" cy="365" r="54" fill="#17211f"/>
+  <path d="M1050 622c26-88 94-134 145-134s119 46 145 134" fill="#0f5c4d"/>
+  <rect x="1100" y="438" width="290" height="178" rx="18" fill="#ffffff" opacity=".92"/>
+  <path d="M1140 485h190M1140 532h130M1140 578h210" stroke="#0f5c4d" stroke-width="16" stroke-linecap="round"/>
+  <circle cx="245" cy="720" r="62" fill="#f4bc4b"/>
+  <circle cx="1340" cy="740" r="44" fill="#eef7f3"/>
+</svg>
