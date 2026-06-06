@@ -95,21 +95,28 @@ WSGI_APPLICATION = "softmarket.wsgi.application"
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-if not DATABASE_URL:
+if DATABASE_URL:
+    if not DATABASE_URL.startswith(("postgres://", "postgresql://")):
+        raise ImproperlyConfigured("DATABASE_URL must use postgres:// or postgresql://.")
+
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+elif DEBUG:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+else:
     raise ImproperlyConfigured(
-        "DATABASE_URL must be set to a PostgreSQL connection string."
+        "DATABASE_URL must be set to a PostgreSQL connection string when DJANGO_DEBUG=False."
     )
-
-if not DATABASE_URL.startswith(("postgres://", "postgresql://")):
-    raise ImproperlyConfigured("DATABASE_URL must use postgres:// or postgresql://.")
-
-DATABASES = {
-    "default": dj_database_url.parse(
-        DATABASE_URL,
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
-}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

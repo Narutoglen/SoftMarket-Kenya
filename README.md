@@ -21,10 +21,15 @@ python -m pip install -r requirements.txt
 Run the Django development server:
 
 ```powershell
-# Create a local Postgres database named softmarket_kenya first, or use your Render database URL.
-$env:DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/softmarket_kenya"
 python manage.py migrate
 python manage.py runserver 127.0.0.1:8000
+```
+
+By default, local development uses `db.sqlite3` when `DJANGO_DEBUG=True`.
+To use Postgres locally instead, create a database named `softmarket_kenya` and set:
+
+```powershell
+$env:DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/softmarket_kenya"
 ```
 
 Then open:
