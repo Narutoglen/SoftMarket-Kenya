@@ -104,6 +104,11 @@ if DATABASE_URL:
         )
     }
 else:
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            "DATABASE_URL must be set when DJANGO_DEBUG=False. "
+            "Attach a Render Postgres database or deploy from render.yaml as a Blueprint."
+        )
     DATABASES = {
         "default": {
             "ENGINE": os.environ.get("DJANGO_DB_ENGINE", "django.db.backends.sqlite3"),

@@ -96,6 +96,8 @@ CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
 ```
 
+If Render logs mention `sqlite3` or `no such table`, the web service is missing `DATABASE_URL`. Deploy from the Blueprint in `render.yaml`, or create a Render Postgres database manually and set the web service `DATABASE_URL` to the database internal connection string. Then redeploy so `python manage.py migrate` runs before the app starts.
+
 Optional security hardening after the final domain is confirmed:
 
 ```text
