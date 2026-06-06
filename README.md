@@ -21,6 +21,8 @@ python -m pip install -r requirements.txt
 Run the Django development server:
 
 ```powershell
+# Create a local Postgres database named softmarket_kenya first, or use your Render database URL.
+$env:DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/softmarket_kenya"
 python manage.py migrate
 python manage.py runserver 127.0.0.1:8000
 ```
@@ -96,7 +98,7 @@ CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
 ```
 
-If Render logs mention `sqlite3` or `no such table`, the web service is missing `DATABASE_URL`. Deploy from the Blueprint in `render.yaml`, or create a Render Postgres database manually and set the web service `DATABASE_URL` to the database internal connection string. Then redeploy so `python manage.py migrate` runs before the app starts.
+If production logs mention missing database tables, the web service is probably missing `DATABASE_URL` or migrations did not run. Deploy from the Blueprint in `render.yaml`, or create a Render Postgres database manually and set the web service `DATABASE_URL` to the database internal connection string. Then redeploy so `python manage.py migrate` runs before the app starts.
 
 Optional security hardening after the final domain is confirmed:
 
