@@ -85,10 +85,11 @@ python manage.py createsuperuser
 Render commands are:
 
 ```bash
-pip install -r requirements.txt && python manage.py collectstatic --no-input
-python manage.py migrate
+pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate
 gunicorn softmarket.wsgi:application
 ```
+
+The default Blueprint uses Render free plans, so migrations run in the build command instead of `preDeployCommand`.
 
 Required production environment variables:
 
@@ -103,7 +104,7 @@ CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
 ```
 
-If production logs mention missing database tables, the web service is probably missing `DATABASE_URL` or migrations did not run. Deploy from the Blueprint in `render.yaml`, or create a Render Postgres database manually and set the web service `DATABASE_URL` to the database internal connection string. Then redeploy so `python manage.py migrate` runs before the app starts.
+If production logs mention missing database tables, the web service is probably missing `DATABASE_URL` or migrations did not run. Deploy from the Blueprint in `render.yaml`, or create a Render Postgres database manually and set the web service `DATABASE_URL` to the database internal connection string. Then redeploy so `python manage.py migrate` runs during the build before the app starts.
 
 Optional security hardening after the final domain is confirmed:
 

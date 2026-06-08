@@ -9,8 +9,7 @@ services:
     name: softmarket-kenya
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --no-input
-    preDeployCommand: python manage.py migrate
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate
     startCommand: gunicorn softmarket.wsgi:application
     envVars:
       - key: DATABASE_URL
