@@ -71,6 +71,18 @@ class MarketplaceFlowTests(TestCase):
         self.assertEqual(DeveloperApplication.objects.count(), 1)
         self.assertEqual(DeveloperApplication.objects.get().name, "Njeri Dev")
 
+    def test_homepage_has_pricing_faq_and_seo_copy(self):
+        response = self.client.get(reverse("marketplace:home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Pricing guidance")
+        self.assertContains(response, "Business Website")
+        self.assertContains(response, "Maintenance / Support")
+        self.assertContains(response, "How much does a website cost?")
+        self.assertContains(response, "How do you choose developers?")
+        self.assertContains(response, "software developers in Kenya")
+        self.assertNotContains(response, "Selected project styles")
+
     def test_matching_suggests_vetted_developer(self):
         developer = DeveloperProfile.objects.create(
             name="Otieno Apps",

@@ -1,5 +1,7 @@
 {% extends "marketplace/base.html" %}
-{% load static %}
+
+{% block title %}Software Developers in Kenya | SoftMarket Kenya{% endblock %}
+{% block meta_description %}Find trusted software developers in Kenya for business websites, mobile app developers Kenya, dashboards, automation, and custom software development Kenya.{% endblock %}
 
 {% block content %}
   <section class="hero">
@@ -44,43 +46,142 @@
     </div>
   </section>
 
-  <section class="section work-section" id="work">
+  <section class="section pricing-section" id="pricing">
     <div class="section-head">
-      <h2 class="reveal">Selected project styles.</h2>
+      <h2 class="reveal">Pricing guidance.</h2>
       <p class="section-desc reveal">
-        We work with a wide range of clients and projects, but here are a few examples of the types of software
-        we build.
+        These ranges help you plan before requesting a quote. Final pricing depends on scope, features, content,
+        integrations, and launch support.
       </p>
     </div>
 
-    <div class="work-grid">
-      <article class="project reveal">
-        <div class="image-wrapper">
-          <img
-            src="https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&amp;w=1200&amp;auto=format&amp;fit=crop"
-            alt="A diverse software team planning a business website project"
-            onerror="this.onerror=null;this.src='{% static 'marketplace/assets/hero-fallback.svg' %}';"
-          />
-        </div>
-        <div class="project-content">
+    <div class="pricing-grid">
+      <article class="pricing-card reveal">
+        <span class="number">01</span>
+        <div>
           <h3>Business Website</h3>
-          <p>Premium online presence for companies that need clean design and strong conversion.</p>
+          <p class="price">KSh 20,000-80,000</p>
+          <p>Company websites, landing pages, portfolios, contact forms, and basic SEO setup.</p>
         </div>
       </article>
 
-      <article class="project reveal">
-        <div class="image-wrapper">
-          <img
-            src="https://images.unsplash.com/photo-1551434678-e076c223a692?q=80&amp;w=1200&amp;auto=format&amp;fit=crop"
-            alt="A software team collaborating around a digital workspace"
-            onerror="this.onerror=null;this.src='{% static 'marketplace/assets/developer-fallback.svg' %}';"
-          />
-        </div>
-        <div class="project-content">
-          <h3>Custom Software</h3>
-          <p>Internal systems, dashboards, booking tools, portals, and marketplace platforms.</p>
+      <article class="pricing-card reveal">
+        <span class="number">02</span>
+        <div>
+          <h3>Ecommerce Website</h3>
+          <p class="price">KSh 50,000-500,000</p>
+          <p>Online stores, product catalogues, checkout flows, payment setup, and order management.</p>
         </div>
       </article>
+
+      <article class="pricing-card reveal">
+        <span class="number">03</span>
+        <div>
+          <h3>Web App</h3>
+          <p class="price">KSh 100,000-600,000</p>
+          <p>Dashboards, portals, booking tools, CRMs, workflow systems, and account-based platforms.</p>
+        </div>
+      </article>
+
+      <article class="pricing-card reveal">
+        <span class="number">04</span>
+        <div>
+          <h3>Android App</h3>
+          <p class="price">KSh 150,000-800,000</p>
+          <p>Native Android experiences, user accounts, notifications, APIs, and admin dashboards.</p>
+        </div>
+      </article>
+
+      <article class="pricing-card reveal">
+        <span class="number">05</span>
+        <div>
+          <h3>Cross-platform App</h3>
+          <p class="price">KSh 150,000-1,000,000</p>
+          <p>Apps for Android and iOS-ready workflows using shared codebases and backend APIs.</p>
+        </div>
+      </article>
+
+      <article class="pricing-card reveal">
+        <span class="number">06</span>
+        <div>
+          <h3>Business System</h3>
+          <p class="price">From KSh 150,000</p>
+          <p>Custom operations systems, inventory tools, internal automation, reporting, and integrations.</p>
+        </div>
+      </article>
+
+      <article class="pricing-card reveal">
+        <span class="number">07</span>
+        <div>
+          <h3>Maintenance / Support</h3>
+          <p class="price">Monthly retainer</p>
+          <p>Bug fixes, updates, backups, monitoring, small improvements, and ongoing technical support.</p>
+        </div>
+      </article>
+    </div>
+
+    <p class="pricing-note reveal">
+      Need a clearer estimate? Share your project details and we will review the scope before recommending a budget.
+    </p>
+  </section>
+
+  <section class="section faq-section" id="faq">
+    <div class="section-head">
+      <h2 class="reveal">FAQ.</h2>
+      <p class="section-desc reveal">
+        Quick answers for businesses comparing website developers in Kenya, mobile app developers Kenya, and custom
+        software development Kenya options.
+      </p>
+    </div>
+
+    <div class="faq-list">
+      <details class="faq-item reveal">
+        <summary>How much does a website cost?</summary>
+        <p>
+          A basic business website usually starts around KSh 20,000, while larger websites, ecommerce builds, and
+          custom features can cost more depending on the scope.
+        </p>
+      </details>
+
+      <details class="faq-item reveal">
+        <summary>How long does a project take?</summary>
+        <p>
+          A simple website can take a few days to a few weeks. Apps, dashboards, and custom systems often take several
+          weeks or months depending on features, approvals, and content readiness.
+        </p>
+      </details>
+
+      <details class="faq-item reveal">
+        <summary>Do you build mobile apps?</summary>
+        <p>
+          Yes. SoftMarket Kenya can help with Android apps and cross-platform apps, including design, APIs, admin
+          dashboards, and launch preparation.
+        </p>
+      </details>
+
+      <details class="faq-item reveal">
+        <summary>Can I pay in phases?</summary>
+        <p>
+          Yes. Most projects can be broken into milestones so you pay in phases as planning, design, development, and
+          launch work progresses.
+        </p>
+      </details>
+
+      <details class="faq-item reveal">
+        <summary>Do you offer maintenance?</summary>
+        <p>
+          Yes. Maintenance can cover updates, security checks, backups, small changes, bug fixes, and ongoing support
+          after launch.
+        </p>
+      </details>
+
+      <details class="faq-item reveal">
+        <summary>How do you choose developers?</summary>
+        <p>
+          We review the project type, budget, timeline, and required skills, then match it with developers whose
+          experience fits the work.
+        </p>
+      </details>
     </div>
   </section>
 
