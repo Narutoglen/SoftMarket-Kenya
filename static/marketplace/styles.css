@@ -900,7 +900,12 @@ section[id] {
 }
 
 .quote-form select {
-  color-scheme: dark;
+  color-scheme: light;
+}
+
+.quote-form select option {
+  color: #111111;
+  background: #ffffff;
 }
 
 .quote-form input:focus,
