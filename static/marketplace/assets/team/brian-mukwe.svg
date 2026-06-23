@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 450" role="img" aria-labelledby="title desc">
+  <title id="title">Brian Mukwe portrait placeholder</title>
+  <desc id="desc">Initials placeholder for Brian Mukwe's passport photo.</desc>
+  <rect width="350" height="450" fill="#e4edf1"/>
+  <circle cx="175" cy="126" r="78" fill="#111111"/>
+  <path d="M72 450c12-92 50-144 103-144s91 52 103 144z" fill="#26486b"/>
+  <circle cx="175" cy="138" r="51" fill="#9d6748"/>
+  <path d="M119 112c17-45 98-58 115 14-43-11-82-12-115-14z" fill="#111111"/>
+  <text x="175" y="382" fill="#ffffff" font-family="Manrope, Arial, sans-serif" font-size="54" font-weight="700" text-anchor="middle">BM</text>
+</svg>

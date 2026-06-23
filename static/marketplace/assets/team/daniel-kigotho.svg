@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 450" role="img" aria-labelledby="title desc">
+  <title id="title">Daniel Kigotho portrait placeholder</title>
+  <desc id="desc">Initials placeholder for Daniel Kigotho's passport photo.</desc>
+  <rect width="350" height="450" fill="#eee8df"/>
+  <circle cx="175" cy="127" r="78" fill="#111111"/>
+  <path d="M72 450c12-92 50-144 103-144s91 52 103 144z" fill="#5c3d2d"/>
+  <circle cx="175" cy="138" r="51" fill="#a86d4d"/>
+  <path d="M118 112c17-46 99-57 116 14-43-12-83-13-116-14z" fill="#111111"/>
+  <text x="175" y="382" fill="#ffffff" font-family="Manrope, Arial, sans-serif" font-size="54" font-weight="700" text-anchor="middle">DK</text>
+</svg>

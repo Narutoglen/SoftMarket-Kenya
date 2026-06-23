@@ -1,41 +1,105 @@
 {% extends "marketplace/base.html" %}
+{% load static %}
 
-{% block title %}Our Work | SoftMarket Kenya{% endblock %}
+{% block title %}Our Team | SoftMarket Kenya{% endblock %}
 
 {% block content %}
   <section class="page-hero">
-    <div class="eyebrow reveal">Our Work</div>
-    <h1 class="reveal">Digital products for Kenyan businesses ready to move.</h1>
+    <div class="eyebrow reveal">Our Team</div>
+    <h1 class="reveal">The people building SoftMarket Kenya.</h1>
     <p class="page-hero-copy reveal">
-      SoftMarket helps clients shape realistic scopes, compare build options, and match with developers for practical software outcomes.
+      Meet the team shaping client work, product direction, interface design, secure systems, and reliable delivery.
     </p>
   </section>
 
-  <section class="section work-section">
-    <div class="work-grid">
-      <article class="project reveal">
-        <div class="image-wrapper">
+  <section class="section team-section">
+    <article class="team-lead reveal">
+      <div class="team-photo team-photo-lead">
+        <img
+          src="{% static 'marketplace/assets/team/glenn-toroitich.svg' %}"
+          alt="Portrait placeholder for Glenn Toroitich"
+        />
+      </div>
+      <div class="team-lead-content">
+        <span class="team-kicker">CEO / Founder</span>
+        <h2>Glenn Toroitich</h2>
+        <p>
+          Leads SoftMarket Kenya's vision, client relationships, and product direction for practical software delivery.
+        </p>
+      </div>
+    </article>
+
+    <div class="section-head team-head">
+      <h2 class="reveal">Developers</h2>
+      <p class="section-desc reveal">
+        A focused technical team covering frontend experiences, UI/UX, security, full-stack delivery, backend systems,
+        and DevOps.
+      </p>
+    </div>
+
+    <div class="team-grid">
+      <article class="team-card reveal">
+        <div class="team-photo">
           <img
-            src="https://images.pexels.com/photos/9432959/pexels-photo-9432959.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200"
-            alt="Young Black software team planning a business website project"
+            src="{% static 'marketplace/assets/team/brian-mukwe.svg' %}"
+            alt="Portrait placeholder for Brian Mukwe"
           />
         </div>
-        <div class="project-content">
-          <h3>Business Websites</h3>
-          <p>Conversion-focused websites with clean messaging, mobile layouts, and local trust signals.</p>
+        <div class="team-card-content">
+          <h3>Brian Mukwe</h3>
+          <p>Frontend Developer</p>
         </div>
       </article>
 
-      <article class="project reveal">
-        <div class="image-wrapper">
+      <article class="team-card reveal">
+        <div class="team-photo">
           <img
-            src="https://images.pexels.com/photos/34708698/pexels-photo-34708698.jpeg?auto=compress&amp;cs=tinysrgb&amp;w=1200"
-            alt="Young Black developers collaborating around a laptop"
+            src="{% static 'marketplace/assets/team/lauren-ndanu.svg' %}"
+            alt="Portrait placeholder for Lauren Ndanu"
           />
         </div>
-        <div class="project-content">
-          <h3>Custom Systems</h3>
-          <p>Dashboards, booking tools, client portals, ecommerce workflows, and internal business systems.</p>
+        <div class="team-card-content">
+          <h3>Lauren Ndanu</h3>
+          <p>Frontend Dev / UI/UX Designer</p>
+        </div>
+      </article>
+
+      <article class="team-card reveal">
+        <div class="team-photo">
+          <img
+            src="{% static 'marketplace/assets/team/vincent-murage.svg' %}"
+            alt="Portrait placeholder for Vincent Murage"
+          />
+        </div>
+        <div class="team-card-content">
+          <h3>Vincent Murage</h3>
+          <p>Cyber Security Engineer</p>
+        </div>
+      </article>
+
+      <article class="team-card reveal">
+        <div class="team-photo">
+          <img
+            src="{% static 'marketplace/assets/team/glenn-toroitich.svg' %}"
+            alt="Portrait placeholder for Glenn Toroitich"
+          />
+        </div>
+        <div class="team-card-content">
+          <h3>Glenn Toroitich</h3>
+          <p>Full Stack Developer</p>
+        </div>
+      </article>
+
+      <article class="team-card reveal">
+        <div class="team-photo">
+          <img
+            src="{% static 'marketplace/assets/team/daniel-kigotho.svg' %}"
+            alt="Portrait placeholder for Daniel Kigotho"
+          />
+        </div>
+        <div class="team-card-content">
+          <h3>Daniel Kigotho</h3>
+          <p>Backend / DevOps</p>
         </div>
       </article>
     </div>

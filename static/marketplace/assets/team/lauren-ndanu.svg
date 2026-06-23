@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 450" role="img" aria-labelledby="title desc">
+  <title id="title">Lauren Ndanu portrait placeholder</title>
+  <desc id="desc">Initials placeholder for Lauren Ndanu's passport photo.</desc>
+  <rect width="350" height="450" fill="#f0e6ea"/>
+  <circle cx="175" cy="132" r="88" fill="#171717"/>
+  <path d="M74 450c10-90 48-145 101-145s91 55 101 145z" fill="#6b3755"/>
+  <circle cx="175" cy="142" r="50" fill="#b87958"/>
+  <path d="M104 140c16-70 124-81 143-7-43-20-86-22-143 7z" fill="#171717"/>
+  <text x="175" y="382" fill="#ffffff" font-family="Manrope, Arial, sans-serif" font-size="54" font-weight="700" text-anchor="middle">LN</text>
+</svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 450" role="img" aria-labelledby="title desc">
+  <title id="title">Glenn Toroitich portrait placeholder</title>
+  <desc id="desc">Initials placeholder for Glenn Toroitich's passport photo.</desc>
+  <rect width="350" height="450" fill="#ebe7dd"/>
+  <circle cx="175" cy="128" r="78" fill="#141414"/>
+  <path d="M75 450c10-91 49-145 100-145s90 54 100 145z" fill="#23423c"/>
+  <circle cx="175" cy="136" r="50" fill="#c18d64"/>
+  <path d="M114 116c18-54 103-63 123 8-37-9-73-10-123-8z" fill="#141414"/>
+  <text x="175" y="382" fill="#ffffff" font-family="Manrope, Arial, sans-serif" font-size="54" font-weight="700" text-anchor="middle">GT</text>
+</svg>

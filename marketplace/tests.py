@@ -176,7 +176,7 @@ class MarketplaceFlowTests(TestCase):
         for name in ["work", "about", "process", "blog_list"]:
             response = self.client.get(reverse(f"marketplace:{name}"))
             self.assertEqual(response.status_code, 200)
-            self.assertContains(response, "Our Work")
+            self.assertContains(response, "Our Team")
             self.assertContains(response, "About Us")
             self.assertContains(response, "Our Process")
             self.assertContains(response, "Blog")
