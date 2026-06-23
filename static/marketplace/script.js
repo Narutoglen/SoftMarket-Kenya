@@ -26,6 +26,41 @@ document.querySelectorAll("form").forEach(fillUtmFields);
 const menuButton = document.querySelector(".menu-btn");
 const menuPanel = document.querySelector("#menuPanel");
 const menuClose = document.querySelector(".menu-close");
+const themeToggle = document.querySelector(".theme-toggle");
+
+function storeTheme(theme) {
+  try {
+    localStorage.setItem("softmarket-theme", theme);
+  } catch (error) {}
+}
+
+function isDarkTheme() {
+  return document.documentElement.dataset.theme === "dark";
+}
+
+function updateThemeButton() {
+  if (!themeToggle) return;
+  const dark = isDarkTheme();
+  themeToggle.setAttribute("aria-pressed", String(dark));
+  themeToggle.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
+}
+
+function setTheme(theme) {
+  const dark = theme === "dark";
+  if (dark) {
+    document.documentElement.dataset.theme = "dark";
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+  storeTheme(dark ? "dark" : "light");
+  updateThemeButton();
+}
+
+updateThemeButton();
+
+themeToggle?.addEventListener("click", () => {
+  setTheme(isDarkTheme() ? "light" : "dark");
+});
 
 function setMenuOpen(isOpen) {
   if (!menuButton || !menuPanel) return;

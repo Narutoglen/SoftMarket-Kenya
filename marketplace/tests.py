@@ -192,6 +192,7 @@ class MarketplaceFlowTests(TestCase):
             self.assertContains(response, "About Us")
             self.assertContains(response, "Our Process")
             self.assertContains(response, "Blog")
+            self.assertContains(response, "theme-toggle")
 
     def test_blog_only_shows_published_posts(self):
         published = BlogPost.objects.create(

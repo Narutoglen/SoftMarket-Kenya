@@ -12,6 +12,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    try {
+      if (localStorage.getItem("softmarket-theme") === "dark") {
+        document.documentElement.dataset.theme = "dark";
+      }
+    } catch (error) {}
+  </script>
   <link rel="stylesheet" href="{% static 'marketplace/styles.css' %}" />
 </head>
 <body id="top" class="{% block body_class %}{% endblock %}">
@@ -23,6 +30,11 @@
 
     <div class="nav-actions">
       <a href="{% url 'marketplace:home' %}#contact" class="contact-btn">Contact us</a>
+      <button class="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
+        <span class="theme-toggle-track" aria-hidden="true">
+          <span class="theme-toggle-thumb"></span>
+        </span>
+      </button>
       <button class="menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="menuPanel">
         <span></span>
         <span></span>
