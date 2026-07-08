@@ -1,7 +1,6 @@
 # Vercel build-time ignores (Python runtime bundles the whole dir)
 # Exclude non-runtime artifacts so the function stays under the 225 MB cap.
 .preview/
-staticfiles/
 __pycache__/
 *.py[cod]
 .venv/
