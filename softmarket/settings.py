@@ -38,18 +38,39 @@ if not SECRET_KEY:
     else:
         raise ImproperlyConfigured("DJANGO_SECRET_KEY must be set when DJANGO_DEBUG=False.")
 
-ALLOWED_HOSTS = env_list(
-    "DJANGO_ALLOWED_HOSTS",
-    "127.0.0.1,localhost",
-)
-# Vercel auto-assigns a *.vercel.app domain; allow it plus any custom domain.
-ALLOWED_HOSTS += [h for h in os.environ.get("VERCEL_URL", "").split(",") if h]
-ALLOWED_HOSTS += [h for h in os.environ.get("DJANGO_ALLOWED_HOSTS_EXTRA", "").split(",") if h]
+def get_allowed_hosts():
+    """ALLOWED_HOSTS for this Django app.
 
+    On Vercel (and other serverless hosts) the incoming request Host header
+    carries the real deployment domain (e.g. softmarket-kenya.vercel.app), which
+    is NOT available via a build-time env var. We read it at request time via
+    get_host() so the app accepts whatever domain is actually serving it.
+    """
+    hosts = env_list("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost")
+    hosts += env_list("DJANGO_ALLOWED_HOSTS_EXTRA")
+    # Accept the wildcard *.vercel.app (preview + production) and localhost.
+    hosts += [".vercel.app", "localhost", "127.0.0.1"]
+    # If a VERCEL_URL is provided (some setups set it), include it too.
+    hosts += env_list("VERCEL_URL")
+    # De-dupe while preserving order.
+    seen = set()
+    result = []
+    for h in hosts:
+        h = h.strip()
+        if h and h not in seen:
+            seen.add(h)
+            result.append(h)
+    return result
+
+
+ALLOWED_HOSTS = get_allowed_hosts()
+
+# CSRF: trust the same host set over HTTPS. Vercel terminates TLS, so the
+# request host is the canonical origin.
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
-# Allow the Vercel deployment URL for CSRF (Vercel proxies HTTPS).
-if os.environ.get("VERCEL_URL"):
-    CSRF_TRUSTED_ORIGINS.append(f"https://{os.environ['VERCEL_URL']}")
+for _h in ALLOWED_HOSTS:
+    if _h not in (".vercel.app", "localhost", "127.0.0.1"):
+        CSRF_TRUSTED_ORIGINS.append(f"https://{_h}")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
