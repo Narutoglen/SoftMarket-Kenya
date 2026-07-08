@@ -5,9 +5,12 @@
   "functions": {
     "softmarket/wsgi.py": {
       "runtime": "@vercel/python@6.0.0",
-      "memory": 1024,
       "maxDuration": 30
     }
+  },
+  "static": {
+    "dir": "staticfiles",
+    "basePath": "static"
   },
   "routes": [
     { "src": "/(.*)", "dest": "softmarket/wsgi.py" }
