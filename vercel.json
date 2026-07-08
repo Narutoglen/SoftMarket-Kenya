@@ -8,10 +8,9 @@
       "maxDuration": 30
     }
   },
-  "static": {
-    "dir": "staticfiles",
-    "basePath": "static"
-  },
+  "rewrites": [
+    { "source": "/static/(.*)", "destination": "/staticfiles/$1" }
+  ],
   "routes": [
     { "src": "/(.*)", "dest": "softmarket/wsgi.py" }
   ]
