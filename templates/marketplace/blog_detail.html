@@ -8,7 +8,7 @@
   <article class="blog-detail">
     <header class="page-hero blog-detail-hero">
       <div class="eyebrow reveal">{{ post.category|default:"Blog" }}</div>
-      <h1 class="reveal">{{ post.title }}</h1>
+      <h1 class="reveal"><span class="roll">{{ post.title }}</span></h1>
       <p class="blog-detail-meta reveal">
         {{ post.published_at|date:"F j, Y" }}
         {% if post.author_display %}

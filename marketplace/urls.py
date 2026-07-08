@@ -1,10 +1,22 @@
 from django.urls import path
 
-from . import views
+from . import api, views
 
 app_name = "marketplace"
 
 urlpatterns = [
+    # --- JSON API (consumed by the Next.js frontend) ---
+    path("api/services/", api.ServiceListView.as_view(), name="api_services"),
+    path("api/blog/", api.BlogListView.as_view(), name="api_blog_list"),
+    path("api/blog/<slug:slug>/", api.BlogDetailView.as_view(), name="api_blog_detail"),
+    path("api/process/", api.ProcessView.as_view(), name="api_process"),
+    path("api/leads/", api.LeadCreateView.as_view(), name="api_leads"),
+    path(
+        "api/developer-applications/",
+        api.DeveloperApplicationCreateView.as_view(),
+        name="api_developer_applications",
+    ),
+    # --- Legacy server-rendered HTML (kept as fallback) ---
     path("", views.home, name="home"),
     path("work/", views.work, name="work"),
     path("about/", views.about, name="about"),

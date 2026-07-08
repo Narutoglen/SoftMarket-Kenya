@@ -9,19 +9,30 @@
     content="{% block meta_description %}SoftMarket Kenya connects businesses with vetted Kenyan developers for websites, apps, dashboards, and automation systems.{% endblock %}"
   />
   <title>{% block title %}SoftMarket Kenya | Software Marketplace{% endblock %}</title>
+
+  <!-- Premium v2 type system: Outfit for display/headings (Inter banned for display). -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Outfit:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
   <script>
+    // Theme boot: keep the dark-mode toggle working (restyled within the v2 palette).
     try {
       if (localStorage.getItem("softmarket-theme") === "dark") {
         document.documentElement.dataset.theme = "dark";
       }
     } catch (error) {}
   </script>
+
   <link rel="stylesheet" href="{% static 'marketplace/styles.css' %}" />
 </head>
 <body id="top" class="{% block body_class %}{% endblock %}">
+  <!-- v2 moving-shader background (canvas, paused off-screen via IntersectionObserver). -->
+  <canvas id="bg-shader" aria-hidden="true"></canvas>
+
   <header class="navbar">
     <a href="{% url 'marketplace:home' %}" class="brand" aria-label="SoftMarket Kenya home">
       <span class="logo-mark" aria-hidden="true"></span>

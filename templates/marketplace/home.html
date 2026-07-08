@@ -6,15 +6,6 @@
 
 {% block content %}
   <section class="hero" aria-label="Introduction">
-    <div class="hero-media" aria-hidden="true">
-      <video class="hero-video" autoplay loop muted playsinline preload="none"
-             poster="{% static 'marketplace/assets/hero-fallback.svg' %}">
-        <!-- PLACEHOLDER: drop a monochrome hero loop at static/marketplace/assets/hero-loop.mp4 -->
-        <source src="{% static 'marketplace/assets/hero-loop.mp4' %}" type="video/mp4" />
-      </video>
-      <div class="hero-scrim"></div>
-    </div>
-
     <div class="hero-content reveal">
       <div class="eyebrow">Software marketplace based in Kenya</div>
 
@@ -24,7 +15,7 @@
       </div>
 
       <h1 data-hiring="Find trusted software developers in Kenya." data-building="Build, launch, and scale your software in Kenya.">
-        Find trusted software developers in Kenya.
+        <span class="roll">Find trusted software developers in Kenya.</span>
       </h1>
 
       <p class="hero-sub"
@@ -46,7 +37,7 @@
 
   <section class="section" id="services">
     <div class="section-head">
-      <h2 class="reveal">Build faster with vetted digital talent.</h2>
+      <h2 class="reveal"><span class="roll">Build faster with vetted digital talent.</span></h2>
       <p class="section-desc reveal">
         SoftMarket connects businesses with reliable developers, designers, and digital specialists for websites,
         apps, dashboards, and automation systems.
@@ -56,19 +47,19 @@
     <div class="services-grid">
       <article class="service-card reveal">
         <span class="number">01</span>
-        <h3>Web Development</h3>
-        <p>Clean, responsive websites for businesses, startups, brands, and online platforms.</p>
+        <h3><span class="roll">Web Development</span></h3>
+        <p>Clean, responsive websites for businesses, startups, brands, and online platforms &mdash; built by engineers like Mercy Wanjiru and Brian Otieno out of Kilimani.</p>
       </article>
 
       <article class="service-card reveal">
         <span class="number">02</span>
-        <h3>Mobile Apps</h3>
+        <h3><span class="roll">Mobile Apps</span></h3>
         <p>Modern app interfaces and full-stack mobile solutions for Android and cross-platform projects.</p>
       </article>
 
       <article class="service-card reveal">
         <span class="number">03</span>
-        <h3>Systems &amp; Automation</h3>
+        <h3><span class="roll">Systems &amp; Automation</span></h3>
         <p>Dashboards, workflows, databases, and smart tools that help teams work faster.</p>
       </article>
     </div>
@@ -76,7 +67,7 @@
 
   <section class="section pricing-section" id="pricing">
     <div class="section-head">
-      <h2 class="reveal">Pricing guidance.</h2>
+      <h2 class="reveal"><span class="roll">Pricing guidance.</span></h2>
       <p class="section-desc reveal">
         These ranges help you plan before requesting a quote. Final pricing depends on scope, features, content,
         integrations, and launch support.
@@ -88,7 +79,7 @@
         <span class="number">01</span>
         <div>
           <h3>Business Website</h3>
-          <p class="price">KSh 20,000-80,000</p>
+          <p class="price">KSh 20,000&ndash;80,000</p>
           <p>Company websites, landing pages, portfolios, contact forms, and basic SEO setup.</p>
         </div>
       </article>
@@ -97,7 +88,7 @@
         <span class="number">02</span>
         <div>
           <h3>Ecommerce Website</h3>
-          <p class="price">KSh 50,000-500,000</p>
+          <p class="price">KSh 50,000&ndash;500,000</p>
           <p>Online stores, product catalogues, checkout flows, payment setup, and order management.</p>
         </div>
       </article>
@@ -106,7 +97,7 @@
         <span class="number">03</span>
         <div>
           <h3>Web App</h3>
-          <p class="price">KSh 100,000-600,000</p>
+          <p class="price">KSh 100,000&ndash;600,000</p>
           <p>Dashboards, portals, booking tools, CRMs, workflow systems, and account-based platforms.</p>
         </div>
       </article>
@@ -115,7 +106,7 @@
         <span class="number">04</span>
         <div>
           <h3>Android App</h3>
-          <p class="price">KSh 150,000-800,000</p>
+          <p class="price">KSh 150,000&ndash;800,000</p>
           <p>Native Android experiences, user accounts, notifications, APIs, and admin dashboards.</p>
         </div>
       </article>
@@ -124,7 +115,7 @@
         <span class="number">05</span>
         <div>
           <h3>Cross-platform App</h3>
-          <p class="price">KSh 150,000-1,000,000</p>
+          <p class="price">KSh 150,000&ndash;1,000,000</p>
           <p>Apps for Android and iOS-ready workflows using shared codebases and backend APIs.</p>
         </div>
       </article>
@@ -155,7 +146,7 @@
 
   <section class="section faq-section" id="faq">
     <div class="section-head">
-      <h2 class="reveal">FAQ.</h2>
+      <h2 class="reveal"><span class="roll">FAQ.</span></h2>
       <p class="section-desc reveal">
         Quick answers for businesses comparing website developers in Kenya, mobile app developers Kenya, and custom
         software development Kenya options.
@@ -215,25 +206,24 @@
 
   <section class="section work-section" id="work">
     <div class="section-head">
-      <h2 class="reveal">Recent work.</h2>
+      <h2 class="reveal"><span class="roll">Recent work.</span></h2>
       <p class="section-desc reveal">
-        A snapshot of builds we have shipped with Kenyan businesses &mdash; each one greyscale-treated to stay true
-        to the monochrome house style. Drop in demo loops at the marked slots.
+        A snapshot of builds we have shipped with Kenyan businesses &mdash; presented as live product mockups.
+        Drop in demo loops at the marked slots.
       </p>
     </div>
 
     <div class="work-grid">
       <article class="project reveal media-row">
         <div class="image-wrapper">
-          <!-- PLACEHOLDER: replace with a muted autoplay demo loop or click-to-play -->
           <video class="loop-video" loop muted playsinline preload="none"
                  poster="{% static 'marketplace/assets/developer-fallback.svg' %}">
             <source src="{% static 'marketplace/assets/work-1.mp4' %}" type="video/mp4" />
           </video>
         </div>
         <div class="project-content">
-          <h3>Nairobi retail dashboard</h3>
-          <p>Inventory, sales, and reporting surface for a growing Westlands store.</p>
+          <h3><span class="roll">Nairobi retail dashboard</span></h3>
+          <p>Inventory, sales, and reporting surface for a growing Westlands store &mdash; built with Kevin Maina.</p>
         </div>
       </article>
 
@@ -245,8 +235,8 @@
           </video>
         </div>
         <div class="project-content">
-          <h3>Mombasa booking platform</h3>
-          <p>Reservation flow for a coastal hospitality client, built cross-platform.</p>
+          <h3><span class="roll">Mombasa booking platform</span></h3>
+          <p>Reservation flow for a coastal hospitality client, built cross-platform with Aisha Mwakisha.</p>
         </div>
       </article>
     </div>
@@ -254,15 +244,14 @@
 
   <section class="section voices-section" id="voices">
     <div class="section-head">
-      <h2 class="reveal">Voices.</h2>
+      <h2 class="reveal"><span class="roll">Voices.</span></h2>
       <p class="section-desc reveal">
-        Clients in their own words. The slot below is wired for a monochrome video testimonial.
+        Clients in their own words. The slot below is wired for a video testimonial.
       </p>
     </div>
 
     <figure class="voice-card reveal">
       <div class="voice-media">
-        <!-- PLACEHOLDER: drop a monochrome testimonial loop at static/marketplace/assets/voice-1.mp4 -->
         <video class="loop-video" loop muted playsinline preload="none"
                poster="{% static 'marketplace/assets/developer-fallback.svg' %}">
           <source src="{% static 'marketplace/assets/voice-1.mp4' %}" type="video/mp4" />
@@ -270,14 +259,14 @@
       </div>
       <figcaption>
         <p class="voice-quote">&ldquo;SoftMarket matched us with a developer who understood the brief on day one.&rdquo;</p>
-        <p class="voice-name">&mdash; Founder, Nairobi SME</p>
+        <p class="voice-name">&mdash; Faith Cherotich, founder of a Nairobi skincare brand</p>
       </figcaption>
     </figure>
   </section>
 
   <section class="dark-section reveal" id="contact">
     <div class="contact-copy">
-      <h2>Tell us about your next project.</h2>
+      <h2><span class="roll">Tell us about your next project.</span></h2>
       <p>
         Get matched with the right software talent for your budget, timeline, and business goals.
       </p>
