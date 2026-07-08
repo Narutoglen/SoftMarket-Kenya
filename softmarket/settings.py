@@ -38,16 +38,18 @@ if not SECRET_KEY:
     else:
         raise ImproperlyConfigured("DJANGO_SECRET_KEY must be set when DJANGO_DEBUG=False.")
 
-ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost")
-RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "")
-
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+ALLOWED_HOSTS = env_list(
+    "DJANGO_ALLOWED_HOSTS",
+    "127.0.0.1,localhost",
+)
+# Vercel auto-assigns a *.vercel.app domain; allow it plus any custom domain.
+ALLOWED_HOSTS += [h for h in os.environ.get("VERCEL_URL", "").split(",") if h]
+ALLOWED_HOSTS += [h for h in os.environ.get("DJANGO_ALLOWED_HOSTS_EXTRA", "").split(",") if h]
 
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
-
-if RENDER_EXTERNAL_HOSTNAME:
-    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
+# Allow the Vercel deployment URL for CSRF (Vercel proxies HTTPS).
+if os.environ.get("VERCEL_URL"):
+    CSRF_TRUSTED_ORIGINS.append(f"https://{os.environ['VERCEL_URL']}")
 
 INSTALLED_APPS = [
     "django.contrib.admin",

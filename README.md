@@ -66,45 +66,51 @@ http://127.0.0.1:8000/dashboard/export/project-requests.csv
 http://127.0.0.1:8000/dashboard/export/project-requests.xlsx
 ```
 
-## Deploy To Render
+## Deploy To Vercel
 
-This project is configured for Render using `render.yaml`.
+This project is configured for Vercel using `vercel.json` (Python runtime, gunicorn WSGI).
 
 1. Push the repository to GitHub.
-2. In Render, create a new Blueprint from this repo.
-3. Render will create:
-   - a Django web service named `softmarket-kenya`
-   - a Postgres database named `softmarket-kenya-db`
-4. Fill in the secret values Render prompts for, especially Cloudinary and M-Pesa credentials.
-5. After the first deploy, open Render Shell and create a production admin user:
+2. In Vercel, import the repo and deploy. Vercel auto-detects the Python runtime from
+   `vercel.json` and runs `python manage.py collectstatic --no-input` at build time.
+3. Vercel provisions a `*.vercel.app` domain automatically; `ALLOWED_HOSTS` and
+   `CSRF_TRUSTED_ORIGINS` pick it up from the `VERCEL_URL` env var (no manual host config needed).
+4. Add a Postgres database from an external provider (Vercel has no built-in Postgres). Recommended:
+   Neon or Supabase. Set its connection string as `DATABASE_URL` in Vercel project env.
+5. After the first deploy, run migrations and create an admin user via the Vercel CLI / terminal:
 
 ```bash
+vercel env pull .env.local        # fetch env vars locally
+python manage.py migrate
 python manage.py createsuperuser
 ```
 
-Render commands are:
+Build/start behavior:
 
 ```bash
-pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate
-gunicorn softmarket.wsgi:application
-```
+# build command (runs automatically on Vercel)
+python manage.py collectstatic --no-input
 
-The default Blueprint uses Render free plans, so migrations run in the build command instead of `preDeployCommand`.
+# runtime: gunicorn wsgi via the @vercel/python function in vercel.json
+```
 
 Required production environment variables:
 
 ```text
-DJANGO_SECRET_KEY=generated-by-render
+DJANGO_SECRET_KEY=generate-a-long-random-string
 DJANGO_DEBUG=False
-DJANGO_ALLOWED_HOSTS=.onrender.com,your-domain.com
-DJANGO_CSRF_TRUSTED_ORIGINS=https://*.onrender.com,https://your-domain.com
-DATABASE_URL=provided-by-render-postgres
+DATABASE_URL=postgresql://user:pass@your-neon-or-supabase-host/dbname
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
+DJANGO_CSRF_TRUSTED_ORIGINS=https://your-domain.com
 ```
 
-If production logs mention missing database tables, the web service is probably missing `DATABASE_URL` or migrations did not run. Deploy from the Blueprint in `render.yaml`, or create a Render Postgres database manually and set the web service `DATABASE_URL` to the database internal connection string. Then redeploy so `python manage.py migrate` runs during the build before the app starts.
+`VERCEL_URL` is injected by Vercel automatically (do not set it yourself).
+
+If production logs mention missing database tables, the app is missing `DATABASE_URL` or
+migrations did not run. Set `DATABASE_URL` to your external Postgres connection string, then
+redeploy so `migrate` runs during the build before the app starts.
 
 Optional security hardening after the final domain is confirmed:
 
@@ -114,8 +120,6 @@ DJANGO_SECURE_HSTS_PRELOAD=True
 ```
 
 Only enable those HSTS options when every subdomain should be HTTPS-only.
-
-The default Blueprint uses Render free plans for previewing. Upgrade before serious production use because free Render Postgres databases expire and do not include backups.
 
 ## Forms And Notifications
 
