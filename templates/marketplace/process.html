@@ -1,4 +1,5 @@
 {% extends "marketplace/base.html" %}
+{% load static %}
 
 {% block title %}Our Process | Custom Software Development Kenya{% endblock %}
 {% block meta_description %}See how SoftMarket Kenya matches businesses with software developers in Kenya for websites, mobile apps, dashboards, automation, and custom software development Kenya projects.{% endblock %}
@@ -35,5 +36,20 @@
         <p>The client and developer move into WhatsApp-first follow-up and project planning.</p>
       </article>
     </div>
+  </section>
+
+  <section class="section process-strip" aria-label="How delivery looks">
+    <div class="strip-grid">
+      <figure class="strip-frame reveal">
+        <img src="{% static 'marketplace/assets/process-1.svg' %}" alt="Discovery session placeholder" loading="lazy" />
+      </figure>
+      <figure class="strip-frame reveal">
+        <img src="{% static 'marketplace/assets/process-2.svg' %}" alt="Build sprint placeholder" loading="lazy" />
+      </figure>
+      <figure class="strip-frame reveal">
+        <img src="{% static 'marketplace/assets/process-3.svg' %}" alt="Launch and handoff placeholder" loading="lazy" />
+      </figure>
+    </div>
+    <p class="strip-caption reveal">Discovery &rarr; build &rarr; launch, captured in monochrome.</p>
   </section>
 {% endblock %}

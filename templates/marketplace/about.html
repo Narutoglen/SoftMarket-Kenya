@@ -1,4 +1,5 @@
 {% extends "marketplace/base.html" %}
+{% load static %}
 
 {% block title %}About SoftMarket Kenya | Website Developers in Kenya{% endblock %}
 {% block meta_description %}Learn about SoftMarket Kenya, a marketplace helping businesses find trusted website developers in Kenya, mobile app developers Kenya, and custom software development Kenya talent.{% endblock %}
@@ -20,5 +21,20 @@
       <p>We review project goals, budget, timeline, and scope before matching a client with a developer.</p>
       <p>That means fewer vague quotes, fewer mismatched conversations, and a smoother path from idea to kickoff.</p>
     </div>
+  </section>
+
+  <section class="section studio-strip" aria-label="Inside the studio">
+    <div class="strip-grid">
+      <figure class="strip-frame reveal">
+        <img src="{% static 'marketplace/assets/office-1.svg' %}" alt="Studio workspace placeholder" loading="lazy" />
+      </figure>
+      <figure class="strip-frame reveal">
+        <img src="{% static 'marketplace/assets/office-2.svg' %}" alt="Team collaboration placeholder" loading="lazy" />
+      </figure>
+      <figure class="strip-frame reveal">
+        <img src="{% static 'marketplace/assets/office-3.svg' %}" alt="Process whiteboard placeholder" loading="lazy" />
+      </figure>
+    </div>
+    <p class="strip-caption reveal">Nairobi &middot; Mombasa &mdash; the people and spaces behind the work.</p>
   </section>
 {% endblock %}

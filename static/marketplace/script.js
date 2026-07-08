@@ -114,6 +114,80 @@ if (reduceMotion || !("IntersectionObserver" in window)) {
   });
 }
 
+/* ---------- Fable augmentations: hero toggle, autoplay-on-view, scroll cue ---------- */
+
+const prefersReducedMotion =
+  window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* Hero "I'm hiring" / "I'm building" toggle */
+const heroToggleButtons = document.querySelectorAll(".hero-toggle-btn");
+if (heroToggleButtons.length) {
+  const heroHeading = document.querySelector(".hero-content h1");
+  const heroSub = document.querySelector(".hero-sub");
+  const heroPrimary = document.querySelector(".hero-bottom .primary-btn");
+
+  heroToggleButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const mode = button.dataset.mode;
+      heroToggleButtons.forEach((other) => {
+        const active = other === button;
+        other.classList.toggle("is-active", active);
+        other.setAttribute("aria-selected", String(active));
+      });
+      if (heroHeading && heroHeading.dataset[mode]) {
+        heroHeading.textContent = heroHeading.dataset[mode];
+      }
+      if (heroSub && heroSub.dataset[mode]) {
+        heroSub.innerHTML = heroSub.dataset[mode];
+        if (!prefersReducedMotion) {
+          heroSub.style.animation = "none";
+          // reflow to restart the swap animation
+          void heroSub.offsetWidth;
+          heroSub.style.animation = "";
+        }
+      }
+      if (heroPrimary && heroPrimary.dataset[mode]) {
+        heroPrimary.innerHTML = heroPrimary.dataset[mode];
+      }
+    });
+  });
+}
+
+/* Autoplay demo loops when they scroll into view (muted videos only) */
+const loopVideos = document.querySelectorAll(".loop-video");
+if (loopVideos.length && "IntersectionObserver" in window && !prefersReducedMotion) {
+  const videoObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const video = entry.target;
+        const card = video.closest(".media-row, .voice-card");
+        if (entry.isIntersecting) {
+          const playPromise = video.play();
+          if (playPromise && typeof playPromise.catch === "function") {
+            playPromise.catch(() => {});
+          }
+          if (card) card.classList.add("is-playing");
+        } else {
+          video.pause();
+          if (card) card.classList.remove("is-playing");
+        }
+      });
+    },
+    { threshold: 0.35 }
+  );
+  loopVideos.forEach((video) => videoObserver.observe(video));
+}
+
+/* Hero scroll cue: smoothly scroll to the first section on click */
+const heroScrollCue = document.querySelector(".hero-scroll-cue");
+if (heroScrollCue) {
+  heroScrollCue.addEventListener("click", (event) => {
+    event.preventDefault();
+    const target = document.querySelector("#services");
+    if (target) target.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth" });
+  });
+}
+
 function formDataToObject(form) {
   return Object.fromEntries(new FormData(form).entries());
 }

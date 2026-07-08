@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="t d">
+  <title id="t">Build sprint placeholder</title>
+  <desc id="d">Monochrome placeholder photograph for a build sprint.</desc>
+  <defs>
+    <linearGradient id="p2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e9e9e9"/>
+      <stop offset="1" stop-color="#bfbfbf"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#p2)"/>
+  <rect x="240" y="220" width="720" height="420" rx="18" fill="#dcdcdc" stroke="#b0b0b0" stroke-width="4"/>
+  <g stroke="#8f8f8f" stroke-width="11" fill="none" stroke-linecap="round" font-family="monospace">
+    <path d="M300 300h360M300 350h480M300 400h300M300 450h420M300 500h260"/>
+  </g>
+  <path d="M560 700h80l24 50h-128z" fill="#9c9c9c"/>
+  <text x="600" y="840" text-anchor="middle" font-family="monospace" font-size="34" fill="#777" letter-spacing="6">PHOTO</text>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="t d">
+  <title id="t">Discovery session placeholder</title>
+  <desc id="d">Monochrome placeholder photograph for a discovery session.</desc>
+  <defs>
+    <linearGradient id="p1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ededed"/>
+      <stop offset="1" stop-color="#c4c4c4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#p1)"/>
+  <circle cx="440" cy="430" r="120" fill="#d6d6d6"/>
+  <circle cx="440" cy="380" r="52" fill="#9c9c9c"/>
+  <path d="M330 560c38-130 182-180 220-180s182 50 220 180z" fill="#9c9c9c"/>
+  <rect x="640" y="320" width="380" height="220" rx="16" fill="#e2e2e2" stroke="#b0b0b0" stroke-width="4"/>
+  <g stroke="#9a9a9a" stroke-width="12" stroke-linecap="round" fill="none">
+    <path d="M680 380h300M680 430h220M680 480h280"/>
+  </g>
+  <text x="600" y="820" text-anchor="middle" font-family="monospace" font-size="34" fill="#777" letter-spacing="6">PHOTO</text>
+</svg>

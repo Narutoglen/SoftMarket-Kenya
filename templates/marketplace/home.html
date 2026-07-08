@@ -1,19 +1,47 @@
 {% extends "marketplace/base.html" %}
+{% load static %}
 
 {% block title %}Software Developers in Kenya | SoftMarket Kenya{% endblock %}
 {% block meta_description %}Find trusted software developers in Kenya for business websites, mobile app developers Kenya, dashboards, automation, and custom software development Kenya.{% endblock %}
 
 {% block content %}
-  <section class="hero">
+  <section class="hero" aria-label="Introduction">
+    <div class="hero-media" aria-hidden="true">
+      <video class="hero-video" autoplay loop muted playsinline preload="none"
+             poster="{% static 'marketplace/assets/hero-fallback.svg' %}">
+        <!-- PLACEHOLDER: drop a monochrome hero loop at static/marketplace/assets/hero-loop.mp4 -->
+        <source src="{% static 'marketplace/assets/hero-loop.mp4' %}" type="video/mp4" />
+      </video>
+      <div class="hero-scrim"></div>
+    </div>
+
     <div class="hero-content reveal">
       <div class="eyebrow">Software marketplace based in Kenya</div>
-      <h1>Find trusted software developers in Kenya.</h1>
+
+      <div class="hero-toggle" role="tablist" aria-label="What brings you here?">
+        <button type="button" class="hero-toggle-btn is-active" role="tab" aria-selected="true" data-mode="hiring">I'm hiring</button>
+        <button type="button" class="hero-toggle-btn" role="tab" aria-selected="false" data-mode="building">I'm building</button>
+      </div>
+
+      <h1 data-hiring="Find trusted software developers in Kenya." data-building="Build, launch, and scale your software in Kenya.">
+        Find trusted software developers in Kenya.
+      </h1>
+
+      <p class="hero-sub"
+         data-hiring="Tell us your project, budget, and timeline. We match you with vetted Kenyan developers."
+         data-building="From first prototype to production &mdash; get matched with developers who actually ship.">
+        Tell us your project, budget, and timeline. We match you with vetted Kenyan developers.
+      </p>
 
       <div class="hero-bottom">
-        <a href="#contact" class="primary-btn">Start a project &rarr;</a>
+        <a href="#contact" class="primary-btn" data-hiring="Start a project &rarr;" data-building="Start building &rarr;">Start a project &rarr;</a>
         <a href="{% url 'marketplace:work' %}" class="secondary-btn">Meet the team</a>
       </div>
     </div>
+
+    <a href="#services" class="hero-scroll-cue" aria-label="Scroll to content">
+      <span class="hero-scroll-line"></span>
+    </a>
   </section>
 
   <section class="section" id="services">
@@ -183,6 +211,68 @@
         </p>
       </details>
     </div>
+  </section>
+
+  <section class="section work-section" id="work">
+    <div class="section-head">
+      <h2 class="reveal">Recent work.</h2>
+      <p class="section-desc reveal">
+        A snapshot of builds we have shipped with Kenyan businesses &mdash; each one greyscale-treated to stay true
+        to the monochrome house style. Drop in demo loops at the marked slots.
+      </p>
+    </div>
+
+    <div class="work-grid">
+      <article class="project reveal media-row">
+        <div class="image-wrapper">
+          <!-- PLACEHOLDER: replace with a muted autoplay demo loop or click-to-play -->
+          <video class="loop-video" loop muted playsinline preload="none"
+                 poster="{% static 'marketplace/assets/developer-fallback.svg' %}">
+            <source src="{% static 'marketplace/assets/work-1.mp4' %}" type="video/mp4" />
+          </video>
+        </div>
+        <div class="project-content">
+          <h3>Nairobi retail dashboard</h3>
+          <p>Inventory, sales, and reporting surface for a growing Westlands store.</p>
+        </div>
+      </article>
+
+      <article class="project reveal media-row">
+        <div class="image-wrapper">
+          <video class="loop-video" loop muted playsinline preload="none"
+                 poster="{% static 'marketplace/assets/developer-fallback.svg' %}">
+            <source src="{% static 'marketplace/assets/work-2.mp4' %}" type="video/mp4" />
+          </video>
+        </div>
+        <div class="project-content">
+          <h3>Mombasa booking platform</h3>
+          <p>Reservation flow for a coastal hospitality client, built cross-platform.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section voices-section" id="voices">
+    <div class="section-head">
+      <h2 class="reveal">Voices.</h2>
+      <p class="section-desc reveal">
+        Clients in their own words. The slot below is wired for a monochrome video testimonial.
+      </p>
+    </div>
+
+    <figure class="voice-card reveal">
+      <div class="voice-media">
+        <!-- PLACEHOLDER: drop a monochrome testimonial loop at static/marketplace/assets/voice-1.mp4 -->
+        <video class="loop-video" loop muted playsinline preload="none"
+               poster="{% static 'marketplace/assets/developer-fallback.svg' %}">
+          <source src="{% static 'marketplace/assets/voice-1.mp4' %}" type="video/mp4" />
+        </video>
+      </div>
+      <figcaption>
+        <p class="voice-quote">&ldquo;SoftMarket matched us with a developer who understood the brief on day one.&rdquo;</p>
+        <p class="voice-name">&mdash; Founder, Nairobi SME</p>
+      </figcaption>
+    </figure>
   </section>
 
   <section class="dark-section reveal" id="contact">

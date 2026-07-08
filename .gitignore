@@ -7,3 +7,6 @@ db.sqlite3
 node_modules/
 .preview/
 *.lnk
+
+.vercel
+.env*

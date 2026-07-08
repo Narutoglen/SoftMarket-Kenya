@@ -58,6 +58,22 @@ body {
   transition: color 0.25s ease, background 0.25s ease;
 }
 
+/* Enforce the strictly-monochrome palette on any photographic or video media. */
+img,
+video,
+.hero-video,
+.loop-video,
+.voice-media video {
+  filter: grayscale(100%) contrast(1.02);
+}
+
+/* Keep the brand logo-mark and SVG glyphs fully saturated (already B&W by design). */
+.logo-mark,
+.menu-logo,
+.eyebrow::before {
+  filter: none;
+}
+
 body.menu-open {
   overflow: hidden;
 }
@@ -1322,6 +1338,281 @@ footer {
   border-top: 1px solid var(--border);
   font-size: 15px;
 }
+
+/* ---------- Fable-style media & motion augmentations (monochrome) ---------- */
+
+/* Hero media (ambient loop) + monochrome gradient scrim */
+.hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.5;
+}
+
+.hero-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, var(--bg) 0%, color-mix(in srgb, var(--bg) 78%, transparent) 42%, transparent 78%),
+    linear-gradient(to top, var(--bg) 0%, transparent 36%);
+  pointer-events: none;
+}
+
+html[data-theme="dark"] .hero-video {
+  opacity: 0.42;
+}
+
+/* Hero hiring / building toggle */
+.hero-toggle {
+  display: inline-flex;
+  gap: 4px;
+  margin: 0 0 28px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  transition: background 0.35s ease, border-color 0.35s ease;
+}
+
+.hero-toggle-btn {
+  padding: 10px 22px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 650;
+  transition: color 0.3s ease, background 0.3s ease, transform 0.3s ease;
+}
+
+.hero-toggle-btn.is-active {
+  color: var(--inverse-text);
+  background: var(--inverse-bg);
+}
+
+.hero-toggle-btn:hover {
+  transform: translateY(-1px);
+}
+
+.hero-sub {
+  max-width: 620px;
+  margin-top: 28px;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1.55;
+  animation: heroSubSwap 0.5s ease;
+}
+
+@keyframes heroSubSwap {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animated hero scroll cue (vertical line) */
+.hero-scroll-cue {
+  position: absolute;
+  z-index: 3;
+  bottom: 38px;
+  left: 50%;
+  display: flex;
+  justify-content: center;
+  width: 24px;
+  height: 64px;
+  transform: translateX(-50%);
+}
+
+.hero-scroll-line {
+  position: relative;
+  width: 2px;
+  height: 100%;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.hero-scroll-line::after {
+  position: absolute;
+  top: -40%;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  background: var(--text);
+  content: "";
+  animation: scrollCue 1.9s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+}
+
+@keyframes scrollCue {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(350%);
+  }
+}
+
+/* In-page anchor links: smooth handled by html scroll-behavior */
+.hero-content a {
+  transition: transform 0.35s ease, box-shadow 0.35s ease, opacity 0.35s ease;
+}
+
+/* Recent-work demo loops */
+.media-row .image-wrapper {
+  position: relative;
+}
+
+.media-row .loop-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.media-row.is-playing .loop-video {
+  opacity: 1;
+}
+
+.media-row .image-wrapper::before {
+  position: absolute;
+  inset: 0;
+  background: #dddddd;
+  content: "";
+}
+
+.media-row.is-playing .image-wrapper::before {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+/* Voices / video testimonial slot */
+.voices-section {
+  background: var(--soft-bg);
+  border-radius: 56px 56px 0 0;
+}
+
+.voice-card {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 48px;
+  align-items: center;
+  margin: 0;
+  padding: clamp(28px, 5vw, 56px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 34px;
+  transition: border-color 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease;
+}
+
+.voice-card:hover {
+  border-color: #d0d0d0;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.08);
+  transform: translateY(-6px);
+}
+
+.voice-media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: #dddddd;
+  border-radius: 22px;
+}
+
+.voice-media .loop-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.voice-card.is-playing .voice-media .loop-video {
+  opacity: 1;
+}
+
+.voice-quote {
+  max-width: 520px;
+  font-size: clamp(26px, 3vw, 38px);
+  font-weight: 500;
+  line-height: 1.18;
+}
+
+.voice-name {
+  margin-top: 22px;
+  color: var(--muted);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+/* Studio / process photography strips */
+.studio-strip,
+.process-strip {
+  border-top: 1px solid var(--border);
+}
+
+.strip-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.strip-frame {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #dddddd;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+}
+
+.strip-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s ease-out;
+}
+
+.strip-frame:hover img {
+  transform: scale(1.04);
+}
+
+.strip-caption {
+  margin-top: 26px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+/* Responsive: stack media rows, voices, strips on small screens */
+@media (max-width: 1100px) {
+  .voice-card {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+@media (max-width: 950px) {
+  .strip-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- end Fable augmentations ---------- */
 
 .reveal {
   opacity: 0;

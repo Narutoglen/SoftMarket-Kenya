@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="t d">
+  <title id="t">Studio workspace placeholder</title>
+  <desc id="d">Monochrome placeholder photograph for a Nairobi studio workspace.</desc>
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#efefef"/>
+      <stop offset="1" stop-color="#c7c7c7"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#g1)"/>
+  <rect x="120" y="120" width="960" height="560" rx="18" fill="#dcdcdc"/>
+  <rect x="120" y="120" width="960" height="560" rx="18" fill="none" stroke="#b3b3b3" stroke-width="3"/>
+  <g stroke="#9a9a9a" stroke-width="14" stroke-linecap="round" fill="none">
+    <path d="M250 690h700M250 740h520"/>
+  </g>
+  <circle cx="600" cy="400" r="86" fill="none" stroke="#8c8c8c" stroke-width="14"/>
+  <path d="M600 330a70 70 0 1 0 .01 0M600 330l0 140" stroke="#8c8c8c" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <text x="600" y="820" text-anchor="middle" font-family="monospace" font-size="34" fill="#777" letter-spacing="6">PHOTO</text>
+</svg>

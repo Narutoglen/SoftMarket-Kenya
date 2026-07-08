@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="t d">
+  <title id="t">Launch and handoff placeholder</title>
+  <desc id="d">Monochrome placeholder photograph for launch and handoff.</desc>
+  <defs>
+    <linearGradient id="p3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f0f0f0"/>
+      <stop offset="1" stop-color="#c1c1c1"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#p3)"/>
+  <path d="M600 180l70 70-70 70-70-70z" fill="#d4d4d4"/>
+  <path d="M600 340l120 120-120 120-120-120z" fill="#cfcfcf"/>
+  <path d="M600 520l170 170-170 170-170-170z" fill="#9c9c9c"/>
+  <text x="600" y="850" text-anchor="middle" font-family="monospace" font-size="34" fill="#777" letter-spacing="6">PHOTO</text>
+</svg>
