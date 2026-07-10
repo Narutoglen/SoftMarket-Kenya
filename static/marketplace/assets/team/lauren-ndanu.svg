@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 450" role="img" aria-labelledby="title desc">
-  <title id="title">Lauren Ndanu portrait placeholder</title>
-  <desc id="desc">Initials placeholder for Lauren Ndanu's passport photo.</desc>
-  <rect width="350" height="450" fill="#f0e6ea"/>
-  <circle cx="175" cy="132" r="88" fill="#171717"/>
-  <path d="M74 450c10-90 48-145 101-145s91 55 101 145z" fill="#6b3755"/>
-  <circle cx="175" cy="142" r="50" fill="#b87958"/>
-  <path d="M104 140c16-70 124-81 143-7-43-20-86-22-143 7z" fill="#171717"/>
-  <text x="175" y="382" fill="#ffffff" font-family="Manrope, Arial, sans-serif" font-size="54" font-weight="700" text-anchor="middle">LN</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 450" role="img" aria-labelledby="t d">
+  <title id="t">Lauren Ndanu portrait</title>
+  <desc id="d">Monochrome portrait placeholder for Lauren Ndanu.</desc>
+  <rect width="350" height="450" fill="#e7e9e7"/>
+  <circle cx="175" cy="170" r="92" fill="#cfd2cf"/>
+  <path d="M70 450c10-104 44-168 105-168s95 64 105 168z" fill="#aeb3ae"/>
+  <circle cx="175" cy="168" r="60" fill="#5c615c"/>
+  <path d="M122 150c16-58 92-72 106 6-44-16-80-14-106-6z" fill="#3a3f3a"/>
+  <text x="175" y="408" fill="#3a3f3a" font-family="Manrope, Arial, sans-serif" font-size="40" font-weight="700" text-anchor="middle" letter-spacing="4">LN</text>
 </svg>

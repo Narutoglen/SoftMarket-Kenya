@@ -42,7 +42,7 @@ def get_allowed_hosts():
     """ALLOWED_HOSTS for this Django app.
 
     On Vercel (and other serverless hosts) the incoming request Host header
-    carries the real deployment domain (e.g. softmarket-kenya.vercel.app), which
+    carries the real deployment domain (e.g. softmarket-kenya-2qmt8bwvb-narutoglens-projects.vercel.app), which
     is NOT available via a build-time env var. We read it at request time via
     get_host() so the app accepts whatever domain is actually serving it.
     """
@@ -198,7 +198,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CORS_ALLOW_ALL_ORIGINS = env_bool("DJANGO_CORS_ALLOW_ALL", False)
 CORS_ALLOWED_ORIGINS = env_list(
     "DJANGO_CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000,https://softmarket-kenya.vercel.app",
+    "http://localhost:3000,https://softmarket-kenya-2qmt8bwvb-narutoglens-projects.vercel.app",
 )
 CORS_ALLOW_CREDENTIALS = False
 

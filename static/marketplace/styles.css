@@ -41,6 +41,7 @@
   --menu-bg: #ffffff;
   --grid-line-strong: rgba(16, 185, 129, 0.1);
   --grid-line-soft: rgba(16, 185, 129, 0.05);
+  --color-scheme: light;
   color-scheme: light;
 }
 
@@ -66,6 +67,7 @@ html[data-theme="dark"] {
   --menu-bg: #050505;
   --grid-line-strong: rgba(16, 185, 129, 0.12);
   --grid-line-soft: rgba(16, 185, 129, 0.06);
+  --color-scheme: dark;
   color-scheme: dark;
 }
 
@@ -266,7 +268,7 @@ section[id] {
   display: block;
   width: 54px;
   height: 30px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.08);
   border: 1px solid var(--border-strong);
   border-radius: 999px;
   transition: background 0.25s ease, border-color 0.25s ease;
@@ -362,7 +364,7 @@ html[data-theme="dark"] .theme-toggle:hover .theme-toggle-track {
   visibility: hidden;
   opacity: 0;
   padding: 24px;
-  color: var(--ink);
+  color: var(--text);
   background: rgba(0, 0, 0, 0.96);
   transform: translateY(-18px);
   transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s ease;
@@ -446,7 +448,7 @@ html[data-theme="dark"] .theme-toggle:hover .theme-toggle-track {
   width: 54px;
   height: 54px;
   padding: 0;
-  color: var(--ink);
+  color: var(--text);
   background: transparent;
   border: 0;
 }
@@ -520,7 +522,7 @@ html[data-theme="dark"] .theme-toggle:hover .theme-toggle-track {
 }
 
 .menu-office-grid address {
-  color: rgba(244, 244, 240, 0.78);
+  color: var(--text-soft);
   font-style: normal;
   font-size: 18px;
   line-height: 1.55;
@@ -543,7 +545,7 @@ html[data-theme="dark"] .theme-toggle:hover .theme-toggle-track {
   width: 42px;
   height: 42px;
   place-items: center;
-  color: var(--ink);
+  color: var(--text);
   border: 1px solid rgba(16, 185, 129, 0.2);
   border-radius: 50%;
   transition: background 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
@@ -654,9 +656,10 @@ html[data-theme="dark"] .theme-toggle:hover .theme-toggle-track {
 
 .hero h1 {
   max-width: 1100px;
-  font-size: 112px;
+  font-size: clamp(46px, 6.4vw, 88px);
   font-weight: 900;
-  line-height: 1.02;
+  line-height: 1.04;
+  text-wrap: balance;
 }
 
 .hero-sub {
@@ -696,7 +699,7 @@ html[data-theme="dark"] .theme-toggle:hover .theme-toggle-track {
 }
 
 .secondary-btn {
-  color: var(--ink);
+  color: var(--text);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-strong);
 }
@@ -718,8 +721,13 @@ html[data-theme="dark"] .theme-toggle:hover .theme-toggle-track {
   padding: 5px;
   border: 1px solid var(--border-strong);
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.06);
   backdrop-filter: blur(8px);
+}
+
+/* On the carbon theme the toggle pill needs the darker treatment. */
+html[data-theme="dark"] .hero-toggle {
+  background: rgba(0, 0, 0, 0.4);
 }
 
 .hero-toggle-btn {
@@ -727,7 +735,7 @@ html[data-theme="dark"] .theme-toggle:hover .theme-toggle-track {
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: var(--ink-soft);
+  color: var(--text-soft);
   font-size: 15px;
   font-weight: 700;
   transition: color 0.3s ease, background 0.3s ease, transform 0.3s ease;
@@ -1292,9 +1300,9 @@ html[data-theme="dark"] .theme-toggle:hover .theme-toggle-track {
   width: 100%;
   min-height: 52px;
   padding: 14px 15px;
-  color: var(--ink);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--text);
+  background: var(--field-bg);
+  border: 1px solid var(--nav-border);
   border-radius: 14px;
   outline: 0;
   transition: border-color 0.25s ease, background 0.25s ease;
@@ -1305,8 +1313,9 @@ html[data-theme="dark"] .theme-toggle:hover .theme-toggle-track {
   resize: vertical;
 }
 
+/* Native dropdown uses the theme's colour scheme so it matches light mode. */
 .quote-form select {
-  color-scheme: dark;
+  color-scheme: var(--color-scheme, light);
 }
 
 .quote-form select option {
@@ -1370,7 +1379,7 @@ html[data-theme="dark"] .theme-toggle:hover .theme-toggle-track {
 
 .blog-card {
   overflow: hidden;
-  color: var(--ink);
+  color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--card-radius);
@@ -1722,6 +1731,88 @@ footer {
 .reveal.active {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* ---------- Founder portrait (about page) ---------- */
+.founder-section {
+  padding-top: 0;
+}
+
+.founder-card {
+  display: grid;
+  grid-template-columns: minmax(260px, 380px) 1fr;
+  gap: 56px;
+  align-items: center;
+  margin: 0;
+}
+
+.founder-photo {
+  position: relative;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-diffuse);
+  background: var(--surface-solid);
+}
+
+.founder-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+
+.founder-copy .eyebrow {
+  margin-bottom: 18px;
+}
+
+.founder-copy p {
+  margin-top: 18px;
+  max-width: 60ch;
+  color: var(--text-soft);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+/* ---------- Philosophy band (3D graphic) ---------- */
+.philosophy-section {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.philosophy-frame {
+  position: relative;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-diffuse);
+  background: #050505;
+}
+
+.philosophy-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+/* ---------- Film strip (brand video) ---------- */
+.film-frame {
+  position: relative;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-diffuse);
+  background: #050505;
+  aspect-ratio: 16 / 9;
+}
+
+.film-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* ---------- Responsive ---------- */

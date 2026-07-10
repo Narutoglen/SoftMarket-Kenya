@@ -62,6 +62,8 @@ function setTheme(theme) {
   }
   storeTheme(dark ? "dark" : "light");
   updateThemeButton();
+  // Let theme-aware widgets (e.g. the moving shader) re-paint.
+  window.dispatchEvent(new CustomEvent("softmarket:themechange"));
 }
 
 updateThemeButton();
@@ -226,14 +228,28 @@ if (!prefersReducedMotion && "IntersectionObserver" in window) {
     seed();
   }
 
+  // Re-seed with the theme-appropriate palette when the user toggles.
+  window.addEventListener("softmarket:themechange", () => {
+    seed();
+    if (!running && !reduce) frame();
+  });
+
   function seed() {
-    // A few soft emerald/volt blobs drifting over carbon.
-    const palette = [
+    // Palette flips with the theme so the shader reads well on both
+    // the carbon (dark) and frost (light) backgrounds.
+    const darkPalette = [
       "rgba(16, 185, 129, 0.55)",
       "rgba(10, 40, 28, 0.9)",
       "rgba(210, 255, 0, 0.12)",
       "rgba(8, 24, 16, 0.95)",
     ];
+    const lightPalette = [
+      "rgba(16, 40, 28, 0.18)",
+      "rgba(120, 140, 125, 0.22)",
+      "rgba(40, 60, 45, 0.14)",
+      "rgba(90, 110, 95, 0.2)",
+    ];
+    const palette = isDarkTheme() ? darkPalette : lightPalette;
     const count = reduce ? 3 : 5;
     blobs = [];
     for (let i = 0; i < count; i++) {
