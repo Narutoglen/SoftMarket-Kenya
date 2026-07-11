@@ -1,5 +1,6 @@
 {% extends "marketplace/base.html" %}
 {% load static %}
+{% load static_extras %}
 
 {% block title %}Software Developers in Kenya | SoftMarket Kenya{% endblock %}
 {% block meta_description %}Find trusted software developers in Kenya for business websites, mobile app developers Kenya, dashboards, automation, and custom software development Kenya.{% endblock %}
@@ -220,7 +221,7 @@
     <div class="work-grid">
       <article class="project reveal media-row">
         <div class="image-wrapper">
-          <img src="{% static 'marketplace/assets/birunda-farm-records.webp' %}"
+          <img src="{% static 'marketplace/assets/birunda-farm-records.webp' %}?v={{ 'marketplace/assets/birunda-farm-records.webp'|static_file_mtime }}"
                width="1351" height="647" loading="lazy" alt="Birunda Farm Records &mdash; farm records and stock management console for livestock, crops, receipts, and Firebase sync." />
         </div>
         <div class="project-content">
@@ -231,7 +232,7 @@
 
       <article class="project reveal media-row">
         <div class="image-wrapper">
-          <img src="{% static 'marketplace/assets/gorosei.webp' %}"
+          <img src="{% static 'marketplace/assets/gorosei.webp' %}?v={{ 'marketplace/assets/gorosei.webp'|static_file_mtime }}"
                width="1355" height="608" loading="lazy" alt="Gorosei &mdash; streetwear and thrift e-commerce storefront for a Nairobi clothing brand." />
         </div>
         <div class="project-content">
@@ -242,7 +243,7 @@
 
       <article class="project reveal media-row">
         <div class="image-wrapper">
-          <img src="{% static 'marketplace/assets/h2org.webp' %}"
+          <img src="{% static 'marketplace/assets/h2org.webp' %}?v={{ 'marketplace/assets/h2org.webp'|static_file_mtime }}"
                width="1351" height="648" loading="lazy" alt="H2Org &mdash; nonprofit site for solar-powered boreholes and water access projects in rural Kenya." />
         </div>
         <div class="project-content">
@@ -253,7 +254,7 @@
 
       <article class="project reveal media-row">
         <div class="image-wrapper">
-          <img src="{% static 'marketplace/assets/threadlite.webp' %}"
+          <img src="{% static 'marketplace/assets/threadlite.webp' %}?v={{ 'marketplace/assets/threadlite.webp'|static_file_mtime }}"
                width="1353" height="629" loading="lazy" alt="Threadlite &mdash; voice-to-text journaling app with AI-generated context and daily summaries." />
         </div>
         <div class="project-content">
@@ -264,7 +265,7 @@
 
       <article class="project reveal media-row">
         <div class="image-wrapper">
-          <img src="{% static 'marketplace/assets/eduflow.webp' %}"
+          <img src="{% static 'marketplace/assets/eduflow.webp' %}?v={{ 'marketplace/assets/eduflow.webp'|static_file_mtime }}"
                width="1920" height="1080" loading="lazy" alt="EduFlow &mdash; course platform with a student dashboard for enrollment, grades, and progress tracking." />
         </div>
         <div class="project-content">
@@ -275,7 +276,7 @@
 
       <article class="project reveal media-row">
         <div class="image-wrapper">
-          <img src="{% static 'marketplace/assets/fareast-ventures.webp' %}"
+          <img src="{% static 'marketplace/assets/fareast-ventures.webp' %}?v={{ 'marketplace/assets/fareast-ventures.webp'|static_file_mtime }}"
                width="1915" height="951" loading="lazy" alt="Fareast Ventures &mdash; booking platform for an executive chauffeur service." />
         </div>
         <div class="project-content">
