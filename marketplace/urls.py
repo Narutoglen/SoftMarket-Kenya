@@ -1,10 +1,20 @@
+from django.contrib.sitemaps.views import sitemap
 from django.urls import path
 
 from . import api, views
+from .seo import BlogSitemap, StaticViewSitemap, robots_txt
 
 app_name = "marketplace"
 
+sitemaps = {
+    "static": StaticViewSitemap,
+    "blog": BlogSitemap,
+}
+
 urlpatterns = [
+    # --- SEO ---
+    path("robots.txt", robots_txt, name="robots"),
+    path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="sitemap"),
     # --- JSON API (consumed by the Next.js frontend) ---
     path("api/services/", api.ServiceListView.as_view(), name="api_services"),
     path("api/blog/", api.BlogListView.as_view(), name="api_blog_list"),

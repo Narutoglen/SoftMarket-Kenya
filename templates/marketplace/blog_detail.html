@@ -4,6 +4,13 @@
 {% block title %}{{ post.title }} | SoftMarket Kenya{% endblock %}
 {% block meta_description %}{{ post.excerpt }} SoftMarket Kenya shares guidance on software developers in Kenya, website developers in Kenya, mobile app developers Kenya, and custom software development Kenya.{% endblock %}
 
+{% block og_title %}<meta property="og:title" content="{{ post.title }} | SoftMarket Kenya" />{% endblock %}
+{% block og_description %}<meta property="og:description" content="{{ post.excerpt }}" />{% endblock %}
+{% block og_image %}<meta property="og:image" content="{% if post.main_image %}{{ request.scheme }}://{{ request.get_host }}{{ post.main_image.url }}{% else %}{{ request.scheme }}://{{ request.get_host }}/static/marketplace/assets/gorosei.webp{% endif %}" />{% endblock %}
+{% block twitter_title %}<meta name="twitter:title" content="{{ post.title }} | SoftMarket Kenya" />{% endblock %}
+{% block twitter_description %}<meta name="twitter:description" content="{{ post.excerpt }}" />{% endblock %}
+{% block twitter_image %}<meta name="twitter:image" content="{% if post.main_image %}{{ request.scheme }}://{{ request.get_host }}{{ post.main_image.url }}{% else %}{{ request.scheme }}://{{ request.get_host }}/static/marketplace/assets/gorosei.webp{% endif %}" />{% endblock %}
+
 {% block content %}
   <article class="blog-detail">
     <header class="page-hero blog-detail-hero">

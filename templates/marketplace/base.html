@@ -11,6 +11,42 @@
   />
   <title>{% block title %}SoftMarket Kenya | Software Marketplace{% endblock %}</title>
 
+  {# SEO: canonical + Open Graph + Twitter. Pages override og_*/twitter_* blocks. #}
+  <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}" />
+  {% block og_title %}<meta property="og:title" content="SoftMarket Kenya | Vetted Software Developers in Kenya" />{% endblock %}
+  {% block og_description %}<meta property="og:description" content="SoftMarket Kenya connects businesses with vetted Kenyan developers for websites, apps, dashboards, and automation systems." />{% endblock %}
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}" />
+  <meta property="og:site_name" content="SoftMarket Kenya" />
+  <meta property="og:locale" content="en_KE" />
+  {% block og_image %}<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}/static/marketplace/assets/gorosei.webp" />{% endblock %}
+  <meta name="twitter:card" content="summary_large_image" />
+  {% block twitter_title %}<meta name="twitter:title" content="SoftMarket Kenya | Vetted Software Developers in Kenya" />{% endblock %}
+  {% block twitter_description %}<meta name="twitter:description" content="SoftMarket Kenya connects businesses with vetted Kenyan developers for websites, apps, dashboards, and automation systems." />{% endblock %}
+  {% block twitter_image %}<meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}/static/marketplace/assets/gorosei.webp" />{% endblock %}
+
+  {# Structured data: LocalBusiness for rich SERP results. #}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "SoftMarket Kenya",
+    "description": "Software marketplace connecting Kenyan businesses with vetted developers for websites, apps, dashboards, and automation.",
+    "url": "{{ request.scheme }}://{{ request.get_host }}/",
+    "telephone": "+254716343561",
+    "address": [
+      { "@type": "PostalAddress", "addressLocality": "Nairobi", "addressCountry": "KE", "addressRegion": "Westlands" },
+      { "@type": "PostalAddress", "addressLocality": "Mombasa", "addressCountry": "KE", "addressRegion": "Nyali" }
+    ],
+    "sameAs": [
+      "https://www.facebook.com/",
+      "https://www.instagram.com/",
+      "https://www.linkedin.com/",
+      "https://www.tiktok.com/"
+    ]
+  }
+  </script>
+
   <!-- Premium v2 type system: Outfit for display/headings (Inter banned for display). -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

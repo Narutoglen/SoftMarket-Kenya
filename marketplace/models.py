@@ -215,6 +215,11 @@ class BlogPost(TimeStampedModel):
     def is_published(self):
         return self.status == self.Status.PUBLISHED
 
+    def get_absolute_url(self):
+        from django.urls import reverse
+
+        return reverse("marketplace:blog_detail", args=[self.slug])
+
     def save(self, *args, **kwargs):
         if self.is_published and self.published_at is None:
             self.published_at = timezone.now()
