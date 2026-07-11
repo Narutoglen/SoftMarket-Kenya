@@ -447,3 +447,56 @@ document.querySelector("#quoteForm")?.addEventListener("submit", (event) => {
     submitButton.disabled = false;
   });
 });
+
+/* ---------- Pricing carousel: sliding rotation of tier cards ----------
+   Compact horizontal track (no longer a tall static grid). Auto-advances
+   every 2s (pauses on hover/focus/hidden tab) and honours
+   prefers-reduced-motion (no auto-advance, but manual buttons still work). */
+(function initPricingCarousel() {
+  const track = document.getElementById("pricingTrack");
+  if (!track) return;
+  const carousel = track.closest(".pricing-carousel");
+  const prev = carousel?.querySelector(".carousel-btn.prev");
+  const next = carousel?.querySelector(".carousel-btn.next");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  let index = 0;
+  // Always begin flush at the left edge (card 01), not mid-scroll.
+  track.scrollTo({ left: 0, behavior: "auto" });
+
+  const cards = () => Array.from(track.querySelectorAll(".pricing-card"));
+
+  const goTo = (i, smooth) => {
+    const list = cards();
+    if (!list.length) return;
+    const count = list.length;
+    index = ((i % count) + count) % count;
+    const target = list[index];
+    const left = target.offsetLeft - track.offsetLeft;
+    track.scrollTo({ left, behavior: smooth && !reduceMotion ? "smooth" : "auto" });
+  };
+
+  const scrollByCards = (dir) => goTo(index + dir, true);
+
+  prev?.addEventListener("click", () => scrollByCards(-1));
+  next?.addEventListener("click", () => scrollByCards(1));
+
+  if (reduceMotion) return;
+
+  let timer = null;
+  const start = () => {
+    stop();
+    timer = setInterval(() => goTo(index + 1, true), 2000);
+  };
+  const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+
+  carousel?.addEventListener("mouseenter", stop);
+  carousel?.addEventListener("mouseleave", start);
+  carousel?.addEventListener("focusin", stop);
+  carousel?.addEventListener("focusout", start);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stop(); else start();
+  });
+
+  start();
+})();
