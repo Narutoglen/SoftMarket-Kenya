@@ -6,6 +6,7 @@ from django.urls import include, path
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("marketplace.urls")),
+    path("", include("crm.urls")),
 ]
 
 # Serve collected static files in ALL environments.

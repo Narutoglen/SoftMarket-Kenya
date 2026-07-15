@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "marketplace",
+    "crm",
 ]
 
 MIDDLEWARE = [
