@@ -209,20 +209,10 @@ section[id] {
   width: 42px;
   height: 42px;
   flex: 0 0 auto;
-  background: var(--volt);
   border-radius: 50%;
-  box-shadow: 0 0 22px rgba(210, 255, 0, 0.45);
-}
-
-.logo-mark::after {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 14px;
-  height: 14px;
+  object-fit: cover;
   background: var(--carbon);
-  border-radius: 50%;
-  content: "";
+  box-shadow: 0 0 22px rgba(210, 255, 0, 0.35);
 }
 
 .nav-actions {
@@ -408,19 +398,9 @@ html[data-theme="dark"] .theme-toggle:hover .theme-toggle-track {
   position: relative;
   width: 44px;
   height: 44px;
-  border: 2px solid var(--volt);
   border-radius: 50%;
-}
-
-.menu-logo::after {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 14px;
-  height: 14px;
-  background: var(--volt);
-  border-radius: 50%;
-  content: "";
+  object-fit: cover;
+  background: var(--carbon);
 }
 
 .menu-actions {
