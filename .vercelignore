@@ -16,7 +16,7 @@ Dockerfile
 .dockerignore
 FLUTTER_AUDIT_REPORT.md
 README.Docker.md
-assets/
+/assets/
 supabase/
 test/
 *.lnk
