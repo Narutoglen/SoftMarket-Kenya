@@ -644,9 +644,9 @@ html[data-theme="dark"] .theme-toggle:hover .theme-toggle-track {
 
 .hero-sub {
   max-width: 620px;
-  margin-top: 28px;
+  margin-top: 24px;
   color: var(--ink-soft);
-  font-size: 22px;
+  font-size: 18px;
   line-height: 1.55;
   animation: heroSubSwap 0.5s ease;
 }
@@ -808,8 +808,8 @@ html[data-theme="dark"] .hero-toggle {
   width: 100%;
   max-width: 430px;
   color: var(--text-soft);
-  font-size: 19px;
-  line-height: 1.6;
+  font-size: 16px;
+  line-height: 1.55;
 }
 
 /* ---------- Bento grid (asymmetric, not 3 equal cards) ---------- */
@@ -1615,7 +1615,7 @@ html[data-theme="dark"] .hero-toggle {
 .page-hero-copy {
   max-width: 720px;
   color: var(--ink-soft);
-  font-size: 22px;
+  font-size: 18px;
   line-height: 1.55;
 }
 
@@ -1688,7 +1688,7 @@ html[data-theme="dark"] .hero-toggle {
 
 .voice-media {
   position: relative;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 2 / 3;
   overflow: hidden;
   background: #05070d;
   border-radius: 22px;
@@ -1739,24 +1739,17 @@ html[data-theme="dark"] .hero-toggle {
 
 .roll .roll-char {
   display: inline-block;
-  transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
   transition-delay: var(--roll-delay, 0s);
   will-change: transform;
 }
 
 .roll:hover .roll-char,
 .roll.is-rolling .roll-char {
-  transform: translateY(-0.12em);
+  transform: translateY(-0.08em);
 }
 
-.roll .roll-char:nth-child(even) {
-  transform: translateY(0.04em);
-}
-
-.roll:hover .roll-char:nth-child(even),
-.roll.is-rolling .roll-char:nth-child(even) {
-  transform: translateY(-0.12em);
-}
+/* Subtle, even baseline — no uneven per-character offset so words stay readable */
 
 /* ---------- Footer ---------- */
 footer {
