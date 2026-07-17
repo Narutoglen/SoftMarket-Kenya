@@ -1688,9 +1688,9 @@ html[data-theme="dark"] .hero-toggle {
 
 .voice-media {
   position: relative;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
-  background: var(--img-ph);
+  background: #05070d;
   border-radius: 22px;
   border: 1px solid var(--border-strong);
   perspective: 1200px;
@@ -1707,7 +1707,9 @@ html[data-theme="dark"] .hero-toggle {
   transition: opacity 0.6s ease;
 }
 
+/* Still image: show the whole artwork (no cropping/zoom) on a dark void */
 .voice-media .voice-image {
+  object-fit: contain;
   opacity: 1;
 }
 
