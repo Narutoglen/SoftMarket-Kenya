@@ -1,0 +1,22 @@
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+  <div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-4">
+    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">Open pipeline</p>
+    <p class="figure text-2xl mt-1 text-[var(--ink-display)]">KSh {{ summary.open_value|floatformat:0 }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] font-semibold mt-1">across active stages</p>
+  </div>
+  <div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-4">
+    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">Weighted forecast</p>
+    <p class="figure text-2xl mt-1 brand-text">KSh {{ summary.weighted|floatformat:0 }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] font-semibold mt-1">probability-adjusted</p>
+  </div>
+  <div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-4">
+    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">Won</p>
+    <p class="figure text-2xl mt-1 text-emerald-600 dark:text-emerald-400">KSh {{ summary.won_value|floatformat:0 }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] font-semibold mt-1">closed deals</p>
+  </div>
+  <div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-4">
+    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">Lost</p>
+    <p class="figure text-2xl mt-1 text-rose-600 dark:text-rose-400">KSh {{ summary.lost_value|floatformat:0 }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] font-semibold mt-1">closed-lost</p>
+  </div>
+</div>

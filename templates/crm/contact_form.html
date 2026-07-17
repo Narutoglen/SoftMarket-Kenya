@@ -1,0 +1,7 @@
+{% extends "crm/base.html" %}
+{% block title %}{% if mode == 'edit' %}Edit{% else %}New{% endif %} contact · {{ tenant.name }} CRM{% endblock %}
+{% block content %}
+<h1 class="font-display font-extrabold text-2xl text-[var(--ink-display)] mb-4">{% if mode == 'edit' %}Edit {{ contact.full_name }}{% else %}New contact{% endif %}</h1>
+
+{% include "crm/_contact_form.html" %}
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "crm/base.html" %}
+{% block title %}Get started · {{ tenant.name }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <div class="mb-6">
+    <p class="text-xs font-semibold uppercase tracking-[0.16em] brand-text">Talk to {{ tenant.name }}</p>
+    <h1 class="font-display font-extrabold text-3xl text-[var(--ink-display)] mt-1">Tell us what you need</h1>
+    <p class="text-sm text-[var(--ink-muted)] mt-1">A few quick questions and the right specialist will reach out within 24 hours.</p>
+  </div>
+
+  <div id="lead-form-wrap" class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-6">
+    {% include "crm/_lead_form.html" with tenant=tenant form=form %}
+  </div>
+</div>
+{% endblock %}

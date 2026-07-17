@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     "cloudinary",
     "corsheaders",
     "rest_framework",
+    "django_htmx",
     "marketplace",
     "crm",
 ]
@@ -92,6 +93,7 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django_htmx.middleware.HtmxMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -135,10 +137,14 @@ if DATABASE_URL:
         )
     }
 elif DEBUG:
+    _db_path = BASE_DIR / "db.sqlite3"
+    # Ensure the directory exists so SQLite cannot fail with
+    # "unable to open database file" when the file is first created.
+    os.makedirs(os.path.dirname(str(_db_path)), exist_ok=True)
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "NAME": _db_path,
         }
     }
 else:
@@ -200,7 +206,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CORS_ALLOW_ALL_ORIGINS = env_bool("DJANGO_CORS_ALLOW_ALL", False)
 CORS_ALLOWED_ORIGINS = env_list(
     "DJANGO_CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000,https://softmarket-kenya-2qmt8bwvb-narutoglens-projects.vercel.app",
+    "http://localhost:3000,http://localhost:3100,https://softmarket-kenya-2qmt8bwvb-narutoglens-projects.vercel.app",
 )
 CORS_ALLOW_CREDENTIALS = False
 

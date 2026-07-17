@@ -1,0 +1,26 @@
+{% comment %}One timeline row. For tasks (`type == 'task'`), the done state is toggleable
+via HTMX (swaps this <li> with the updated row).{% endcomment %}
+<li class="ml-4" id="activity-{{ activity.pk }}">
+  <span class="absolute -left-[9px] w-4 h-4 rounded-full ring-4 ring-[var(--surface)]
+    {% if activity.type == 'call' %}brand-bg{% elif activity.type == 'email' %}bg-emerald-500{% elif activity.type == 'task' %}bg-[var(--signal)]{% elif activity.type == 'meeting' %}bg-sky-500{% else %}bg-[var(--ink-muted)]{% endif %}"></span>
+
+  <div class="flex items-start gap-2">
+    <div class="min-w-0 flex-1">
+      <p class="text-sm font-semibold {% if activity.type == 'task' and activity.done %}line-through text-[var(--ink-muted)]{% else %}text-[var(--ink-display)]{% endif %}">
+        {{ activity.get_type_display }}{% if activity.subject %} · {{ activity.subject }}{% endif %}
+      </p>
+      {% if activity.notes %}<p class="text-xs text-[var(--ink-muted)]">{{ activity.notes }}</p>{% endif %}
+      <p class="text-xs text-[var(--ink-muted)]/70">{{ activity.created_at|date:"M j, H:i" }}</p>
+    </div>
+
+    {% if activity.type == 'task' %}
+    <button hx-post="{% url 'crm:activity_toggle' pk=activity.pk %}"
+            hx-target="#activity-{{ activity.pk }}" hx-swap="outerHTML"
+            class="shrink-0 w-5 h-5 rounded-md border flex items-center justify-center transition
+              {% if activity.done %}brand-bg border-transparent{% else %}border-[var(--hairline)] hover:border-[var(--accent)]{% endif %}"
+            aria-label="Toggle done">
+      {% if activity.done %}<i data-lucide="check" class="w-3.5 h-3.5 text-white"></i>{% endif %}
+    </button>
+    {% endif %}
+  </div>
+</li>

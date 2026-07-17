@@ -1,0 +1,24 @@
+{% extends "crm/base.html" %}
+{% block title %}{% if mode == 'edit' %}Edit{% else %}New{% endif %} account · {{ tenant.name }} CRM{% endblock %}
+{% block content %}
+<h1 class="font-display font-extrabold text-2xl text-[var(--ink-display)] mb-4">{% if mode == 'edit' %}Edit {{ account.name }}{% else %}New account{% endif %}</h1>
+
+<form hx-post="{% if account %}{% url 'crm:account_edit' pk=account.pk %}{% else %}{% url 'crm:account_create' %}{% endif %}"
+      hx-target="this" hx-swap="outerHTML"
+      class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-5 space-y-4">
+  {% csrf_token %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    {% for field in form %}
+    <div class="{% if field.name == 'billing_address' or field.name == 'notes' %}sm:col-span-2{% endif %}">
+      <label class="block text-xs font-semibold uppercase tracking-wide text-[var(--ink-muted)] mb-1.5">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<p class="text-xs text-rose-500 mt-1">{{ field.errors.0 }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="flex items-center gap-2 pt-2">
+    <button type="submit" class="px-4 py-2 rounded-xl brand-bg text-white text-sm font-semibold hover:opacity-90 transition">Save account</button>
+    <a href="{% if account %}{% url 'crm:account_detail' pk=account.pk %}{% else %}{% url 'crm:account_list' %}{% endif %}" class="px-4 py-2 rounded-xl border border-[var(--hairline)] text-sm font-semibold hover:bg-[var(--page)] transition">Cancel</a>
+  </div>
+</form>
+{% endblock %}

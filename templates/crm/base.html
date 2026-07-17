@@ -1,0 +1,187 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}{{ tenant.name }} CRM{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Outfit', 'system-ui', 'sans-serif'],
+            sans: ['Manrope', 'system-ui', 'sans-serif'],
+          },
+          colors: { accent: '{{ tenant.brand_primary_color }}' },
+        },
+      },
+    };
+    document.documentElement.style.setProperty('--accent', '{{ tenant.brand_primary_color }}');
+    document.documentElement.style.setProperty('--accent2', '{{ tenant.brand_accent_color }}');
+    // design-system signal token (amber, pinned light across modes)
+    document.documentElement.style.setProperty('--signal', '#fcd34d');
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html { font-family: 'Manrope', system-ui, sans-serif; }
+    body { font-feature-settings: "cv11", "ss01"; }
+    .font-display { font-family: 'Outfit', sans-serif; }
+    .figure { font-family: 'Outfit', sans-serif; font-weight: 900; letter-spacing: -0.02em; }
+    /* Slate neutral tokens (from bm-design-system) */
+    :root { --page:#ffffff; --surface:#f8fafc; --hairline:#e2e8f0; --ink-body:#334155; --ink-display:#0f172a; --ink-muted:#64748b; }
+    .dark { --page:#020617; --surface:#0f172a; --hairline:#1e293b; --ink-body:#e2e8f0; --ink-display:#f8fafc; --ink-muted:#94a3b8; }
+    .brand-bg { background: var(--accent); }
+    .brand-text { color: var(--accent); }
+    .brand-grad { background-image: linear-gradient(135deg, var(--accent), var(--accent2)); }
+    .brand-ring { box-shadow: 0 10px 30px -10px var(--accent); }
+    .brand-border { border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+    .signal-text { color: var(--signal); }
+    .nav-item.active { background: color-mix(in srgb, var(--accent) 14%, transparent); color: #fff; }
+    .nav-item.active .nav-ico { color: var(--accent2); }
+    a.brand-link { color: var(--accent); }
+    .htmx-indicator { opacity: 0; transition: opacity .2s; }
+    .htmx-request .htmx-indicator { opacity: 1; }
+    .htmx-request.htmx-indicator { opacity: 1; }
+    @media print { .no-print { display:none !important; } }
+  </style>
+</head>
+<body class="bg-[var(--page)] text-[var(--ink-body)] dark:bg-[var(--page)] dark:text-[var(--ink-body)] antialiased">
+
+  <header class="no-print sticky top-0 z-30 backdrop-blur bg-[color-mix(in_srgb,var(--page)_80%,transparent)] border-b border-[var(--hairline)]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
+      <a href="{% url 'crm:dashboard' %}" class="flex items-center gap-2.5">
+        {% if tenant.logo_url %}
+        <img src="{{ tenant.logo_url }}" alt="{{ tenant.name }} logo"
+             class="h-9 w-9 rounded-xl object-cover brand-ring" />
+        {% else %}
+        <div class="w-9 h-9 rounded-xl brand-grad brand-ring flex items-center justify-center">
+          <i data-lucide="boxes" class="w-5 h-5 text-white"></i>
+        </div>
+        {% endif %}
+        <div class="leading-tight">
+          <p class="font-display font-extrabold text-[15px] tracking-tight text-[var(--ink-display)]">{{ tenant.name }} <span class="brand-text">CRM</span></p>
+          <p class="text-[11px] text-[var(--ink-muted)] -mt-0.5">Front office</p>
+        </div>
+      </a>
+
+      <div class="hidden md:flex flex-1 max-w-md ml-4">
+        <form class="relative w-full" method="get" action="{% url 'crm:contact_list' %}">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--ink-muted)]"></i>
+          <input name="q" value="{{ request.GET.q }}" type="text" placeholder="Search contacts, accounts, deals…"
+            class="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-[var(--surface)] border border-[var(--hairline)] focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/30 outline-none placeholder:text-[var(--ink-muted)]" />
+        </form>
+      </div>
+
+      <div class="ml-auto flex items-center gap-3">
+        <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold brand-text border" style="background: color-mix(in srgb, var(--accent) 12%, transparent); border-color: color-mix(in srgb, var(--accent) 25%, transparent);">
+          <i data-lucide="building-2" class="w-3.5 h-3.5"></i> {{ tenant.name }}
+        </span>
+        <button id="theme-toggle" class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-[var(--hairline)] hover:bg-[var(--surface)] transition" aria-label="Toggle theme">
+          <i data-lucide="sun" class="hidden dark:inline-block w-4 h-4"></i>
+          <i data-lucide="moon" class="inline-block dark:hidden w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
+
+    <aside class="no-print hidden lg:block">
+      <nav class="space-y-1 sticky top-24">
+        <a class="nav-item {% if active == 'dashboard' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold" href="{% url 'crm:dashboard' %}"><i data-lucide="layout-dashboard" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Dashboard</a>
+        <a class="nav-item {% if active == 'contacts' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface)] transition" href="{% url 'crm:contact_list' %}"><i data-lucide="users" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Contacts</a>
+        <a class="nav-item {% if active == 'accounts' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface)] transition" href="{% url 'crm:account_list' %}"><i data-lucide="building" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Accounts</a>
+        <a class="nav-item {% if active == 'leads' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface)] transition" href="{% url 'crm:lead_list' %}"><i data-lucide="target" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Leads</a>
+        <a class="nav-item {% if active == 'pipeline' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface)] transition" href="{% url 'crm:pipeline_board' %}"><i data-lucide="kanban" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Pipeline</a>
+        <a class="nav-item {% if active == 'followups' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface)] transition" href="{% url 'crm:followups' %}"><i data-lucide="check-circle" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Follow-ups</a>
+        <a class="nav-item {% if active == 'settings' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface)] transition" href="{% url 'crm:crm_settings' %}"><i data-lucide="settings" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Settings</a>
+      </nav>
+    </aside>
+
+    <main class="min-w-0">
+      {% if messages %}
+        <div class="mb-4 space-y-2" id="messages">
+          {% for m in messages %}
+            <p class="text-sm font-semibold px-4 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">{{ m }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <footer class="no-print max-w-7xl mx-auto px-4 sm:px-6 py-8 text-center text-xs text-[var(--ink-muted)]">
+    {{ tenant.name }} CRM — white-label front office.
+  </footer>
+
+  {# Non-blocking confirm modal. Replaces window.confirm() (which freezes the
+     page in headless/embedded browsers) for any element carrying hx-confirm. #}
+  <div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true">
+    <div class="w-full max-w-sm rounded-2xl bg-[var(--surface)] border border-[var(--hairline)] p-5 shadow-2xl">
+      <p id="confirm-text" class="text-sm text-[var(--ink-body)] mb-5"></p>
+      <div class="flex justify-end gap-2">
+        <button id="confirm-cancel" class="px-4 py-2 text-sm font-semibold rounded-xl border border-[var(--hairline)] text-[var(--ink-muted)] hover:bg-[var(--page)] transition">Cancel</button>
+        <button id="confirm-ok" class="px-4 py-2 text-sm font-semibold rounded-xl brand-grad text-white hover:opacity-90 transition">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var html = document.documentElement;
+      var btn = document.getElementById('theme-toggle');
+      if (btn) btn.addEventListener('click', function () {
+        var isDark = html.classList.toggle('dark');
+        localStorage.setItem('crm-theme', isDark ? 'dark' : 'light');
+      });
+      // Attach CSRF token to every HTMX request (delete/toggle buttons have no
+      // enclosing {% csrf_token %} in scope, so read it from the cookie).
+      document.body.addEventListener('htmx:configRequest', function (evt) {
+        var match = document.cookie.match(/csrftoken=([^;]+)/);
+        if (match) evt.detail.parameters['csrfmiddlewaretoken'] = match[1];
+      });
+      if (window.lucide) window.lucide.createIcons();
+
+      // --- Non-blocking confirm for hx-confirm elements ---
+      // HTMX 2.0 calls `htmx.config.confirm` (which defaults to the blocking
+      // window.confirm()). We override it with a Promise-based modal so the
+      // page never freezes. The promise resolves true (Confirm) or false
+      // (Cancel/Dismiss), and HTMX proceeds or aborts accordingly.
+      var modal = document.getElementById('confirm-modal');
+      var textEl = document.getElementById('confirm-text');
+      var okBtn = document.getElementById('confirm-ok');
+      var cancelBtn = document.getElementById('confirm-cancel');
+      function showConfirm(message) {
+        return new Promise(function (resolve) {
+          textEl.textContent = message || 'Are you sure?';
+          modal.classList.remove('hidden');
+          function cleanup() {
+            modal.classList.add('hidden');
+            okBtn.removeEventListener('click', onOk);
+            cancelBtn.removeEventListener('click', onCancel);
+            modal.removeEventListener('click', onBackdrop);
+          }
+          function onOk() { cleanup(); resolve(true); }
+          function onCancel() { cleanup(); resolve(false); }
+          function onBackdrop(e) { if (e.target === modal) { cleanup(); resolve(false); } }
+          okBtn.addEventListener('click', onOk);
+          cancelBtn.addEventListener('click', onCancel);
+          modal.addEventListener('click', onBackdrop);
+        });
+      }
+      if (window.htmx) {
+        htmx.config.confirm = function (message, issuer) {
+          return showConfirm(message);
+        };
+      }
+    })();
+  </script>
+</body>
+</html>

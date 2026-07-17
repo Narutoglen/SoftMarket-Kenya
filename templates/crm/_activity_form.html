@@ -1,0 +1,29 @@
+{% comment %}Inline "log activity" form. Submits via HTMX; on success the view returns an
+HX-Redirect back to the contact detail (which re-renders the timeline).{% endcomment %}
+<details class="group rounded-xl border border-[var(--hairline)] bg-[var(--page)]">
+  <summary class="cursor-pointer select-none flex items-center gap-2 px-3 py-2.5 text-sm font-semibold text-[var(--ink-display)]">
+    <i data-lucide="plus-circle" class="w-4 h-4 brand-text"></i> Log activity
+  </summary>
+  <form hx-post="{% url 'crm:activity_create' contact_pk=contact.pk %}"
+        hx-target="this" hx-swap="outerHTML"
+        class="px-3 pb-3 pt-1 grid grid-cols-1 sm:grid-cols-[140px_1fr_auto] gap-2 items-end">
+    {% csrf_token %}
+    <div>
+      <label class="block text-[11px] font-semibold uppercase tracking-wide text-[var(--ink-muted)] mb-1">Type</label>
+      {{ form.type }}
+    </div>
+    <div>
+      <label class="block text-[11px] font-semibold uppercase tracking-wide text-[var(--ink-muted)] mb-1">Subject</label>
+      {{ form.subject }}
+    </div>
+    <button type="submit" class="px-3 py-2 rounded-xl brand-bg text-white text-sm font-semibold hover:opacity-90 transition">Add</button>
+    <div class="sm:col-span-2">
+      <label class="block text-[11px] font-semibold uppercase tracking-wide text-[var(--ink-muted)] mb-1">Notes</label>
+      {{ form.notes }}
+    </div>
+    <div class="flex items-center gap-2">
+      <label class="text-[11px] font-semibold text-[var(--ink-muted)]">Due</label>
+      {{ form.due_at }}
+    </div>
+  </form>
+</details>

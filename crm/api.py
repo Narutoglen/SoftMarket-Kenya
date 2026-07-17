@@ -117,6 +117,13 @@ class LeadIntakeView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []  # JSON API — no session/CSRF
 
+    def get(self, request):
+        # GET /api/crm/leads/ lists leads (documented contract + REST
+        # convention). The list logic lives in LeadListView; reuse it so the
+        # two routes stay in sync. (The /api/crm/leads/list/ alias is kept for
+        # backward compatibility.)
+        return LeadListView().get(request)
+
     def post(self, request):
         tenant = resolve_tenant(request)
         if not tenant:
@@ -137,11 +144,8 @@ class LeadIntakeView(APIView):
             bant_need=int(data.get("bant_need", 0) or 0),
             bant_timeline=int(data.get("bant_timeline", 0) or 0),
         )
-        # Automation: score BANT + auto-assign owner.
-        services.qualify_lead(lead)
-        # Auto-responder (stub: flag + would send email/SMS here).
-        lead.auto_responded = True
-        lead.save(update_fields=["auto_responded", "updated_at"])
+        # Automation: score BANT + auto-assign owner + auto-responder email.
+        services.intake_lead(lead)
         return Response(
             {
                 "id": lead.id,
@@ -164,7 +168,21 @@ class LeadListView(APIView):
         rating = request.GET.get("rating")
         if rating:
             qs = qs.filter(rating=rating)
-        return Response(LeadSerializer(qs, many=True).data)
+        # Pagination: high-volume safety (no full-table dumps to the client).
+        try:
+            limit = min(int(request.GET.get("limit", 100)), 500)
+            offset = max(int(request.GET.get("offset", 0)), 0)
+        except (TypeError, ValueError):
+            limit, offset = 100, 0
+        total = qs.count()
+        page = qs[offset:offset + limit]
+        return Response({
+            "count": total,
+            "limit": limit,
+            "offset": offset,
+            "next_offset": offset + limit if offset + limit < total else None,
+            "results": LeadSerializer(page, many=True).data,
+        })
 
 
 class ContactListView(APIView):
@@ -175,7 +193,21 @@ class ContactListView(APIView):
         if not tenant:
             return Response({"detail": "Unknown CRM instance."}, status=404)
         qs = Contact.objects.filter(tenant=tenant)
-        return Response(ContactSerializer(qs, many=True).data)
+        # Pagination: high-volume safety (no full-table dumps to the client).
+        try:
+            limit = min(int(request.GET.get("limit", 100)), 500)
+            offset = max(int(request.GET.get("offset", 0)), 0)
+        except (TypeError, ValueError):
+            limit, offset = 100, 0
+        total = qs.count()
+        page = qs[offset:offset + limit]
+        return Response({
+            "count": total,
+            "limit": limit,
+            "offset": offset,
+            "next_offset": offset + limit if offset + limit < total else None,
+            "results": ContactSerializer(page, many=True).data,
+        })
 
 
 class ContactDetailView(APIView):

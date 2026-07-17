@@ -1,0 +1,58 @@
+{% extends "crm/base.html" %}
+{% block title %}{{ lead.full_name }} · Leads{% endblock %}
+{% block content %}
+<div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] overflow-hidden">
+  <div class="px-5 py-4 border-b border-[var(--hairline)] flex items-center gap-3">
+    <div class="w-12 h-12 rounded-full brand-grad flex items-center justify-center text-white font-bold">{{ lead.full_name|first }}</div>
+    <div class="min-w-0">
+      <p class="font-display font-bold text-lg text-[var(--ink-display)] truncate">{{ lead.full_name }}</p>
+      <p class="text-xs text-[var(--ink-muted)] truncate">{{ lead.email }}{% if lead.company %} · {{ lead.company }}{% endif %}</p>
+    </div>
+    <span class="ml-auto text-[11px] font-bold px-2.5 py-1 rounded-full
+      {% if lead.rating == 'hot' %}bg-rose-500/15 text-rose-600 dark:text-rose-400
+      {% elif lead.rating == 'warm' %}bg-[color-mix(in_srgb,var(--signal)_22%,transparent)] text-amber-600 dark:text-amber-400
+      {% else %}bg-[var(--hairline)] text-[var(--ink-muted)]{% endif %}">{{ lead.get_rating_display }} · BANT {{ lead.bant_score }}/12</span>
+  </div>
+
+  <div class="px-5 py-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div><p class="text-xs text-[var(--ink-muted)]">Owner</p><p class="text-sm font-semibold text-[var(--ink-display)]">{{ lead.owner|default:"Unassigned" }}</p></div>
+    <div><p class="text-xs text-[var(--ink-muted)]">Source</p><p class="text-sm font-semibold text-[var(--ink-display)]">{{ lead.get_source_display }}</p></div>
+    <div><p class="text-xs text-[var(--ink-muted)]">Territory</p><p class="text-sm font-semibold text-[var(--ink-display)]">{{ lead.territory|default:"—" }}</p></div>
+    <div><p class="text-xs text-[var(--ink-muted)]">Phone</p><p class="text-sm font-semibold text-[var(--ink-display)]">{{ lead.phone|default:"—" }}</p></div>
+  </div>
+
+  <div class="px-5 py-4 border-t border-[var(--hairline)]">
+    <h3 class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-muted)] mb-3">BANT score</h3>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {% with b=lead.bant_budget a=lead.bant_authority n=lead.bant_need t=lead.bant_timeline %}
+      <div class="rounded-xl border border-[var(--hairline)] p-3">
+        <p class="text-[11px] uppercase tracking-wide text-[var(--ink-muted)]">Budget</p>
+        <p class="figure text-xl text-[var(--ink-display)]">{{ b }}<span class="text-xs text-[var(--ink-muted)]">/3</span></p>
+      </div>
+      <div class="rounded-xl border border-[var(--hairline)] p-3">
+        <p class="text-[11px] uppercase tracking-wide text-[var(--ink-muted)]">Authority</p>
+        <p class="figure text-xl text-[var(--ink-display)]">{{ a }}<span class="text-xs text-[var(--ink-muted)]">/3</span></p>
+      </div>
+      <div class="rounded-xl border border-[var(--hairline)] p-3">
+        <p class="text-[11px] uppercase tracking-wide text-[var(--ink-muted)]">Need</p>
+        <p class="figure text-xl text-[var(--ink-display)]">{{ n }}<span class="text-xs text-[var(--ink-muted)]">/3</span></p>
+      </div>
+      <div class="rounded-xl border border-[var(--hairline)] p-3">
+        <p class="text-[11px] uppercase tracking-wide text-[var(--ink-muted)]">Timeline</p>
+        <p class="figure text-xl text-[var(--ink-display)]">{{ t }}<span class="text-xs text-[var(--ink-muted)]">/3</span></p>
+      </div>
+      {% endwith %}
+    </div>
+    {% if lead.message %}
+    <div class="mt-4 rounded-xl border border-[var(--hairline)] p-3">
+      <p class="text-xs text-[var(--ink-muted)] mb-1">Original message</p>
+      <p class="text-sm text-[var(--ink-display)]">{{ lead.message }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="px-5 py-4 border-t border-[var(--hairline)] flex items-center justify-end gap-2">
+    <span id="lead-status-{{ lead.pk }}">{% include "crm/_lead_status.html" with lead=lead %}</span>
+  </div>
+</div>
+{% endblock %}

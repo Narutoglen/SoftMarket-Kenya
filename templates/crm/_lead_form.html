@@ -1,0 +1,56 @@
+{% comment %}Public lead-intake form body. Submits via HTMX; on success the view
+renders _lead_thanks.html into #lead-form-wrap.{% endcomment %}
+<form hx-post="{% url 'crm:lead_intake' %}{% if request.GET.instance %}?instance={{ request.GET.instance }}{% endif %}"
+      hx-target="#lead-form-wrap" hx-swap="innerHTML"
+      class="grid grid-cols-2 gap-4">
+  {% csrf_token %}
+  <div class="col-span-1">
+    <label class="block text-xs font-medium text-[var(--ink-muted)] mb-1">First name</label>
+    {{ form.first_name }}
+  </div>
+  <div class="col-span-1">
+    <label class="block text-xs font-medium text-[var(--ink-muted)] mb-1">Last name</label>
+    {{ form.last_name }}
+  </div>
+  <div class="col-span-1">
+    <label class="block text-xs font-medium text-[var(--ink-muted)] mb-1">Email</label>
+    {{ form.email }}
+  </div>
+  <div class="col-span-1">
+    <label class="block text-xs font-medium text-[var(--ink-muted)] mb-1">Phone</label>
+    {{ form.phone }}
+  </div>
+  <div class="col-span-1">
+    <label class="block text-xs font-medium text-[var(--ink-muted)] mb-1">Business name</label>
+    {{ form.company }}
+  </div>
+  <div class="col-span-1">
+    <label class="block text-xs font-medium text-[var(--ink-muted)] mb-1">County / town</label>
+    {{ form.territory }}
+  </div>
+  <div class="col-span-2">
+    <label class="block text-xs font-medium text-[var(--ink-muted)] mb-1">How did you hear about us?</label>
+    {{ form.source }}
+  </div>
+
+  <div class="col-span-2 mt-2">
+    <p class="text-xs font-semibold uppercase tracking-[0.16em] brand-text mb-2">A few qualifying questions</p>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="block text-xs font-medium text-[var(--ink-muted)] mb-1">{{ form.bant_budget.label }}</label>{{ form.bant_budget }}</div>
+      <div><label class="block text-xs font-medium text-[var(--ink-muted)] mb-1">{{ form.bant_authority.label }}</label>{{ form.bant_authority }}</div>
+      <div><label class="block text-xs font-medium text-[var(--ink-muted)] mb-1">{{ form.bant_need.label }}</label>{{ form.bant_need }}</div>
+      <div><label class="block text-xs font-medium text-[var(--ink-muted)] mb-1">{{ form.bant_timeline.label }}</label>{{ form.bant_timeline }}</div>
+    </div>
+  </div>
+
+  <div class="col-span-2">
+    <label class="block text-xs font-medium text-[var(--ink-muted)] mb-1">Anything else?</label>
+    {{ form.message }}
+  </div>
+
+  <div class="col-span-2 flex justify-end">
+    <button type="submit" class="text-sm font-semibold px-4 py-2 rounded-xl brand-grad text-white hover:opacity-90 transition inline-flex items-center gap-1">
+      <i data-lucide="send" class="w-4 h-4"></i> Submit enquiry
+    </button>
+  </div>
+</form>

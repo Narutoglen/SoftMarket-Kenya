@@ -1,0 +1,21 @@
+{% extends "crm/base.html" %}
+{% block title %}Accounts · {{ tenant.name }} CRM{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="font-display font-extrabold text-2xl text-[var(--ink-display)]">Accounts</h1>
+  <a href="{% url 'crm:account_create' %}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl brand-bg text-white text-sm font-semibold hover:opacity-90 transition">New account</a>
+</div>
+
+<form class="mb-4 flex gap-2"
+      hx-get="{% url 'crm:account_list' %}"
+      hx-target="#account-list" hx-swap="innerHTML"
+      hx-trigger="input changed delay:300ms, keyup delay:300ms from:input">
+  <input name="q" value="{{ q }}" type="text" placeholder="Search by name or industry…"
+    class="flex-1 rounded-xl bg-[var(--surface)] border border-[var(--hairline)] px-3 py-2 text-sm focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/30 outline-none placeholder:text-[var(--ink-muted)]" />
+  <button class="px-4 py-2 rounded-xl border border-[var(--hairline)] text-sm font-semibold hover:bg-[var(--surface)] transition">Search</button>
+</form>
+
+<div id="account-list" class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] overflow-hidden">
+  {% include "crm/_account_rows.html" %}
+</div>
+{% endblock %}

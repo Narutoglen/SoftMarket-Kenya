@@ -1,0 +1,12 @@
+{% extends "crm/base.html" %}
+{% block title %}Follow-ups · {{ tenant.name }} CRM{% endblock %}
+{% block content %}
+<div class="mb-5">
+  <h1 class="font-display font-extrabold text-2xl text-[var(--ink-display)]">Follow-ups</h1>
+  <p class="text-xs text-[var(--ink-muted)] mt-0.5">Today's next actions and customers who've gone quiet.</p>
+</div>
+
+<div id="followup-panel">
+  {% include "crm/_followup_panel.html" %}
+</div>
+{% endblock %}

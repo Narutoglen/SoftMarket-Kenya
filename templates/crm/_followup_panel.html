@@ -1,0 +1,104 @@
+{% comment %}Follow-up to-do panel + churn radar. Swapped wholesale by HTMX on
+check-off so bucket counts stay in sync. Each task links back to its contact.{% endcomment %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+  {# --- To-do list (2/3 width) --- #}
+  <div class="lg:col-span-2 space-y-4">
+
+    {% comment %}Reusable bucket block via include-like loop over the four buckets.{% endcomment %}
+    {% for group in bucket_groups %}{% endfor %}
+
+    {# Overdue #}
+    {% if buckets.overdue %}
+    <section class="rounded-2xl border border-rose-500/30 bg-[var(--surface)] overflow-hidden">
+      <div class="px-4 py-2.5 border-b border-[var(--hairline)] flex items-center gap-2">
+        <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600 dark:text-rose-400"></i>
+        <span class="text-sm font-bold text-rose-600 dark:text-rose-400">Overdue</span>
+        <span class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400">{{ buckets.overdue|length }}</span>
+      </div>
+      <ul class="divide-y divide-[var(--hairline)]">
+        {% for a in buckets.overdue %}{% include "crm/_followup_row.html" %}{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {# Due today #}
+    <section class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] overflow-hidden">
+      <div class="px-4 py-2.5 border-b border-[var(--hairline)] flex items-center gap-2">
+        <i data-lucide="calendar-check" class="w-4 h-4 brand-text"></i>
+        <span class="text-sm font-bold text-[var(--ink-display)]">Due today</span>
+        <span class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-[color-mix(in_srgb,var(--accent)_20%,transparent)] brand-text">{{ buckets.today|length }}</span>
+      </div>
+      <ul class="divide-y divide-[var(--hairline)]">
+        {% for a in buckets.today %}{% include "crm/_followup_row.html" %}
+        {% empty %}<li class="px-4 py-6 text-sm text-[var(--ink-muted)] text-center">Nothing due today. 🎉</li>{% endfor %}
+      </ul>
+    </section>
+
+    {# Upcoming #}
+    {% if buckets.upcoming %}
+    <section class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] overflow-hidden">
+      <div class="px-4 py-2.5 border-b border-[var(--hairline)] flex items-center gap-2">
+        <i data-lucide="clock" class="w-4 h-4 text-[var(--ink-muted)]"></i>
+        <span class="text-sm font-bold text-[var(--ink-display)]">Upcoming</span>
+        <span class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--hairline)] text-[var(--ink-muted)]">{{ buckets.upcoming|length }}</span>
+      </div>
+      <ul class="divide-y divide-[var(--hairline)]">
+        {% for a in buckets.upcoming %}{% include "crm/_followup_row.html" %}{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {# No date #}
+    {% if buckets.undated %}
+    <section class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] overflow-hidden">
+      <div class="px-4 py-2.5 border-b border-[var(--hairline)] flex items-center gap-2">
+        <i data-lucide="inbox" class="w-4 h-4 text-[var(--ink-muted)]"></i>
+        <span class="text-sm font-bold text-[var(--ink-display)]">No due date</span>
+        <span class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--hairline)] text-[var(--ink-muted)]">{{ buckets.undated|length }}</span>
+      </div>
+      <ul class="divide-y divide-[var(--hairline)]">
+        {% for a in buckets.undated %}{% include "crm/_followup_row.html" %}{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if buckets.total == 0 %}
+    <section class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] px-4 py-10 text-center">
+      <p class="text-sm text-[var(--ink-muted)]">No open follow-ups. All caught up.</p>
+    </section>
+    {% endif %}
+  </div>
+
+  {# --- Churn radar (1/3 width) --- #}
+  <div class="space-y-4">
+    <section class="rounded-2xl border border-amber-500/30 bg-[var(--surface)] overflow-hidden">
+      <div class="px-4 py-2.5 border-b border-[var(--hairline)] flex items-center gap-2">
+        <i data-lucide="activity" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>
+        <span class="text-sm font-bold text-amber-600 dark:text-amber-400">Churn radar</span>
+        <span class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">{{ churn|length }}</span>
+      </div>
+      <p class="px-4 pt-2 text-[11px] text-[var(--ink-muted)]">Customers with no activity in {{ churn_days }}+ days.</p>
+      <ul class="divide-y divide-[var(--hairline)]">
+        {% for row in churn %}
+        <li class="px-4 py-3">
+          <a href="{% url 'crm:contact_detail' pk=row.contact.pk %}" class="flex items-center gap-3 hover:opacity-80 transition">
+            <div class="w-9 h-9 rounded-full brand-grad flex items-center justify-center text-xs font-bold text-white">{{ row.contact.full_name|first }}</div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-[var(--ink-display)] truncate">{{ row.contact.full_name }}</p>
+              <p class="text-xs text-[var(--ink-muted)]">
+                {% if row.days_quiet is None %}No activity ever{% else %}Quiet {{ row.days_quiet }} days{% endif %}
+              </p>
+            </div>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">At risk</span>
+          </a>
+        </li>
+        {% empty %}
+        <li class="px-4 py-6 text-sm text-[var(--ink-muted)] text-center">No customers at risk. 👍</li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+</div>
+
+<script>if (window.lucide) lucide.createIcons();</script>

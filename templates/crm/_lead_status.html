@@ -1,0 +1,14 @@
+{% comment %}Lead status cell. Shows Convert button (or converted badge). Used standalone
+by the HTMX convert swap, and inside the leads list rows.{% endcomment %}
+{% if lead.converted_contact %}
+  <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1">
+    <i data-lucide="check-circle" class="w-3 h-3"></i> Converted
+  </span>
+{% else %}
+  <button hx-post="{% url 'crm:lead_convert' pk=lead.pk %}"
+          hx-target="#lead-status-{{ lead.pk }}" hx-swap="outerHTML"
+          hx-confirm="Convert this lead to a contact?"
+          class="text-[11px] font-bold px-2.5 py-1 rounded-full border border-[color-mix(in_srgb,var(--accent)_30%,transparent)] brand-text hover:bg-[var(--page)] transition inline-flex items-center gap-1">
+    <i data-lucide="user-plus" class="w-3 h-3"></i> Convert
+  </button>
+{% endif %}

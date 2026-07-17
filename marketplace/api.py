@@ -13,7 +13,6 @@ Endpoints:
   POST /api/developer-applications/         submit a developer application
 """
 
-from django.conf import settings
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.permissions import AllowAny

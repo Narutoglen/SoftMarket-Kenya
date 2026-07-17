@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>White-Label Retail CRM — PRD</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    html { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    body { font-feature-settings: "cv11", "ss01"; }
+    @media print {
+      html { background: white !important; color: black !important; color-scheme: light; }
+      html.dark { color-scheme: light; }
+      html.dark body, html.dark * { background: white !important; color: black !important; border-color: #d4d4d8 !important; }
+      .no-print { display: none !important; }
+      .print-card { break-inside: avoid; page-break-inside: avoid; }
+      header.sticky { position: static !important; backdrop-filter: none !important; }
+      main { padding-top: 0 !important; }
+      a { color: black !important; text-decoration: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 antialiased">
+  <header class="sticky top-0 z-10 backdrop-blur bg-zinc-50/80 dark:bg-zinc-950/80 border-b border-zinc-200 dark:border-zinc-800">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400">PRD · White-Label Retail CRM</span>
+      <button id="theme-toggle" class="no-print inline-flex items-center justify-center w-9 h-9 rounded-md border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition" aria-label="Toggle theme">
+        <i data-lucide="sun" class="hidden dark:inline-block w-4 h-4"></i>
+        <i data-lucide="moon" class="inline-block dark:hidden w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14 space-y-14">
+
+    <!-- DISCLAIMER (keep verbatim) -->
+    <div class="rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-900 dark:text-amber-200">
+      <p><strong class="font-semibold">About this file:</strong> Everything in <code class="font-mono text-xs">_build_plan/</code> (this PRD and the per-milestone folders) is a temporary documentation artifact for the initial build-out of this codebase. These files are not functional — no code, configuration, runtime logic, tests, or deployment process should import, read, reference, or depend on anything in <code class="font-mono text-xs">_build_plan/</code>. Once the initial milestones are built and shipped, the entire <code class="font-mono text-xs">_build_plan/</code> folder is expected to be deleted from the codebase.</p>
+    </div>
+
+    <!-- HERO -->
+    <section>
+      <h1 class="text-4xl sm:text-5xl font-bold tracking-tight">White-Label Retail CRM</h1>
+      <p class="mt-5 text-lg sm:text-xl text-zinc-600 dark:text-zinc-400 leading-relaxed">A single reusable CRM core that ships configured per retail client. SoftMarket KE is tenant #1; the next supermarket is a new Tenant row plus branding/config — not a code fork. It follows a contact-centric 360° model where Contact is the hub and Account, Activity, Lead, and Opportunity all relate to it. Retail retention economics (catch churn early, nurture loyalty, clean vendor relations) drive the design, with Kenyan-market hooks designed in from v1.</p>
+      <div class="mt-6 flex flex-wrap gap-2">
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300">Django</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300">Python</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300">PostgreSQL / Supabase</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300">Tailwind</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300">HTMX</span>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300">Vercel</span>
+      </div>
+    </section>
+
+    <!-- WHAT THE APP DOES -->
+    <section>
+      <h2 class="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>What the app does
+      </h2>
+      <ul class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 list-none p-0">
+        <li class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+      <div class="flex items-start gap-3">
+        <div class="shrink-0 mt-0.5 w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+          <i data-lucide="users" class="w-4 h-4 text-zinc-700 dark:text-zinc-300"></i>
+        </div>
+        <div>
+          <p class="font-medium text-zinc-900 dark:text-zinc-100">Contact hub (360° view)</p>
+          <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">Every customer/vendor in one place with a timeline of every call, email, note, and deal.</p>
+        </div>
+      </div>
+    </li>
+<li class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+      <div class="flex items-start gap-3">
+        <div class="shrink-0 mt-0.5 w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+          <i data-lucide="layers" class="w-4 h-4 text-zinc-700 dark:text-zinc-300"></i>
+        </div>
+        <div>
+          <p class="font-medium text-zinc-900 dark:text-zinc-100">Multi-tenant white-label</p>
+          <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">One codebase serves many clients as isolated instances — each with its own branding and pipeline.</p>
+        </div>
+      </div>
+    </li>
+<li class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+      <div class="flex items-start gap-3">
+        <div class="shrink-0 mt-0.5 w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+          <i data-lucide="target" class="w-4 h-4 text-zinc-700 dark:text-zinc-300"></i>
+        </div>
+        <div>
+          <p class="font-medium text-zinc-900 dark:text-zinc-100">Lead capture + BANT scoring</p>
+          <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">Public web form turns strangers into scored leads (hot/warm/cold) and routes them by territory.</p>
+        </div>
+      </div>
+    </li>
+<li class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+      <div class="flex items-start gap-3">
+        <div class="shrink-0 mt-0.5 w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+          <i data-lucide="kanban" class="w-4 h-4 text-zinc-700 dark:text-zinc-300"></i>
+        </div>
+        <div>
+          <p class="font-medium text-zinc-900 dark:text-zinc-100">Kanban opportunity pipeline</p>
+          <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">Drag deals across stages, see per-stage value totals and a weighted forecast.</p>
+        </div>
+      </div>
+    </li>
+<li class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+      <div class="flex items-start gap-3">
+        <div class="shrink-0 mt-0.5 w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+          <i data-lucide="bell" class="w-4 h-4 text-zinc-700 dark:text-zinc-300"></i>
+        </div>
+        <div>
+          <p class="font-medium text-zinc-900 dark:text-zinc-100">Activity & follow-ups</p>
+          <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">Timestamped log plus a to-do list of next actions linked back to each deal.</p>
+        </div>
+      </div>
+    </li>
+<li class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+      <div class="flex items-start gap-3">
+        <div class="shrink-0 mt-0.5 w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+          <i data-lucide="trending-down" class="w-4 h-4 text-zinc-700 dark:text-zinc-300"></i>
+        </div>
+        <div>
+          <p class="font-medium text-zinc-900 dark:text-zinc-100">Retention & churn signals</p>
+          <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">Lifecycle tracking flags customers with no recent activity so you re-engage before they leave.</p>
+        </div>
+      </div>
+    </li>
+<li class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+      <div class="flex items-start gap-3">
+        <div class="shrink-0 mt-0.5 w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+          <i data-lucide="sliders-horizontal" class="w-4 h-4 text-zinc-700 dark:text-zinc-300"></i>
+        </div>
+        <div>
+          <p class="font-medium text-zinc-900 dark:text-zinc-100">Per-tenant configuration</p>
+          <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">Each client configures its own pipeline stages and key fields — no code change.</p>
+        </div>
+      </div>
+    </li>
+<li class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+      <div class="flex items-start gap-3">
+        <div class="shrink-0 mt-0.5 w-8 h-8 rounded-md bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+          <i data-lucide="plug" class="w-4 h-4 text-zinc-700 dark:text-zinc-300"></i>
+        </div>
+        <div>
+          <p class="font-medium text-zinc-900 dark:text-zinc-100">Integration hooks</p>
+          <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">M-Pesa, WhatsApp Business, eTIMS export, and offline sync wire in as the build progresses.</p>
+        </div>
+      </div>
+    </li>
+      </ul>
+    </section>
+
+    <!-- ALREADY PROVIDED -->
+    <section>
+      <h2 class="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
+        <i data-lucide="package-check" class="w-3.5 h-3.5"></i>Already provided by existing SoftMarket codebase
+      </h2>
+      <ul class="mt-5 flex flex-wrap gap-2 list-none p-0">
+        <li class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-700 dark:text-zinc-300"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>Tenant + InstanceScopedModel (multi-tenant base)</li>
+<li class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-700 dark:text-zinc-300"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>Contact, Account, Activity, Lead, Opportunity models</li>
+<li class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-700 dark:text-zinc-300"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>BANT scoring service on Lead</li>
+<li class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-700 dark:text-zinc-300"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>Django JSON API at /api/*</li>
+<li class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-700 dark:text-zinc-300"><i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>Vercel deployment config</li>
+      </ul>
+    </section>
+
+    <!-- OUT OF SCOPE -->
+    <section>
+      <h2 class="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
+        <i data-lucide="minus-circle" class="w-3.5 h-3.5"></i>Out of scope (v1)
+      </h2>
+      <ul class="mt-5 space-y-2.5 list-none p-0">
+        <li class="flex items-start gap-3">
+      <i data-lucide="x" class="w-4 h-4 mt-1 shrink-0 text-zinc-400 dark:text-zinc-600"></i>
+      <span class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">Team seats / RBAC</span><span class="text-zinc-500 dark:text-zinc-400"> — single owner string per record in v1; full multi-user comes when a client needs it</span></span>
+    </li>
+<li class="flex items-start gap-3">
+      <i data-lucide="x" class="w-4 h-4 mt-1 shrink-0 text-zinc-400 dark:text-zinc-600"></i>
+      <span class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">Email-blast marketing</span><span class="text-zinc-500 dark:text-zinc-400"> — only the triggered lead auto-responder ships in v1</span></span>
+    </li>
+<li class="flex items-start gap-3">
+      <i data-lucide="x" class="w-4 h-4 mt-1 shrink-0 text-zinc-400 dark:text-zinc-600"></i>
+      <span class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">Inventory / POS module</span><span class="text-zinc-500 dark:text-zinc-400"> — the CRM is not the store — expose hooks only</span></span>
+    </li>
+<li class="flex items-start gap-3">
+      <i data-lucide="x" class="w-4 h-4 mt-1 shrink-0 text-zinc-400 dark:text-zinc-600"></i>
+      <span class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">Custom report builder</span><span class="text-zinc-500 dark:text-zinc-400"> — ship a fixed set of preset retail reports instead</span></span>
+    </li>
+<li class="flex items-start gap-3">
+      <i data-lucide="x" class="w-4 h-4 mt-1 shrink-0 text-zinc-400 dark:text-zinc-600"></i>
+      <span class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">Bi-directional accounting</span><span class="text-zinc-500 dark:text-zinc-400"> — eTIMS export only, no live ledger sync</span></span>
+    </li>
+<li class="flex items-start gap-3">
+      <i data-lucide="x" class="w-4 h-4 mt-1 shrink-0 text-zinc-400 dark:text-zinc-600"></i>
+      <span class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">Native mobile apps</span><span class="text-zinc-500 dark:text-zinc-400"> — responsive web only in v1</span></span>
+    </li>
+<li class="flex items-start gap-3">
+      <i data-lucide="x" class="w-4 h-4 mt-1 shrink-0 text-zinc-400 dark:text-zinc-600"></i>
+      <span class="text-zinc-700 dark:text-zinc-300"><span class="font-medium">In-product AI features</span><span class="text-zinc-500 dark:text-zinc-400"> — the build uses AI; the shipped CRM does not (future scope)</span></span>
+    </li>
+      </ul>
+    </section>
+
+    <!-- INTEGRATIONS -->
+    <section>
+      <h2 class="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
+        <i data-lucide="plug" class="w-3.5 h-3.5"></i>External integrations
+      </h2>
+      <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+      <div class="flex items-center gap-2">
+        <i data-lucide="plug" class="w-4 h-4 text-zinc-500 dark:text-zinc-400"></i>
+        <h3 class="font-semibold text-zinc-900 dark:text-zinc-100">M-Pesa (Buy Goods)</h3>
+        <span class="ml-auto text-xs text-zinc-500 dark:text-zinc-400">Payments</span>
+      </div>
+      <p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">Let customers and reps record M-Pesa transactions against deals/contacts.</p>
+      <p class="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5"><i data-lucide="key" class="w-3 h-3"></i>Credentials needed</p>
+      <ul class="mt-2 space-y-1.5 list-none p-0">
+        <li class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300"><i data-lucide="key-round" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>Till / Paybill number</li>
+<li class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300"><i data-lucide="key-round" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>Daraja API consumer key + secret</li>
+<li class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300"><i data-lucide="key-round" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>callback URL</li>
+      </ul>
+    </div>
+<div class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+      <div class="flex items-center gap-2">
+        <i data-lucide="plug" class="w-4 h-4 text-zinc-500 dark:text-zinc-400"></i>
+        <h3 class="font-semibold text-zinc-900 dark:text-zinc-100">WhatsApp Business API</h3>
+        <span class="ml-auto text-xs text-zinc-500 dark:text-zinc-400">Outreach</span>
+      </div>
+      <p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">Send and log WhatsApp messages as activities so conversations live in the CRM.</p>
+      <p class="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5"><i data-lucide="key" class="w-3 h-3"></i>Credentials needed</p>
+      <ul class="mt-2 space-y-1.5 list-none p-0">
+        <li class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300"><i data-lucide="key-round" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>Meta WhatsApp Business Account ID</li>
+<li class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300"><i data-lucide="key-round" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>per-tenant access token</li>
+<li class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300"><i data-lucide="key-round" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>phone number ID</li>
+      </ul>
+    </div>
+<div class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+      <div class="flex items-center gap-2">
+        <i data-lucide="plug" class="w-4 h-4 text-zinc-500 dark:text-zinc-400"></i>
+        <h3 class="font-semibold text-zinc-900 dark:text-zinc-100">eTIMS export</h3>
+        <span class="ml-auto text-xs text-zinc-500 dark:text-zinc-400">Compliance</span>
+      </div>
+      <p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">Export deal/invoice data in the KRA eTIMS format for tax compliance.</p>
+      <p class="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5"><i data-lucide="key" class="w-3 h-3"></i>Credentials needed</p>
+      <ul class="mt-2 space-y-1.5 list-none p-0">
+        <li class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300"><i data-lucide="key-round" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>KRA taxpayer PIN</li>
+<li class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300"><i data-lucide="key-round" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>eTIMS device/branch ID</li>
+      </ul>
+    </div>
+<div class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+      <div class="flex items-center gap-2">
+        <i data-lucide="plug" class="w-4 h-4 text-zinc-500 dark:text-zinc-400"></i>
+        <h3 class="font-semibold text-zinc-900 dark:text-zinc-100">Offline sync</h3>
+        <span class="ml-auto text-xs text-zinc-500 dark:text-zinc-400">Resilience</span>
+      </div>
+      <p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">Field reps keep working without signal; changes sync when reconnected.</p>
+      <p class="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5"><i data-lucide="key" class="w-3 h-3"></i>Credentials needed</p>
+      <ul class="mt-2 space-y-1.5 list-none p-0">
+        <li class="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300"><i data-lucide="key-round" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>(no external creds — client-side queue + conflict strategy)</li>
+      </ul>
+    </div>
+      </div>
+    </section>
+
+    <!-- DATA MODEL -->
+    <section>
+      <h2 class="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
+        <i data-lucide="database" class="w-3.5 h-3.5"></i>Data model
+      </h2>
+      <p class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">What the app needs to remember.</p>
+      <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+      <div class="flex items-center gap-2">
+        <i data-lucide="box" class="w-4 h-4 text-zinc-500 dark:text-zinc-400"></i>
+        <h3 class="font-semibold text-zinc-900 dark:text-zinc-100">Tenant</h3>
+      </div>
+      <table class="mt-4 w-full text-sm">
+        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">slug</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">short id, e.g. 'softmarket'</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">name</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">display name, e.g. 'SoftMarket Kenya'</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">brand colors / logo</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">per-instance look so the same UI re-skins</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">default lead owner</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">who new leads fall to if no territory match</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">active</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">whether this instance is live</td>
+      </tr>
+        </tbody>
+      </table>
+      <p class="mt-4 text-xs text-zinc-500 dark:text-zinc-400"><span class="font-semibold uppercase tracking-[0.14em] text-[11px]">Related to</span> · parent of every other entity — everything below belongs to one tenant</p>
+    </div>
+<div class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+      <div class="flex items-center gap-2">
+        <i data-lucide="box" class="w-4 h-4 text-zinc-500 dark:text-zinc-400"></i>
+        <h3 class="font-semibold text-zinc-900 dark:text-zinc-100">Account</h3>
+      </div>
+      <table class="mt-4 w-full text-sm">
+        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">name</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">the company (supplier/vendor)</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">industry / website / phone</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">basic company facts</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">billing address</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">where invoices go</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">notes</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">free text about the relationship</td>
+      </tr>
+        </tbody>
+      </table>
+      <p class="mt-4 text-xs text-zinc-500 dark:text-zinc-400"><span class="font-semibold uppercase tracking-[0.14em] text-[11px]">Related to</span> · has many Contacts and many Opportunities</p>
+    </div>
+<div class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+      <div class="flex items-center gap-2">
+        <i data-lucide="box" class="w-4 h-4 text-zinc-500 dark:text-zinc-400"></i>
+        <h3 class="font-semibold text-zinc-900 dark:text-zinc-100">Contact</h3>
+      </div>
+      <table class="mt-4 w-full text-sm">
+        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">name / email / phone</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">how to reach the person</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">date of birth / personal notes</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">context that fuels relationship nurturing</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">lifecycle</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">subscriber → lead → customer → churned</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">territory</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">county/region used to route leads</td>
+      </tr>
+        </tbody>
+      </table>
+      <p class="mt-4 text-xs text-zinc-500 dark:text-zinc-400"><span class="font-semibold uppercase tracking-[0.14em] text-[11px]">Related to</span> · the hub — has Activities, Leads, and Opportunities</p>
+    </div>
+<div class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+      <div class="flex items-center gap-2">
+        <i data-lucide="box" class="w-4 h-4 text-zinc-500 dark:text-zinc-400"></i>
+        <h3 class="font-semibold text-zinc-900 dark:text-zinc-100">Activity</h3>
+      </div>
+      <table class="mt-4 w-full text-sm">
+        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">type</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">call, email, meeting, note, or task</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">subject / notes</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">what happened</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">due at</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">for tasks and follow-ups</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">done</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">whether the task is checked off</td>
+      </tr>
+        </tbody>
+      </table>
+      <p class="mt-4 text-xs text-zinc-500 dark:text-zinc-400"><span class="font-semibold uppercase tracking-[0.14em] text-[11px]">Related to</span> · belongs to one Contact</p>
+    </div>
+<div class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+      <div class="flex items-center gap-2">
+        <i data-lucide="box" class="w-4 h-4 text-zinc-500 dark:text-zinc-400"></i>
+        <h3 class="font-semibold text-zinc-900 dark:text-zinc-100">Lead</h3>
+      </div>
+      <table class="mt-4 w-full text-sm">
+        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">source / message</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">where it came from and what they said</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">BANT answers</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">budget, authority, need, timeline — each 1–3</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">rating</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">hot / warm / cold from the BANT score</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">owner / auto-responded</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">who it's assigned to and whether the reply sent</td>
+      </tr>
+        </tbody>
+      </table>
+      <p class="mt-4 text-xs text-zinc-500 dark:text-zinc-400"><span class="font-semibold uppercase tracking-[0.14em] text-[11px]">Related to</span> · converts into a Contact when qualified</p>
+    </div>
+<div class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+      <div class="flex items-center gap-2">
+        <i data-lucide="box" class="w-4 h-4 text-zinc-500 dark:text-zinc-400"></i>
+        <h3 class="font-semibold text-zinc-900 dark:text-zinc-100">Opportunity</h3>
+      </div>
+      <table class="mt-4 w-full text-sm">
+        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">name / amount</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">the deal and its value in KSh</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">stage</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">where it sits in the pipeline</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">probability / close date</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">forecast inputs</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">owner</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">the rep running the deal</td>
+      </tr>
+        </tbody>
+      </table>
+      <p class="mt-4 text-xs text-zinc-500 dark:text-zinc-400"><span class="font-semibold uppercase tracking-[0.14em] text-[11px]">Related to</span> · belongs to one Contact and one Account</p>
+    </div>
+<div class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+      <div class="flex items-center gap-2">
+        <i data-lucide="box" class="w-4 h-4 text-zinc-500 dark:text-zinc-400"></i>
+        <h3 class="font-semibold text-zinc-900 dark:text-zinc-100">TenantStage (new in v1)</h3>
+      </div>
+      <table class="mt-4 w-full text-sm">
+        <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">tenant</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">which instance this stage belongs to</td>
+      </tr>
+<tr>
+        <td class="py-2 pr-4 font-mono text-xs font-medium text-zinc-700 dark:text-zinc-300 align-top whitespace-nowrap">name / order</td>
+        <td class="py-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">stage label and its position in the pipeline</td>
+      </tr>
+        </tbody>
+      </table>
+      <p class="mt-4 text-xs text-zinc-500 dark:text-zinc-400"><span class="font-semibold uppercase tracking-[0.14em] text-[11px]">Related to</span> · makes each client's pipeline configurable — the white-label requirement</p>
+    </div>
+      </div>
+    </section>
+
+    <!-- MILESTONES -->
+    <section>
+      <h2 class="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
+        <i data-lucide="route" class="w-3.5 h-3.5"></i>Milestones
+      </h2>
+      <div class="mt-5 space-y-5">
+        <article class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+      <header class="flex items-center gap-3 p-5 border-b border-zinc-100 dark:border-zinc-800">
+        <span class="shrink-0 w-8 h-8 rounded-full bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 flex items-center justify-center text-sm font-semibold">1</span>
+        <h3 class="font-semibold text-lg text-zinc-900 dark:text-zinc-100">Tenant + Contact/Account CRUD</h3>
+      </header>
+      <div class="p-5">
+        <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">Lay the white-label foundation and the two core entities every later feature depends on.</p>
+        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>What gets built
+            </h4>
+            <ul class="mt-3 space-y-2 text-sm text-zinc-700 dark:text-zinc-300 list-none p-0">
+              <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Tenant model + branding hooks (colors, logo)</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Contact list, detail, create/edit/delete</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Account (vendor) list, detail, CRUD</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>360° shell that will later show the timeline</span></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <i data-lucide="x-circle" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>Not in this milestone
+            </h4>
+            <ul class="mt-3 space-y-2 text-sm text-zinc-500 dark:text-zinc-400 list-none p-0">
+              <li class="flex items-start gap-2"><i data-lucide="minus" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i><span>Leads or deals (those need later milestones)</span></li>
+<li class="flex items-start gap-2"><i data-lucide="minus" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i><span>Kanban board</span></li>
+<li class="flex items-start gap-2"><i data-lucide="minus" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i><span>Automation/auto-responder</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="mt-5 rounded-md border-l-4 border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 p-4 text-sm text-emerald-900 dark:text-emerald-200">
+          <p class="flex items-start gap-2"><i data-lucide="flag" class="w-4 h-4 mt-0.5 shrink-0"></i><span><span class="font-semibold">Done when:</span> Logged-in user can create contacts and accounts, open a contact, and see tenant branding applied.</span></p>
+        </div>
+      </div>
+    </article>
+<article class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+      <header class="flex items-center gap-3 p-5 border-b border-zinc-100 dark:border-zinc-800">
+        <span class="shrink-0 w-8 h-8 rounded-full bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 flex items-center justify-center text-sm font-semibold">2</span>
+        <h3 class="font-semibold text-lg text-zinc-900 dark:text-zinc-100">Activity log + 360° timeline</h3>
+      </header>
+      <div class="p-5">
+        <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">Attach the interaction history to each contact so the hub view comes alive.</p>
+        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>What gets built
+            </h4>
+            <ul class="mt-3 space-y-2 text-sm text-zinc-700 dark:text-zinc-300 list-none p-0">
+              <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Log calls/emails/meetings/notes/tasks</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Timestamped timeline on the contact page</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Mark tasks done</span></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <i data-lucide="x-circle" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>Not in this milestone
+            </h4>
+            <ul class="mt-3 space-y-2 text-sm text-zinc-500 dark:text-zinc-400 list-none p-0">
+              <li class="flex items-start gap-2"><i data-lucide="minus" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i><span>Follow-up reminders/notifications (those are M5)</span></li>
+<li class="flex items-start gap-2"><i data-lucide="minus" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i><span>Bulk import UI</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="mt-5 rounded-md border-l-4 border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 p-4 text-sm text-emerald-900 dark:text-emerald-200">
+          <p class="flex items-start gap-2"><i data-lucide="flag" class="w-4 h-4 mt-0.5 shrink-0"></i><span><span class="font-semibold">Done when:</span> Opening any contact shows every interaction in order, newest first.</span></p>
+        </div>
+      </div>
+    </article>
+<article class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+      <header class="flex items-center gap-3 p-5 border-b border-zinc-100 dark:border-zinc-800">
+        <span class="shrink-0 w-8 h-8 rounded-full bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 flex items-center justify-center text-sm font-semibold">3</span>
+        <h3 class="font-semibold text-lg text-zinc-900 dark:text-zinc-100">Lead capture + BANT scoring</h3>
+      </header>
+      <div class="p-5">
+        <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">Turn the public web form into scored, routed leads without manual triage.</p>
+        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>What gets built
+            </h4>
+            <ul class="mt-3 space-y-2 text-sm text-zinc-700 dark:text-zinc-300 list-none p-0">
+              <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Public web-intake form</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Auto BANT score → hot/warm/cold</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Territory-based auto-assign + auto-responder email</span></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <i data-lucide="x-circle" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>Not in this milestone
+            </h4>
+            <ul class="mt-3 space-y-2 text-sm text-zinc-500 dark:text-zinc-400 list-none p-0">
+              <li class="flex items-start gap-2"><i data-lucide="minus" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i><span>Lead de-dupe/merge</span></li>
+<li class="flex items-start gap-2"><i data-lucide="minus" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i><span>Manual BANT entry UI</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="mt-5 rounded-md border-l-4 border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 p-4 text-sm text-emerald-900 dark:text-emerald-200">
+          <p class="flex items-start gap-2"><i data-lucide="flag" class="w-4 h-4 mt-0.5 shrink-0"></i><span><span class="font-semibold">Done when:</span> Submitting the form creates a rated lead owned by the right rep with an auto-reply sent.</span></p>
+        </div>
+      </div>
+    </article>
+<article class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+      <header class="flex items-center gap-3 p-5 border-b border-zinc-100 dark:border-zinc-800">
+        <span class="shrink-0 w-8 h-8 rounded-full bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 flex items-center justify-center text-sm font-semibold">4</span>
+        <h3 class="font-semibold text-lg text-zinc-900 dark:text-zinc-100">Opportunity pipeline (Kanban)</h3>
+      </header>
+      <div class="p-5">
+        <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">Give deals a board with drag-and-drop and a forecast.</p>
+        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>What gets built
+            </h4>
+            <ul class="mt-3 space-y-2 text-sm text-zinc-700 dark:text-zinc-300 list-none p-0">
+              <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Board + list views of opportunities</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Drag deals across stages (persisted)</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Drag to reorder within a column</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Per-stage value totals + weighted forecast</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Associate multiple contacts with a deal</span></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <i data-lucide="x-circle" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>Not in this milestone
+            </h4>
+            <ul class="mt-3 space-y-2 text-sm text-zinc-500 dark:text-zinc-400 list-none p-0">
+              <li class="flex items-start gap-2"><i data-lucide="minus" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i><span>Per-deal probability editing UI (default-per-stage used)</span></li>
+<li class="flex items-start gap-2"><i data-lucide="minus" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i><span>Custom fields per deal</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="mt-5 rounded-md border-l-4 border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 p-4 text-sm text-emerald-900 dark:text-emerald-200">
+          <p class="flex items-start gap-2"><i data-lucide="flag" class="w-4 h-4 mt-0.5 shrink-0"></i><span><span class="font-semibold">Done when:</span> User can drag a deal to Won and watch the stage total and forecast update.</span></p>
+        </div>
+      </div>
+    </article>
+<article class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+      <header class="flex items-center gap-3 p-5 border-b border-zinc-100 dark:border-zinc-800">
+        <span class="shrink-0 w-8 h-8 rounded-full bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 flex items-center justify-center text-sm font-semibold">5</span>
+        <h3 class="font-semibold text-lg text-zinc-900 dark:text-zinc-100">Follow-ups + churn detection</h3>
+      </header>
+      <div class="p-5">
+        <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">Make sure nothing falls through the cracks and at-risk customers surface early.</p>
+        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>What gets built
+            </h4>
+            <ul class="mt-3 space-y-2 text-sm text-zinc-700 dark:text-zinc-300 list-none p-0">
+              <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>To-do list of next actions with due dates</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Check-off that links back to the deal</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Lifecycle transitions</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Churn flag on customers with no activity in N days</span></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <i data-lucide="x-circle" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>Not in this milestone
+            </h4>
+            <ul class="mt-3 space-y-2 text-sm text-zinc-500 dark:text-zinc-400 list-none p-0">
+              <li class="flex items-start gap-2"><i data-lucide="minus" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i><span>Push/email reminders (in-app only in v1)</span></li>
+<li class="flex items-start gap-2"><i data-lucide="minus" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i><span>Predictive/ML churn</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="mt-5 rounded-md border-l-4 border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 p-4 text-sm text-emerald-900 dark:text-emerald-200">
+          <p class="flex items-start gap-2"><i data-lucide="flag" class="w-4 h-4 mt-0.5 shrink-0"></i><span><span class="font-semibold">Done when:</span> A rep sees today's follow-ups and a list of customers who've gone quiet.</span></p>
+        </div>
+      </div>
+    </article>
+<article class="print-card rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+      <header class="flex items-center gap-3 p-5 border-b border-zinc-100 dark:border-zinc-800">
+        <span class="shrink-0 w-8 h-8 rounded-full bg-zinc-900 dark:bg-zinc-100 text-zinc-50 dark:text-zinc-900 flex items-center justify-center text-sm font-semibold">6</span>
+        <h3 class="font-semibold text-lg text-zinc-900 dark:text-zinc-100">White-label config + integration hooks</h3>
+      </header>
+      <div class="p-5">
+        <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">Make the core resellable and wire in the Kenyan-market integrations.</p>
+        <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>What gets built
+            </h4>
+            <ul class="mt-3 space-y-2 text-sm text-zinc-700 dark:text-zinc-300 list-none p-0">
+              <li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Per-tenant pipeline stage configuration UI</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>Branding UI (colors/logo)</span></li>
+<li class="flex items-start gap-2"><i data-lucide="check" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"></i><span>M-Pesa, WhatsApp, eTIMS, offline-sync interfaces + queues</span></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+              <i data-lucide="x-circle" class="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500"></i>Not in this milestone
+            </h4>
+            <ul class="mt-3 space-y-2 text-sm text-zinc-500 dark:text-zinc-400 list-none p-0">
+              <li class="flex items-start gap-2"><i data-lucide="minus" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i><span>Live third-party calls for every channel (contracts wired, real creds per tenant later)</span></li>
+<li class="flex items-start gap-2"><i data-lucide="minus" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i><span>Full SSO/multi-user</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="mt-5 rounded-md border-l-4 border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 p-4 text-sm text-emerald-900 dark:text-emerald-200">
+          <p class="flex items-start gap-2"><i data-lucide="flag" class="w-4 h-4 mt-0.5 shrink-0"></i><span><span class="font-semibold">Done when:</span> A second tenant (new row + stages/branding) renders isolated, branded, and integration-ready.</span></p>
+        </div>
+      </div>
+    </article>
+      </div>
+    </section>
+
+    <footer class="pt-8 border-t border-zinc-200 dark:border-zinc-800 text-xs text-zinc-500 dark:text-zinc-400">
+      Generated by <span class="font-medium">bm-prd-creator</span>. Open the milestone-1 <code class="font-mono">prompt.md</code> to start building.
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      var html = document.documentElement;
+      var stored = localStorage.getItem('prd-theme');
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var initial = stored ? stored : (prefersDark ? 'dark' : 'light');
+      if (initial === 'dark') html.classList.add('dark');
+      var btn = document.getElementById('theme-toggle');
+      if (btn) {
+        btn.addEventListener('click', function () {
+          var isDark = html.classList.toggle('dark');
+          localStorage.setItem('prd-theme', isDark ? 'dark' : 'light');
+        });
+      }
+      if (window.lucide) window.lucide.createIcons();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{% extends "crm/base.html" %}
+{% block title %}Contacts · {{ tenant.name }} CRM{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="font-display font-extrabold text-2xl text-[var(--ink-display)]">Contacts</h1>
+  <a href="{% url 'crm:contact_create' %}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl brand-bg text-white text-sm font-semibold hover:opacity-90 transition">New contact</a>
+</div>
+
+{% include "crm/_contact_search.html" %}
+
+<div id="contact-list" class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] overflow-hidden">
+  {% include "crm/_contact_rows.html" %}
+</div>
+{% endblock %}

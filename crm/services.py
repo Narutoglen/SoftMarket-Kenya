@@ -4,23 +4,29 @@ Kept separate from models (marketplace-style) so views stay thin and the logic
 is reusable by the white-label core for ANY tenant instance.
 """
 
+from datetime import timedelta
+
+from django.conf import settings
+from django.core.mail import send_mail
+from django.db.models import F
 from django.utils import timezone
 
 from .models import (
     Account,
     Activity,
     Contact,
+    IntegrationConfig,
+    IntegrationMessage,
     Lead,
     Opportunity,
     Tenant,
+    TenantStage,
 )
 
 
 # ---------------------------------------------------------------------------
 # BANT scoring -> hot / warm / cold
-# ---------------------------------------------------------------------------
 def score_lead_rating(lead: Lead) -> Lead.Rating:
-    """Map a 0-12 BANT score to a rating. Hot >=9, Warm 5-8, Cold <5."""
     total = lead.bant_score()
     if total >= 9:
         return Lead.Rating.HOT
@@ -56,6 +62,71 @@ def qualify_lead(lead: Lead) -> Lead:
     if not lead.owner:
         lead.owner = route_lead_owner(lead.tenant, lead)
     lead.save(update_fields=["rating", "owner", "updated_at"])
+    return lead
+
+
+# ---------------------------------------------------------------------------
+# Auto-responder (triggered lead email) — the one marketing email in v1
+# ---------------------------------------------------------------------------
+def send_lead_autoresponse(lead: Lead) -> bool:
+    """Email the lead a confirmation + notify the assigned rep.
+
+    Uses Django's configured email backend (console in dev, SMTP in prod via
+    env). Returns True if the send was attempted without raising. Failures are
+    swallowed so a flaky mail server never blocks lead capture.
+    """
+    tenant = lead.tenant
+    from_email = settings.DEFAULT_FROM_EMAIL
+    recipients = [lead.email] if lead.email else []
+    sent_any = False
+
+    if recipients:
+        subject = f"Thanks for reaching out to {tenant.name}"
+        greeting = lead.first_name or "there"
+        body = (
+            f"Hi {greeting},\n\n"
+            f"Thanks for your interest in {tenant.name}. We've received your "
+            f"enquiry and {lead.owner or 'a specialist'} will be in touch within "
+            f"24 hours.\n\n"
+            f"— The {tenant.name} team"
+        )
+        try:
+            send_mail(subject, body, from_email, recipients, fail_silently=False)
+            sent_any = True
+        except Exception:
+            sent_any = False
+
+    # Internal notification to the assigned rep / admins (best-effort).
+    notify = list(getattr(settings, "ADMIN_NOTIFICATION_EMAILS", []) or [])
+    if notify:
+        try:
+            send_mail(
+                f"[{tenant.name}] New {lead.get_rating_display()} lead: {lead.full_name}",
+                (
+                    f"Source: {lead.get_source_display()}\n"
+                    f"Owner: {lead.owner or 'Unassigned'}\n"
+                    f"Rating: {lead.get_rating_display()} (BANT {lead.bant_score()}/12)\n"
+                    f"Email: {lead.email}\nPhone: {lead.phone}\n"
+                    f"Territory: {lead.territory}\n\nMessage:\n{lead.message}"
+                ),
+                from_email,
+                notify,
+                fail_silently=True,
+            )
+        except Exception:
+            pass
+
+    return sent_any
+
+
+def intake_lead(lead: Lead) -> Lead:
+    """Full public-intake pipeline: score + route + auto-respond. Idempotent-ish
+    (safe to re-run; only flips auto_responded once)."""
+    qualify_lead(lead)
+    if not lead.auto_responded:
+        send_lead_autoresponse(lead)
+        lead.auto_responded = True
+        lead.save(update_fields=["auto_responded", "updated_at"])
     return lead
 
 
@@ -181,3 +252,139 @@ def pipeline_summary(tenant: Tenant):
         "by_stage": rows,
         "generated_at": timezone.localtime(timezone.now()).isoformat(),
     }
+
+
+# ---------------------------------------------------------------------------
+# Follow-ups + churn detection (Milestone 5)
+# ---------------------------------------------------------------------------
+# A customer with no activity in this many days is flagged at-risk / churning.
+CHURN_THRESHOLD_DAYS = 30
+
+
+def open_followups(tenant: Tenant):
+    """Open task activities (the to-do list), ordered by due date (soonest first,
+    undated last). Overdue/today are surfaced by the caller via `due_at`."""
+    return (
+        Activity.objects.filter(tenant=tenant, type=Activity.Type.TASK, done=False)
+        .select_related("contact")
+        .order_by(F("due_at").asc(nulls_last=True), "created_at")
+    )
+
+
+def followup_buckets(tenant: Tenant):
+    """Split open follow-ups into overdue / today / upcoming / no-date buckets."""
+    now = timezone.localtime(timezone.now())
+    today = now.date()
+    overdue, due_today, upcoming, undated = [], [], [], []
+    for a in open_followups(tenant):
+        if a.due_at is None:
+            undated.append(a)
+        else:
+            d = timezone.localtime(a.due_at).date()
+            if d < today:
+                overdue.append(a)
+            elif d == today:
+                due_today.append(a)
+            else:
+                upcoming.append(a)
+    return {
+        "overdue": overdue,
+        "today": due_today,
+        "upcoming": upcoming,
+        "undated": undated,
+        "total": len(overdue) + len(due_today) + len(upcoming) + len(undated),
+    }
+
+
+def last_activity_at(contact: Contact):
+    """Timestamp of the contact's most recent activity, or None."""
+    latest = contact.activities.order_by("-created_at").first()
+    return latest.created_at if latest else None
+
+
+def churn_candidates(tenant: Tenant, days: int = CHURN_THRESHOLD_DAYS):
+    """Return customers who've gone quiet: lifecycle=customer with no activity in
+    the last `days` days (or never). Each item carries the contact + how many
+    days since their last touch (None = never)."""
+    cutoff = timezone.now() - timedelta(days=days)
+    now = timezone.now()
+    rows = []
+    customers = Contact.objects.filter(
+        tenant=tenant, lifecycle=Contact.Lifecycle.CUSTOMER
+    ).select_related("account")
+    for c in customers:
+        last = last_activity_at(c)
+        if last is None or last < cutoff:
+            days_quiet = None if last is None else (now - last).days
+            rows.append({"contact": c, "last_activity": last, "days_quiet": days_quiet})
+    # Longest-quiet first; never-touched (None) at the top.
+    rows.sort(key=lambda r: (r["days_quiet"] is not None, r["days_quiet"] or 0), reverse=True)
+    return rows
+
+
+def set_lifecycle(contact: Contact, lifecycle: str) -> Contact:
+    """Transition a contact's lifecycle stage (subscriber/lead/customer/churned).
+    Logs a note activity so the 360 timeline records the transition."""
+    valid = {c[0] for c in Contact.Lifecycle.choices}
+    if lifecycle not in valid or lifecycle == contact.lifecycle:
+        return contact
+    old = contact.get_lifecycle_display()
+    contact.lifecycle = lifecycle
+    contact.save(update_fields=["lifecycle", "updated_at"])
+    Activity.objects.create(
+        tenant=contact.tenant, contact=contact, type=Activity.Type.NOTE,
+        subject="Lifecycle change",
+        notes=f"Moved from {old} to {contact.get_lifecycle_display()}.",
+    )
+    return contact
+
+
+# ---------------------------------------------------------------------------
+# M6 — white-label integrations (contracts only, no live third-party calls)
+# ---------------------------------------------------------------------------
+INTEGRATION_CHANNELS = ["mpesa", "whatsapp", "etims", "offline"]
+
+
+def ensure_integration_configs(tenant: Tenant):
+    """Create the four channel IntegrationConfig rows for a tenant if missing."""
+    created = []
+    for ch in INTEGRATION_CHANNELS:
+        obj, made = IntegrationConfig.objects.get_or_create(tenant=tenant, channel=ch)
+        if made:
+            created.append(obj)
+    return created
+
+
+def enqueue_integration_message(tenant, channel, recipient, payload=None):
+    """Add an outbound message to the queue for a worker to drain later.
+
+    Returns the created IntegrationMessage (status=pending). No network call.
+    """
+    return IntegrationMessage.objects.create(
+        tenant=tenant,
+        channel=channel,
+        recipient=recipient or "",
+        payload=payload or {},
+    )
+
+
+def tenant_stages(tenant: Tenant):
+    """Ordered pipeline stages for a tenant (falls back to defaults if none)."""
+    stages = list(TenantStage.objects.filter(tenant=tenant).order_by("order"))
+    if not stages:
+        # Sensible default pipeline so a brand-new tenant still has a board.
+        defaults = [
+            ("prospecting", "Prospecting", 10, False, False),
+            ("qualification", "Qualification", 25, False, False),
+            ("proposal", "Proposal", 50, False, False),
+            ("negotiation", "Negotiation", 80, False, False),
+            ("won", "Won", 100, True, False),
+            ("lost", "Lost", 0, False, True),
+        ]
+        stages = [
+            TenantStage(tenant=tenant, key=k, label=l, order=i,
+                        probability=p, is_won=w, is_lost=lo)
+            for i, (k, l, p, w, lo) in enumerate(defaults)
+        ]
+    return stages
+

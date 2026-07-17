@@ -1,0 +1,55 @@
+{% comment %}Kanban columns — swapped wholesale by HTMX after a drag-move so stage
+totals + the forecast header update live. Each card is draggable; dropping on a
+column fires opportunity_move (POST) which persists + re-renders this partial.{% endcomment %}
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" id="board-columns">
+  {% for col in columns %}
+  <div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] flex flex-col"
+       data-stage="{{ col.stage }}"
+       ondragover="event.preventDefault(); this.classList.add('ring-2','ring-[var(--accent)]');"
+       ondragleave="this.classList.remove('ring-2','ring-[var(--accent)]');"
+       ondrop="event.preventDefault(); this.classList.remove('ring-2','ring-[var(--accent)]'); moveCard(this, '{{ col.stage }}');">
+    <div class="px-3 py-2.5 border-b border-[var(--hairline)] flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-bold text-[var(--ink-display)]">{{ col.stage_label }}</span>
+        <span class="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-[var(--hairline)] text-[var(--ink-muted)]">{{ col.count }}</span>
+      </div>
+      <span class="text-[11px] font-bold text-[var(--ink-display)]">KSh {{ col.value|floatformat:0 }}</span>
+    </div>
+    <div class="p-2 space-y-2 min-h-[60px]" data-stage="{{ col.stage }}">
+      {% for o in col.opps %}
+      <div class="rounded-xl border border-[var(--hairline)] bg-[var(--page)] p-3 cursor-grab active:cursor-grabbing hover:border-[color-mix(in_srgb,var(--accent)_40%,transparent)] transition"
+           draggable="true" data-id="{{ o.pk }}"
+           ondragstart="event.dataTransfer.setData('text/plain', '{{ o.pk }}'); this.classList.add('opacity-50');"
+           ondragend="this.classList.remove('opacity-50');">
+        <div class="flex items-start justify-between gap-2">
+          <p class="text-sm font-semibold text-[var(--ink-display)] leading-tight">{{ o.name }}</p>
+          <span class="text-[12px] font-bold text-[var(--ink-display)] whitespace-nowrap">KSh {{ o.amount|floatformat:0 }}</span>
+        </div>
+        <p class="text-xs text-[var(--ink-muted)] mt-1 truncate">{{ o.contact.full_name }}{% if o.account %} · {{ o.account.name }}{% endif %}</p>
+        {% if o.owner %}<p class="text-[11px] text-[var(--ink-muted)] mt-0.5">Owner: {{ o.owner }}</p>{% endif %}
+      </div>
+      {% empty %}
+      <p class="text-xs text-[var(--ink-muted)] text-center py-3">Drop deals here</p>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+  function moveCard(columnEl, stage) {
+    var id = event.dataTransfer.getData('text/plain');
+    if (!id) return;
+    // Collect ordered ids in the destination column (incl. the dragged one).
+    var body = new FormData();
+    body.append('stage', stage);
+    var cards = columnEl.querySelectorAll('[data-id]');
+    cards.forEach(function (c) { body.append('order', c.getAttribute('data-id')); });
+    htmx.ajax('POST', "/crm/opportunities/" + id + "/move/", {
+      values: body,
+      headers: { 'HX-Target': 'board-columns' },
+      target: '#board-columns',
+      swap: 'outerHTML'
+    });
+  }
+</script>

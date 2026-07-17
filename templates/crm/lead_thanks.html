@@ -1,0 +1,9 @@
+{% extends "crm/base.html" %}
+{% block title %}Thanks · {{ tenant.name }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <div id="lead-form-wrap">
+    {% include "crm/_lead_thanks.html" with lead=lead %}
+  </div>
+</div>
+{% endblock %}

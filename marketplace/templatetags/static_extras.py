@@ -3,7 +3,6 @@ import os
 
 from django.conf import settings
 from django.template import Library
-from django.templatetags.static import static
 
 register = Library()
 

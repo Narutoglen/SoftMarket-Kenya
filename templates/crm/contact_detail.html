@@ -1,0 +1,48 @@
+{% extends "crm/base.html" %}
+{% block title %}{{ contact.full_name }} · {{ tenant.name }} CRM{% endblock %}
+{% block content %}
+<div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] overflow-hidden">
+  <div class="px-5 py-4 border-b border-[var(--hairline)] flex items-center gap-3">
+    <div class="w-12 h-12 rounded-full brand-grad flex items-center justify-center text-white font-bold">{{ contact.full_name|first }}</div>
+    <div class="min-w-0">
+      <p class="font-display font-bold text-lg text-[var(--ink-display)] truncate">{{ contact.full_name }}</p>
+      <p class="text-xs text-[var(--ink-muted)] truncate">{{ contact.email }}{% if contact.account %} · {{ contact.account.name }}{% endif %}</p>
+    </div>
+    <span class="ml-auto text-[11px] font-bold px-2 py-1 rounded-full
+      {% if contact.lifecycle == 'customer' %}bg-emerald-500/15 text-emerald-600 dark:text-emerald-400
+      {% elif contact.lifecycle == 'lead' %}bg-[color-mix(in_srgb,var(--accent)_20%,transparent)] brand-text
+      {% elif contact.lifecycle == 'churned' %}bg-rose-500/15 text-rose-600 dark:text-rose-400
+      {% else %}bg-[var(--hairline)] text-[var(--ink-muted)]{% endif %}">{{ contact.get_lifecycle_display }}</span>
+  </div>
+
+  <div class="px-5 py-3 grid grid-cols-3 gap-2 text-center border-b border-[var(--hairline)]">
+    <div><p class="figure text-xl text-[var(--ink-display)]">{{ contact.opportunities.count }}</p><p class="text-[11px] text-[var(--ink-muted)]">Deals</p></div>
+    <div><p class="figure text-xl text-[var(--ink-display)]">{{ contact.activities.count }}</p><p class="text-[11px] text-[var(--ink-muted)]">Activities</p></div>
+    <div><p class="figure text-xl brand-text">{{ contact.territory|default:"—" }}</p><p class="text-[11px] text-[var(--ink-muted)]">Territory</p></div>
+  </div>
+
+  <div class="px-5 py-3 flex items-center justify-end gap-2 border-b border-[var(--hairline)]">
+    <a href="{% url 'crm:contact_edit' pk=contact.pk %}" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-[var(--hairline)] hover:bg-[var(--page)] transition inline-flex items-center gap-1"><i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit</a>
+    <button hx-post="{% url 'crm:contact_delete' pk=contact.pk %}"
+            hx-confirm="Delete this contact?"
+            hx-target="body" hx-swap="none"
+            class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition inline-flex items-center gap-1">
+      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete
+    </button>
+  </div>
+
+  <div class="px-5 py-4">
+    <h3 class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-muted)] flex items-center gap-2 mb-3"><i data-lucide="activity" class="w-3.5 h-3.5"></i> Timeline</h3>
+
+    {% include "crm/_activity_form.html" %}
+
+    <ol class="relative border-l-2 border-[var(--hairline)] ml-2 mt-4 space-y-4" id="timeline">
+      {% for a in activities %}
+        {% include "crm/_activity_row.html" with activity=a %}
+      {% empty %}
+      <li class="ml-4 text-sm text-[var(--ink-muted)]">No activity logged yet.</li>
+      {% endfor %}
+    </ol>
+  </div>
+</div>
+{% endblock %}

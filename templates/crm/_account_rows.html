@@ -1,0 +1,16 @@
+{% comment %}HTMX-swappable rows for account search.{% endcomment %}
+<ul class="divide-y divide-[var(--hairline)]">
+  {% for a in accounts %}
+  <li>
+    <a href="{% url 'crm:account_detail' pk=a.pk %}" class="flex items-center gap-3 px-4 py-3 hover:bg-[color-mix(in_srgb,var(--accent)_8%,transparent)] transition">
+      <div class="w-9 h-9 rounded-full bg-[var(--hairline)] flex items-center justify-center text-xs font-bold text-[var(--ink-display)]">{{ a.name|first }}</div>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-semibold text-[var(--ink-display)] truncate">{{ a.name }}</p>
+        <p class="text-xs text-[var(--ink-muted)] truncate">{{ a.industry|default:"—" }}{% if a.contacts.count %} · {{ a.contacts.count }} contact{{ a.contacts.count|pluralize }}{% endif %}</p>
+      </div>
+    </a>
+  </li>
+  {% empty %}
+  <li class="px-4 py-10 text-center text-sm text-[var(--ink-muted)]">No accounts found. <a class="brand-link font-semibold hover:underline" href="{% url 'crm:account_create' %}">Add the first one</a>.</li>
+  {% endfor %}
+</ul>

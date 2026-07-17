@@ -1,0 +1,21 @@
+{% comment %}HTMX-swappable rows for contact search.{% endcomment %}
+<ul class="divide-y divide-[var(--hairline)]">
+  {% for c in contacts %}
+  <li>
+    <a href="{% url 'crm:contact_detail' pk=c.pk %}" class="flex items-center gap-3 px-4 py-3 hover:bg-[color-mix(in_srgb,var(--accent)_8%,transparent)] transition">
+      <div class="w-9 h-9 rounded-full bg-[var(--hairline)] flex items-center justify-center text-xs font-bold text-[var(--ink-display)]">{{ c.full_name|first }}</div>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-semibold text-[var(--ink-display)] truncate">{{ c.full_name }}</p>
+        <p class="text-xs text-[var(--ink-muted)] truncate">{{ c.email }}{% if c.territory %} · {{ c.territory }}{% endif %}</p>
+      </div>
+      <span class="text-[11px] font-bold px-2 py-0.5 rounded-full
+        {% if c.lifecycle == 'customer' %}bg-emerald-500/15 text-emerald-600 dark:text-emerald-400
+        {% elif c.lifecycle == 'lead' %}bg-[color-mix(in_srgb,var(--accent)_20%,transparent)] brand-text
+        {% elif c.lifecycle == 'churned' %}bg-rose-500/15 text-rose-600 dark:text-rose-400
+        {% else %}bg-[var(--hairline)] text-[var(--ink-muted)]{% endif %}">{{ c.get_lifecycle_display }}</span>
+    </a>
+  </li>
+  {% empty %}
+  <li class="px-4 py-10 text-center text-sm text-[var(--ink-muted)]">No contacts found. <a class="brand-link font-semibold hover:underline" href="{% url 'crm:contact_create' %}">Add the first one</a>.</li>
+  {% endfor %}
+</ul>

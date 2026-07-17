@@ -1,0 +1,21 @@
+{% comment %}Contact create/edit form. Submits via HTMX to its own URL; on success the
+view returns an HX-Redirect, on validation error it returns THIS partial so errors
+swap in place.{% endcomment %}
+<form hx-post="{% if contact %}{% url 'crm:contact_edit' pk=contact.pk %}{% else %}{% url 'crm:contact_create' %}{% endif %}"
+      hx-target="this" hx-swap="outerHTML"
+      class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-5 space-y-4">
+  {% csrf_token %}
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    {% for field in form %}
+    <div class="{% if field.name == 'personal_notes' %}sm:col-span-2{% endif %}">
+      <label class="block text-xs font-semibold uppercase tracking-wide text-[var(--ink-muted)] mb-1.5">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<p class="text-xs text-rose-500 mt-1">{{ field.errors.0 }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="flex items-center gap-2 pt-2">
+    <button type="submit" class="px-4 py-2 rounded-xl brand-bg text-white text-sm font-semibold hover:opacity-90 transition">Save contact</button>
+    <a href="{% if contact %}{% url 'crm:contact_detail' pk=contact.pk %}{% else %}{% url 'crm:contact_list' %}{% endif %}" class="px-4 py-2 rounded-xl border border-[var(--hairline)] text-sm font-semibold hover:bg-[var(--page)] transition">Cancel</a>
+  </div>
+</form>

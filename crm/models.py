@@ -18,7 +18,7 @@ Borrowed from FrugalTech CRM teaching:
 """
 
 from django.db import models
-from django.utils import timezone
+
 
 from marketplace.models import TimeStampedModel
 
@@ -78,6 +78,9 @@ class Account(InstanceScopedModel):
     def __str__(self):
         return self.name
 
+    def get_absolute_url(self):
+        return f"/crm/accounts/{self.pk}/"
+
 
 # ---------------------------------------------------------------------------
 # Contact (the hub of the 360-degree view)
@@ -114,6 +117,9 @@ class Contact(InstanceScopedModel):
 
     def __str__(self):
         return self.full_name
+
+    def get_absolute_url(self):
+        return f"/crm/contacts/{self.pk}/"
 
 
 # ---------------------------------------------------------------------------
@@ -226,9 +232,99 @@ class Opportunity(InstanceScopedModel):
     probability = models.PositiveSmallIntegerField(null=True, blank=True)
     expected_close_date = models.DateField(null=True, blank=True)
     owner = models.CharField(max_length=120, blank=True)
+    # Manual ordering within a stage column (drag-to-reorder). Lower = higher up.
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["stage", "order", "-created_at"]
+
+    def __str__(self):
+        return f"{self.name} ({self.get_stage_display()})"
+
+
+# ---------------------------------------------------------------------------
+# M6 — White-label config: per-tenant pipeline stages + integrations
+# ---------------------------------------------------------------------------
+class TenantStage(InstanceScopedModel):
+    """A configurable pipeline stage for ONE tenant.
+
+    Replaces the hard-coded Opportunity.Stage enum for display/branding: each
+    tenant gets its own ordered stage list with its own win-probability. The
+    Opportunity.stage value is the stage `key` (stable slug), so existing deals
+    keep working even if a tenant renames a stage.
+    """
+
+    key = models.SlugField(max_length=30, help_text="Stable slug, e.g. 'proposal'")
+    label = models.CharField(max_length=60, help_text="Display name, e.g. 'Proposal'")
+    order = models.PositiveIntegerField(default=0)
+    probability = models.PositiveSmallIntegerField(
+        default=50, help_text="Default win-probability (%) for the weighted forecast."
+    )
+    is_won = models.BooleanField(default=False)
+    is_lost = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["tenant", "order"]
+        unique_together = [("tenant", "key")]
+
+    def __str__(self):
+        return f"{self.label} ({self.tenant.slug})"
+
+
+class IntegrationConfig(InstanceScopedModel):
+    """Per-tenant toggles + placeholder creds for the Kenyan-market channels.
+
+    Milestone 6 wires the *contracts* only — no live third-party calls. Real
+    credentials are filled per tenant later (kept out of code / in env).
+    """
+
+    class Channel(models.TextChoices):
+        MPESA = "mpesa", "M-Pesa"
+        WHATSAPP = "whatsapp", "WhatsApp"
+        ETIMS = "etims", "eTIMS"
+        OFFLINE = "offline", "Offline sync"
+
+    channel = models.CharField(max_length=20, choices=Channel.choices)
+    enabled = models.BooleanField(default=False)
+    # Placeholder config (no secrets here). Per-channel fields added as needed.
+    config_json = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["channel"]
+        unique_together = [("tenant", "channel")]
+
+    def __str__(self):
+        return f"{self.get_channel_display()} ({'on' if self.enabled else 'off'})"
+
+
+class IntegrationMessage(InstanceScopedModel):
+    """Outbound message queue for integration channels (M-Pesa/WhatsApp/etc.).
+
+    The integration service enqueues here; a worker (later) drains it. Milestone
+    6 proves the queue + enqueue path, not the live delivery.
+    """
+
+    class Channel(models.TextChoices):
+        MPESA = "mpesa", "M-Pesa"
+        WHATSAPP = "whatsapp", "WhatsApp"
+        ETIMS = "etims", "eTIMS"
+        OFFLINE = "offline", "Offline sync"
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        SENT = "sent", "Sent"
+        FAILED = "failed", "Failed"
+
+    channel = models.CharField(max_length=20, choices=Channel.choices)
+    recipient = models.CharField(max_length=200, blank=True)
+    payload = models.JSONField(default=dict, blank=True)
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.PENDING
+    )
+    sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.name} ({self.get_stage_display()})"
+        return f"{self.get_channel_display()} -> {self.recipient} ({self.status})"

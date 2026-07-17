@@ -1,0 +1,33 @@
+{% extends "crm/base.html" %}
+{% block title %}{{ account.name }} · {{ tenant.name }} CRM{% endblock %}
+{% block content %}
+<div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] overflow-hidden">
+  <div class="px-5 py-4 border-b border-[var(--hairline)] flex items-center gap-3">
+    <div class="w-12 h-12 rounded-full bg-[var(--hairline)] flex items-center justify-center text-[var(--ink-display)] font-bold">{{ account.name|first }}</div>
+    <div class="min-w-0">
+      <p class="font-display font-bold text-lg text-[var(--ink-display)] truncate">{{ account.name }}</p>
+      <p class="text-xs text-[var(--ink-muted)] truncate">{{ account.industry|default:"—" }}{% if account.website %} · {{ account.website }}{% endif %}</p>
+    </div>
+    <div class="ml-auto flex items-center gap-2">
+      <a href="{% url 'crm:account_edit' pk=account.pk %}" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-[var(--hairline)] hover:bg-[var(--page)] transition inline-flex items-center gap-1"><i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit</a>
+      <button hx-post="{% url 'crm:account_delete' pk=account.pk %}"
+              hx-confirm="Delete this account?"
+              hx-target="body" hx-swap="none"
+              class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition inline-flex items-center gap-1">
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete
+      </button>
+    </div>
+  </div>
+
+  <div class="px-5 py-4">
+    <h3 class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-muted)] mb-2">Contacts</h3>
+    <ul class="space-y-1">
+      {% for c in contacts %}
+      <li><a href="{% url 'crm:contact_detail' pk=c.pk %}" class="text-sm brand-link hover:underline">{{ c.full_name }}</a> <span class="text-xs text-[var(--ink-muted)]">· {{ c.get_lifecycle_display }}</span></li>
+      {% empty %}
+      <li class="text-sm text-[var(--ink-muted)]">No contacts linked.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "crm/base.html" %}
+{% block title %}Pipeline · List · {{ tenant.name }} CRM{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-5">
+  <div>
+    <h1 class="font-display font-extrabold text-2xl text-[var(--ink-display)]">Pipeline</h1>
+    <p class="text-xs text-[var(--ink-muted)] mt-0.5">All deals by stage with value &amp; weighted forecast.</p>
+  </div>
+  <a href="{% url 'crm:pipeline_board' %}" class="text-sm font-semibold px-3.5 py-2 rounded-xl border border-[var(--hairline)] hover:bg-[var(--surface)] transition inline-flex items-center gap-1">
+    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Board
+  </a>
+</div>
+
+{% include "crm/_pipeline_forecast.html" with summary=summary %}
+
+<div class="mt-5 rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] overflow-hidden">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-left text-[var(--ink-muted)] text-xs uppercase tracking-wide border-b border-[var(--hairline)]">
+        <th class="px-4 py-3 font-semibold">Deal</th>
+        <th class="px-4 py-3 font-semibold">Contact</th>
+        <th class="px-4 py-3 font-semibold">Stage</th>
+        <th class="px-4 py-3 font-semibold">Owner</th>
+        <th class="px-4 py-3 font-semibold text-right">Value</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-[var(--hairline)]">
+      {% for o in opps %}
+      <tr class="hover:bg-[var(--page)] transition">
+        <td class="px-4 py-3 font-semibold text-[var(--ink-display)]">{{ o.name }}</td>
+        <td class="px-4 py-3 text-[var(--ink-muted)]">{{ o.contact.full_name }}</td>
+        <td class="px-4 py-3">
+          <span class="text-[11px] font-bold px-2 py-0.5 rounded-full
+            {% if o.stage == 'won' %}bg-emerald-500/15 text-emerald-600 dark:text-emerald-400
+            {% elif o.stage == 'lost' %}bg-rose-500/15 text-rose-600 dark:text-rose-400
+            {% elif o.stage == 'negotiation' %}bg-[color-mix(in_srgb,var(--signal)_22%,transparent)] text-amber-600 dark:text-amber-400
+            {% else %}bg-[color-mix(in_srgb,var(--accent)_20%,transparent)] brand-text{% endif %}">{{ o.get_stage_display }}</span>
+        </td>
+        <td class="px-4 py-3 text-[var(--ink-muted)]">{{ o.owner|default:"—" }}</td>
+        <td class="px-4 py-3 text-right font-semibold text-[var(--ink-display)]">KSh {{ o.amount|floatformat:0 }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="px-4 py-10 text-center text-[var(--ink-muted)]">No deals yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

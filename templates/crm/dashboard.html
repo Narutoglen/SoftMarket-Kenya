@@ -1,0 +1,59 @@
+{% extends "crm/base.html" %}
+{% block title %}{{ tenant.name }} CRM · Dashboard{% endblock %}
+{% block content %}
+<section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+  <div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-4">
+    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">Contacts</p>
+    <p class="figure text-3xl mt-1 text-[var(--ink-display)]">{{ contacts_count }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] font-semibold mt-1">total in this instance</p>
+  </div>
+  <div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-4">
+    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">Open pipeline</p>
+    <p class="figure text-3xl mt-1 text-[var(--ink-display)]">KSh {{ pipeline_value|floatformat:0 }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] font-semibold mt-1">excl. won/lost</p>
+  </div>
+  <div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-4">
+    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">Hot leads</p>
+    <p class="figure text-3xl mt-1 text-rose-600 dark:text-rose-400">{{ hot_leads }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] font-semibold mt-1">awaiting assign</p>
+  </div>
+  <div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-4">
+    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">Tasks due</p>
+    <p class="figure text-3xl mt-1 text-amber-600 dark:text-amber-400">{{ tasks_due }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] font-semibold mt-1">open follow-ups</p>
+  </div>
+</section>
+
+<section class="mt-6 rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] overflow-hidden">
+  <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--hairline)]">
+    <h2 class="font-display font-bold text-[var(--ink-display)]">Recent contacts</h2>
+    <a href="{% url 'crm:contact_list' %}" class="text-xs font-semibold brand-link hover:underline">View all</a>
+  </div>
+  <ul class="divide-y divide-[var(--hairline)]">
+    {% for c in recent_contacts %}
+    <li>
+      <a href="{% url 'crm:contact_detail' pk=c.pk %}" class="flex items-center gap-3 px-4 py-3 hover:bg-[var(--page)] transition">
+        <div class="w-9 h-9 rounded-full brand-grad flex items-center justify-center text-xs font-bold text-white">{{ c.full_name|first }}</div>
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-semibold text-[var(--ink-display)] truncate">{{ c.full_name }}</p>
+          <p class="text-xs text-[var(--ink-muted)] truncate">{{ c.email }}</p>
+        </div>
+        <span class="text-[11px] font-bold px-2 py-0.5 rounded-full
+          {% if c.lifecycle == 'customer' %}bg-emerald-500/15 text-emerald-600 dark:text-emerald-400
+          {% elif c.lifecycle == 'lead' %}bg-[color-mix(in_srgb,var(--accent)_20%,transparent)] brand-text
+          {% else %}bg-[var(--hairline)] text-[var(--ink-muted)]{% endif %}">{{ c.get_lifecycle_display }}</span>
+      </a>
+    </li>
+    {% empty %}
+    <li class="px-4 py-6 text-sm text-[var(--ink-muted)] text-center">No contacts yet. <a class="brand-link font-semibold hover:underline" href="{% url 'crm:contact_create' %}">Add one</a>.</li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="mt-6 flex items-center justify-between">
+  <p class="text-sm text-[var(--ink-muted)]">Capture new business from your website:</p>
+  <a href="{% url 'crm:lead_intake' %}" class="text-sm font-semibold px-4 py-2 rounded-xl brand-grad text-white hover:opacity-90 transition inline-flex items-center gap-1">
+    <i data-lucide="plus" class="w-4 h-4"></i> New lead form
+  </a>
+</section>
+{% endblock %}

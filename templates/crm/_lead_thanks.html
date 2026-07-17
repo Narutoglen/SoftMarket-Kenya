@@ -1,0 +1,13 @@
+<div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-8 text-center">
+  <div class="w-14 h-14 rounded-full brand-grad flex items-center justify-center text-white mx-auto mb-4">
+    <i data-lucide="check" class="w-7 h-7"></i>
+  </div>
+  <h2 class="font-display font-extrabold text-2xl text-[var(--ink-display)]">Thanks, {{ lead.first_name|default:"there" }}!</h2>
+  <p class="text-sm text-[var(--ink-muted)] mt-2">We've received your enquiry and <span class="brand-text font-semibold">{{ lead.owner|default:"a specialist" }}</span> will be in touch within 24 hours.</p>
+  <div class="mt-4 inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full
+    {% if lead.rating == 'hot' %}bg-rose-500/15 text-rose-600 dark:text-rose-400
+    {% elif lead.rating == 'warm' %}bg-[color-mix(in_srgb,var(--signal)_22%,transparent)] text-amber-600 dark:text-amber-400
+    {% else %}bg-[var(--hairline)] text-[var(--ink-muted)]{% endif %}">
+    <i data-lucide="zap" class="w-3.5 h-3.5"></i> {{ lead.get_rating_display }} lead · BANT {{ lead.bant_score }}/12
+  </div>
+</div>

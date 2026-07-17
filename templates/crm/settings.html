@@ -1,0 +1,102 @@
+{% extends "crm/base.html" %}
+{% block title %}Settings · {{ tenant.name }} CRM{% endblock %}
+{% block content %}
+<div class="mb-5">
+  <h1 class="font-display font-extrabold text-2xl text-[var(--ink-display)]">Settings</h1>
+  <p class="text-sm text-[var(--ink-muted)]">White-label this CRM instance — branding, pipeline stages, and Kenyan-market integrations.</p>
+</div>
+
+<form method="post" action="{% url 'crm:crm_settings_save' %}" class="space-y-6">
+  {% csrf_token %}
+
+  {# --- Branding --- #}
+  <section class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-5">
+    <h2 class="font-display font-bold text-lg text-[var(--ink-display)] mb-4">Branding</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <label class="block">
+        <span class="text-xs font-semibold uppercase tracking-wide text-[var(--ink-muted)]">Instance name</span>
+        <input name="name" value="{{ tenant.name }}" class="mt-1 w-full px-3 py-2 rounded-xl bg-[var(--page)] border border-[var(--hairline)] text-sm" />
+      </label>
+      <label class="block">
+        <span class="text-xs font-semibold uppercase tracking-wide text-[var(--ink-muted)]">Logo URL</span>
+        <input name="logo_url" value="{{ tenant.logo_url }}" placeholder="/static/img/logo.jpg" class="mt-1 w-full px-3 py-2 rounded-xl bg-[var(--page)] border border-[var(--hairline)] text-sm" />
+      </label>
+      <label class="block">
+        <span class="text-xs font-semibold uppercase tracking-wide text-[var(--ink-muted)]">Primary color</span>
+        <input type="color" name="brand_primary_color" value="{{ tenant.brand_primary_color }}" class="mt-1 h-10 w-full rounded-xl border border-[var(--hairline)] bg-[var(--page)]" />
+      </label>
+      <label class="block">
+        <span class="text-xs font-semibold uppercase tracking-wide text-[var(--ink-muted)]">Accent color</span>
+        <input type="color" name="brand_accent_color" value="{{ tenant.brand_accent_color }}" class="mt-1 h-10 w-full rounded-xl border border-[var(--hairline)] bg-[var(--page)]" />
+      </label>
+    </div>
+  </section>
+
+  {# --- Pipeline stages (per-tenant) --- #}
+  <section class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-5">
+    <h2 class="font-display font-bold text-lg text-[var(--ink-display)] mb-1">Pipeline stages</h2>
+    <p class="text-xs text-[var(--ink-muted)] mb-4">Each tenant gets its own ordered pipeline. Keys are stable; labels & win-probability are editable.</p>
+    <div class="space-y-2">
+      {% for s in stages %}
+      <div class="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--hairline)] bg-[var(--page)] px-3 py-2">
+        <input type="hidden" name="stage_key_{{ forloop.counter0 }}" value="{{ s.key }}" />
+        <span class="text-xs font-mono text-[var(--ink-muted)] w-28">{{ s.key }}</span>
+        <input name="stage_label_{{ forloop.counter0 }}" value="{{ s.label }}" class="px-2 py-1 rounded-lg border border-[var(--hairline)] text-sm w-40" />
+        <label class="flex items-center gap-1 text-xs text-[var(--ink-muted)]">
+          Win %
+          <input type="number" min="0" max="100" name="stage_prob_{{ forloop.counter0 }}" value="{{ s.probability }}" class="w-16 px-2 py-1 rounded-lg border border-[var(--hairline)] text-sm" />
+        </label>
+        <label class="flex items-center gap-1 text-xs text-[var(--ink-muted)]">
+          <input type="checkbox" name="stage_won_{{ forloop.counter0 }}" {% if s.is_won %}checked{% endif %} /> Won
+        </label>
+        <label class="flex items-center gap-1 text-xs text-[var(--ink-muted)]">
+          <input type="checkbox" name="stage_lost_{{ forloop.counter0 }}" {% if s.is_lost %}checked{% endif %} /> Lost
+        </label>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# --- Integrations --- #}
+  <section class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-5">
+    <h2 class="font-display font-bold text-lg text-[var(--ink-display)] mb-1">Kenyan-market integrations</h2>
+    <p class="text-xs text-[var(--ink-muted)] mb-4">Contracts wired (no live calls yet). Toggle per channel; real credentials added per tenant later.</p>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {% for itg in integrations %}
+      <label class="flex items-center gap-2 rounded-xl border border-[var(--hairline)] bg-[var(--page)] px-3 py-2.5 cursor-pointer">
+        <input type="checkbox" name="integration_{{ itg.channel }}" {% if itg.enabled %}checked{% endif %} />
+        <span class="text-sm font-semibold">{{ itg.get_channel_display }}</span>
+      </label>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="flex justify-end">
+    <button type="submit" class="px-5 py-2.5 rounded-xl brand-grad text-white font-semibold text-sm hover:opacity-90 transition">Save settings</button>
+  </div>
+</form>
+
+{# --- Outbound queue (proof of enqueue path) --- #}
+<section class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-5 mt-6">
+  <h2 class="font-display font-bold text-lg text-[var(--ink-display)] mb-1">Outbound message queue</h2>
+  <p class="text-xs text-[var(--ink-muted)] mb-4">Demo: enqueue a message to prove the integration queue path (no live delivery).</p>
+  <div class="flex flex-wrap items-end gap-3 mb-4" hx-target="#queue-body" hx-swap="innerHTML">
+    <select name="channel" class="px-3 py-2 rounded-xl border border-[var(--hairline)] bg-[var(--page)] text-sm">
+      {% for c in integrations %}<option value="{{ c.channel }}">{{ c.get_channel_display }}</option>{% endfor %}
+    </select>
+    <input name="recipient" placeholder="recipient (phone/no.)" class="px-3 py-2 rounded-xl border border-[var(--hairline)] bg-[var(--page)] text-sm w-48" />
+    <button class="px-4 py-2 rounded-xl brand-grad text-white text-sm font-semibold hover:opacity-90"
+            hx-post="{% url 'crm:integration_send' %}" hx-include="closest div">Enqueue</button>
+  </div>
+  <div id="queue-body" class="divide-y divide-[var(--hairline)]">
+    {% for m in queue %}
+    <div class="flex items-center justify-between py-2 text-sm">
+      <span><span class="font-semibold">{{ m.get_channel_display }}</span> → {{ m.recipient|default:"—" }}</span>
+      <span class="text-xs px-2 py-0.5 rounded-full {% if m.status == 'pending' %}bg-amber-500/15 text-amber-600{% elif m.status == 'sent' %}bg-emerald-500/15 text-emerald-600{% else %}bg-rose-500/15 text-rose-600{% endif %}">{{ m.get_status_display }}</span>
+    </div>
+    {% empty %}
+    <p class="text-sm text-[var(--ink-muted)] py-2">No messages queued yet.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

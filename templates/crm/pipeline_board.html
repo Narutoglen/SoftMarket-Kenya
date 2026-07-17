@@ -1,0 +1,21 @@
+{% extends "crm/base.html" %}
+{% block title %}Pipeline · {{ tenant.name }} CRM{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-5">
+  <div>
+    <h1 class="font-display font-extrabold text-2xl text-[var(--ink-display)]">Pipeline</h1>
+    <p class="text-xs text-[var(--ink-muted)] mt-0.5">Drag deals across stages — totals &amp; forecast update live.</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="{% url 'crm:pipeline_list' %}" class="text-sm font-semibold px-3.5 py-2 rounded-xl border border-[var(--hairline)] hover:bg-[var(--surface)] transition inline-flex items-center gap-1">
+      <i data-lucide="list" class="w-4 h-4"></i> List
+    </a>
+  </div>
+</div>
+
+{% include "crm/_pipeline_forecast.html" with summary=summary %}
+
+<div id="pipeline" class="mt-5">
+  {% include "crm/_pipeline_columns.html" with columns=columns summary=summary %}
+</div>
+{% endblock %}
