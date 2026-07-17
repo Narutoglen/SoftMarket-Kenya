@@ -1696,7 +1696,8 @@ html[data-theme="dark"] .hero-toggle {
   perspective: 1200px;
 }
 
-.voice-media .loop-video {
+.voice-media .loop-video,
+.voice-media .voice-image {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1704,6 +1705,10 @@ html[data-theme="dark"] .hero-toggle {
   object-fit: cover;
   opacity: 0;
   transition: opacity 0.6s ease;
+}
+
+.voice-media .voice-image {
+  opacity: 1;
 }
 
 .voice-card.is-playing .voice-media .loop-video {
