@@ -1709,7 +1709,8 @@ html[data-theme="dark"] .hero-toggle {
 
 /* Still image: show the whole artwork (no cropping/zoom) on a dark void */
 .voice-media .voice-image {
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center 42%;
   opacity: 1;
 }
 
