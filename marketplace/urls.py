@@ -1,5 +1,6 @@
 from django.contrib.sitemaps.views import sitemap
 from django.urls import path
+from django.views.generic import RedirectView
 
 from . import api, views
 from .seo import BlogSitemap, StaticViewSitemap, robots_txt
@@ -28,7 +29,9 @@ urlpatterns = [
     ),
     # --- Legacy server-rendered HTML (kept as fallback) ---
     path("", views.home, name="home"),
-    path("work/", views.work, name="work"),
+    path("team/", views.team, name="team"),
+    # --- Legacy alias (permanent redirect to avoid breaking old links) ---
+    path("work/", RedirectView.as_view(url="/team/", permanent=True), name="work"),
     path("about/", views.about, name="about"),
     path("process/", views.process, name="process"),
     path("blog/", views.blog_list, name="blog_list"),

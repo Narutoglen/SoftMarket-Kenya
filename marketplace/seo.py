@@ -4,7 +4,6 @@
 - BlogSitemap covers only PUBLISHED posts (drafts are excluded).
 - robots_txt view points crawlers at the sitemap.
 """
-from django.conf import settings
 from django.contrib.sitemaps import Sitemap
 from django.http import HttpResponse
 from django.urls import reverse
@@ -17,7 +16,7 @@ class StaticViewSitemap(Sitemap):
     priority = 0.7
 
     def items(self):
-        return ["marketplace:home", "marketplace:work", "marketplace:about",
+        return ["marketplace:home", "marketplace:team", "marketplace:about",
                 "marketplace:process", "marketplace:blog_list"]
 
     def location(self, item):

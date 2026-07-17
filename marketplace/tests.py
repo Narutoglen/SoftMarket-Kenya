@@ -4,8 +4,6 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from django.utils import timezone
-
 from .models import (
     Assignment,
     BlogPost,
@@ -185,7 +183,7 @@ class MarketplaceFlowTests(TestCase):
         self.assertEqual(project.status, ProjectRequest.Status.DEPOSIT_PAID)
 
     def test_studio_menu_pages_render(self):
-        for name in ["work", "about", "process", "blog_list"]:
+        for name in ["team", "about", "process", "blog_list"]:
             response = self.client.get(reverse(f"marketplace:{name}"))
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, "Our Team")

@@ -51,8 +51,8 @@ def home(request):
     return render(request, "marketplace/home.html")
 
 
-def work(request):
-    return render(request, "marketplace/work.html")
+def team(request):
+    return render(request, "marketplace/team.html")
 
 
 def about(request):
