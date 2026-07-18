@@ -237,3 +237,54 @@ class SecondTenantPreviewTests(TestCase):
         # only GreenVault's own contact counts
         self.assertEqual(resp.context["tenant"].contacts.count(), 1)
         self.assertContains(resp, "GreenVault Foods")
+
+
+class PublicIntakeRobustnessTests(TestCase):
+    """The public intake endpoints must degrade gracefully on garbage input."""
+
+    def setUp(self):
+        self.tenant = make_tenant()
+
+    def test_garbage_bant_values_do_not_500(self):
+        c = client_for()
+        resp = c.post(reverse("crm:lead_intake_api"), {
+            "first_name": "Garbage", "email": "g@x.com",
+            "bant_budget": "lots", "bant_authority": "9999",
+            "bant_need": "", "bant_timeline": "2.5",
+        })
+        self.assertEqual(resp.status_code, 201)
+        lead = Lead.objects.get(email="g@x.com")
+        self.assertEqual(lead.bant_budget, 0)      # "lots" -> default
+        self.assertEqual(lead.bant_authority, 3)   # 9999 -> clamped to 3
+        self.assertEqual(lead.bant_timeline, 0)    # "2.5" is not an int
+
+    def test_invalid_due_at_returns_400_not_500(self):
+        contact = Contact.objects.create(
+            tenant=self.tenant, first_name="D", email="d@x.com",
+        )
+        c = client_for()
+        resp = c.post(
+            reverse("crm:activity_create_api", args=[contact.pk]),
+            {"subject": "Call", "due_at": "not-a-date"},
+        )
+        self.assertEqual(resp.status_code, 400)
+        resp = c.post(
+            reverse("crm:activity_create_api", args=[contact.pk]),
+            {"subject": "Call", "due_at": "2026-08-01T10:00:00"},
+        )
+        self.assertEqual(resp.status_code, 201)
+
+    def test_settings_save_bad_probability_does_not_500(self):
+        c = client_for()
+        resp = c.post(reverse("crm:crm_settings_save"), {
+            "name": self.tenant.name,
+            "brand_primary_color": "#6d28d9",
+            "brand_accent_color": "#22d3ee",
+            "logo_url": "",
+            "stage_key_0": "proposal",
+            "stage_label_0": "Proposal",
+            "stage_prob_0": "not-a-number",
+        })
+        self.assertEqual(resp.status_code, 302)
+        stage = TenantStage.objects.get(tenant=self.tenant, key="proposal")
+        self.assertEqual(stage.probability, 50)

@@ -232,3 +232,105 @@ class MarketplaceFlowTests(TestCase):
         )
 
         self.assertIsNotNone(post.published_at)
+
+
+class PaymentReliabilityTests(TestCase):
+    def _project(self):
+        return ProjectRequest.objects.create(
+            name="Rel Client",
+            phone="0712345678",
+            email="rel@example.com",
+            service_label="Business website",
+            budget="KSh 20,000-80,000",
+            timeline="Within 1-2 months",
+            details="Reliability test.",
+            deposit_amount=2_000,
+        )
+
+    def test_duplicate_checkout_request_id_rejected(self):
+        from django.db import IntegrityError
+
+        project = self._project()
+        Payment.objects.create(
+            project=project, amount=2_000, phone="0712345678",
+            checkout_request_id="ws_CO_DUP",
+        )
+        with self.assertRaises(IntegrityError):
+            Payment.objects.create(
+                project=project, amount=2_000, phone="0712345678",
+                checkout_request_id="ws_CO_DUP",
+            )
+
+    def test_blank_checkout_ids_are_not_unique_constrained(self):
+        project = self._project()
+        Payment.objects.create(project=project, amount=2_000, phone="0712345678")
+        other = ProjectRequest.objects.create(
+            name="Other", phone="0700000000", email="other@example.com",
+            service_label="Web app", budget="-", timeline="-", details="-",
+        )
+        # Second blank-checkout payment (different project) must be allowed.
+        Payment.objects.create(project=other, amount=5_000, phone="0700000000")
+        self.assertEqual(Payment.objects.filter(checkout_request_id="").count(), 2)
+
+    def test_create_deposit_payment_reuses_open_payment(self):
+        from .services import create_deposit_payment
+
+        project = self._project()
+        first = create_deposit_payment(project)
+        second = create_deposit_payment(project)
+        self.assertEqual(first.pk, second.pk)
+        self.assertEqual(Payment.objects.filter(project=project).count(), 1)
+        # Quote changed -> the open payment is refreshed, not duplicated.
+        project.deposit_amount = 5_000
+        third = create_deposit_payment(project)
+        self.assertEqual(third.pk, first.pk)
+        self.assertEqual(third.amount, 5_000)
+
+    def test_create_deposit_payment_does_not_reuse_pushed_payment(self):
+        from .services import create_deposit_payment
+
+        project = self._project()
+        pushed = create_deposit_payment(project)
+        pushed.checkout_request_id = "ws_CO_PUSHED"
+        pushed.status = Payment.Status.STK_SENT
+        pushed.save()
+        fresh = create_deposit_payment(project)
+        self.assertNotEqual(fresh.pk, pushed.pk)
+
+    def test_stk_network_error_returns_502_and_marks_payment_failed(self):
+        from unittest.mock import patch
+        import requests as requests_lib
+
+        User.objects.create_superuser("relstaff", "rel@example.com", "password")
+        self.client.login(username="relstaff", password="password")
+        project = self._project()
+
+        with self.settings(
+            MPESA_CONSUMER_KEY="k", MPESA_CONSUMER_SECRET="s",
+            MPESA_BUSINESS_SHORTCODE="174379", MPESA_PASSKEY="p",
+            MPESA_CALLBACK_URL="https://example.com/cb",
+        ), patch(
+            "marketplace.services.requests.get",
+            side_effect=requests_lib.ConnectionError("boom"),
+        ), patch(
+            "marketplace.services.requests.post",
+            side_effect=requests_lib.ConnectionError("boom"),
+        ):
+            resp = self.client.post(
+                reverse("marketplace:initiate_mpesa_deposit", args=[project.pk])
+            )
+
+        self.assertEqual(resp.status_code, 502)
+        payment = Payment.objects.get(project=project)
+        self.assertEqual(payment.status, Payment.Status.FAILED)
+        self.assertIn("STK push failed", payment.result_description)
+
+    def test_stk_not_configured_returns_json_not_500(self):
+        User.objects.create_superuser("relstaff2", "rel2@example.com", "password")
+        self.client.login(username="relstaff2", password="password")
+        project = self._project()
+        resp = self.client.post(
+            reverse("marketplace:initiate_mpesa_deposit", args=[project.pk])
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.json()["result"]["configured"])

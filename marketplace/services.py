@@ -8,6 +8,7 @@ from xml.sax.saxutils import escape
 import requests
 from django.conf import settings
 from django.core.mail import send_mail
+from django.db import transaction
 from django.db.models import Count, Sum
 from django.utils import timezone
 
@@ -324,31 +325,63 @@ def handle_mpesa_callback(payload):
     body = payload.get("Body", {})
     stk = body.get("stkCallback", {})
     checkout_id = stk.get("CheckoutRequestID", "")
-    payment = Payment.objects.filter(checkout_request_id=checkout_id).first()
-    if not payment:
-        return None
+    # Money mutation: lock the payment row and update payment + project status
+    # in one transaction so concurrent/duplicate callbacks cannot interleave
+    # (e.g. double-processing a success, or a success and a failure racing).
+    with transaction.atomic():
+        payment = (
+            Payment.objects.select_for_update()
+            .filter(checkout_request_id=checkout_id)
+            .first()
+        )
+        if not payment:
+            return None
 
-    result_code = str(stk.get("ResultCode", ""))
-    payment.result_code = result_code
-    payment.result_description = stk.get("ResultDesc", "")
-    payment.callback_payload = payload
+        result_code = str(stk.get("ResultCode", ""))
+        payment.result_code = result_code
+        payment.result_description = stk.get("ResultDesc", "")
+        payment.callback_payload = payload
 
-    metadata = stk.get("CallbackMetadata", {}).get("Item", [])
-    values = {item.get("Name"): item.get("Value") for item in metadata}
-    if result_code == "0":
-        payment.status = Payment.Status.PAID
-        payment.mpesa_receipt = values.get("MpesaReceiptNumber", "")
-        payment.project.status = ProjectRequest.Status.DEPOSIT_PAID
-        payment.project.save(update_fields=["status", "updated_at"])
-    else:
-        payment.status = Payment.Status.FAILED
-    payment.save()
+        metadata = stk.get("CallbackMetadata", {}).get("Item", [])
+        values = {item.get("Name"): item.get("Value") for item in metadata}
+        if result_code == "0":
+            payment.status = Payment.Status.PAID
+            payment.mpesa_receipt = values.get("MpesaReceiptNumber", "")
+            payment.project.status = ProjectRequest.Status.DEPOSIT_PAID
+            payment.project.save(update_fields=["status", "updated_at"])
+        else:
+            payment.status = Payment.Status.FAILED
+        payment.save()
     return payment
 
 
 def create_deposit_payment(project):
+    """Get-or-create the open deposit payment for a project.
+
+    Previously every click created a brand-new Payment row, so repeated
+    "initiate deposit" actions piled up duplicate pending payments. Reuse the
+    open (pending, not-yet-pushed) payment instead, refreshing amount/phone in
+    case the quote or contact number changed.
+    """
     amount = project.deposit_amount or 0
-    return Payment.objects.create(project=project, amount=amount, phone=project.phone)
+    with transaction.atomic():
+        payment = (
+            Payment.objects.select_for_update()
+            .filter(
+                project=project,
+                status=Payment.Status.PENDING,
+                checkout_request_id="",
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        if payment:
+            if payment.amount != amount or payment.phone != project.phone:
+                payment.amount = amount
+                payment.phone = project.phone
+                payment.save(update_fields=["amount", "phone", "updated_at"])
+            return payment
+        return Payment.objects.create(project=project, amount=amount, phone=project.phone)
 
 
 def analytics_summary():

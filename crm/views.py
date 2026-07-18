@@ -416,7 +416,11 @@ def crm_settings_save(request):
         if not key:
             break
         label = request.POST.get(f"stage_label_{i}", key)
-        prob = int(request.POST.get(f"stage_prob_{i}", 50) or 50)
+        try:
+            prob = int(request.POST.get(f"stage_prob_{i}") or 50)
+        except (TypeError, ValueError):
+            prob = 50
+        prob = max(0, min(prob, 100))
         is_won = request.POST.get(f"stage_won_{i}") == "on"
         is_lost = request.POST.get(f"stage_lost_{i}") == "on"
         TenantStage.objects.update_or_create(

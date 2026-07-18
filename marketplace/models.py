@@ -147,6 +147,16 @@ class Payment(TimeStampedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        constraints = [
+            # One payment row per Daraja checkout: duplicate callbacks or a
+            # double-registered STK push can never settle against two rows.
+            # Blank ids (payments not yet pushed) are exempt.
+            models.UniqueConstraint(
+                fields=["checkout_request_id"],
+                condition=~models.Q(checkout_request_id=""),
+                name="uniq_payment_checkout_request_id",
+            )
+        ]
 
     def __str__(self):
         return f"{self.project} - KSh {self.amount} ({self.get_status_display()})"

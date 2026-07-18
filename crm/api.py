@@ -18,6 +18,8 @@ Endpoints (namespaced under /api/crm/):
   POST /api/crm/contacts/merge/   dedupe/merge by email or phone
 """
 
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from rest_framework import serializers
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -38,6 +40,19 @@ def resolve_tenant(request):
     """Resolve the active CRM instance from header or default 'softmarket'."""
     slug = request.headers.get("X-CRM-Instance") or request.GET.get("instance") or "softmarket"
     return Tenant.objects.filter(slug=slug, active=True).first()
+
+
+def _to_int(value, default=0, lo=0, hi=3):
+    """Defensively coerce public-form input to a bounded int.
+
+    Garbage (``"lots"``, ``None``, floats-as-strings) must degrade to the
+    default instead of raising a 500 on the public intake endpoint.
+    """
+    try:
+        result = int(value)
+    except (TypeError, ValueError):
+        return default
+    return max(lo, min(result, hi))
 
 
 class LeadSerializer(serializers.ModelSerializer):
@@ -139,10 +154,10 @@ class LeadIntakeView(APIView):
             territory=data.get("territory", ""),
             source=data.get("source", Lead.Source.WEB_FORM),
             message=data.get("message", ""),
-            bant_budget=int(data.get("bant_budget", 0) or 0),
-            bant_authority=int(data.get("bant_authority", 0) or 0),
-            bant_need=int(data.get("bant_need", 0) or 0),
-            bant_timeline=int(data.get("bant_timeline", 0) or 0),
+            bant_budget=_to_int(data.get("bant_budget", 0) or 0),
+            bant_authority=_to_int(data.get("bant_authority", 0) or 0),
+            bant_need=_to_int(data.get("bant_need", 0) or 0),
+            bant_timeline=_to_int(data.get("bant_timeline", 0) or 0),
         )
         # Automation: score BANT + auto-assign owner + auto-responder email.
         services.intake_lead(lead)
@@ -235,13 +250,25 @@ class ActivityCreateView(APIView):
         if not contact:
             return Response({"detail": "Contact not found."}, status=404)
         data = request.data
+        # Validate due_at instead of passing the raw string to the DB layer
+        # (an unparseable value used to raise -> 500).
+        due_at = None
+        due_raw = data.get("due_at")
+        if due_raw:
+            due_at = parse_datetime(str(due_raw))
+            if due_at is None:
+                return Response(
+                    {"detail": "Invalid due_at; use an ISO 8601 datetime."}, status=400
+                )
+            if timezone.is_naive(due_at):
+                due_at = timezone.make_aware(due_at)
         activity = Activity.objects.create(
             tenant=tenant,
             contact=contact,
             type=data.get("type", Activity.Type.NOTE),
             subject=data.get("subject", ""),
             notes=data.get("notes", ""),
-            due_at=data.get("due_at"),
+            due_at=due_at,
             done=bool(data.get("done", False)),
         )
         return Response(ActivitySerializer(activity).data, status=201)

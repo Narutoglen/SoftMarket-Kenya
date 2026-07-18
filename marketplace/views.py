@@ -1,3 +1,4 @@
+import requests
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse, JsonResponse
@@ -110,7 +111,21 @@ def initiate_mpesa_deposit(request, project_id):
     if not project.deposit_amount:
         generate_quote(project)
     payment = create_deposit_payment(project)
-    result = MpesaClient().initiate_stk_push(payment)
+    try:
+        result = MpesaClient().initiate_stk_push(payment)
+    except requests.RequestException as exc:
+        # A Safaricom outage/timeout must degrade gracefully, not 500. The
+        # payment is marked failed with the reason so staff can retry.
+        payment.status = Payment.Status.FAILED
+        payment.result_description = f"STK push failed: {exc}"
+        payment.save(update_fields=["status", "result_description", "updated_at"])
+        return JsonResponse(
+            {
+                "payment_id": payment.id,
+                "error": "M-Pesa request failed. Please try again shortly.",
+            },
+            status=502,
+        )
     return JsonResponse({"payment_id": payment.id, "result": result})
 
 
