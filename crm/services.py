@@ -8,7 +8,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.mail import send_mail
-from django.db.models import F
+from django.db.models import Count, F, Max, Sum
 from django.utils import timezone
 
 from .models import (
@@ -218,13 +218,21 @@ def pipeline_summary(tenant: Tenant):
         Opportunity.Stage.PROPOSAL,
         Opportunity.Stage.NEGOTIATION,
     ]
+    # One grouped aggregate query for all stages (previously two queries per
+    # stage plus loading every row just to sum amounts in Python).
+    totals = {
+        row["stage"]: row
+        for row in Opportunity.objects.filter(tenant=tenant)
+        .values("stage")
+        .annotate(count=Count("id"), value=Sum("amount"))
+    }
     rows = []
     total_open = 0
     weighted = 0
     for stage in open_stages:
-        opps = Opportunity.objects.filter(tenant=tenant, stage=stage)
-        count = opps.count()
-        value = sum(o.amount for o in opps)
+        agg = totals.get(stage, {})
+        count = agg.get("count") or 0
+        value = agg.get("value") or 0
         prob = {
             Opportunity.Stage.PROSPECTING: 10,
             Opportunity.Stage.QUALIFICATION: 30,
@@ -242,13 +250,11 @@ def pipeline_summary(tenant: Tenant):
             "probability": prob,
             "weighted": stage_weighted,
         })
-    won = Opportunity.objects.filter(tenant=tenant, stage=Opportunity.Stage.WON)
-    lost = Opportunity.objects.filter(tenant=tenant, stage=Opportunity.Stage.LOST)
     return {
         "open_pipeline_value": total_open,
         "weighted_forecast": weighted,
-        "won_value": sum(o.amount for o in won),
-        "lost_value": sum(o.amount for o in lost),
+        "won_value": (totals.get(Opportunity.Stage.WON) or {}).get("value") or 0,
+        "lost_value": (totals.get(Opportunity.Stage.LOST) or {}).get("value") or 0,
         "by_stage": rows,
         "generated_at": timezone.localtime(timezone.now()).isoformat(),
     }
@@ -309,11 +315,15 @@ def churn_candidates(tenant: Tenant, days: int = CHURN_THRESHOLD_DAYS):
     cutoff = timezone.now() - timedelta(days=days)
     now = timezone.now()
     rows = []
-    customers = Contact.objects.filter(
-        tenant=tenant, lifecycle=Contact.Lifecycle.CUSTOMER
-    ).select_related("account")
+    # Annotate the latest activity timestamp in the same query instead of one
+    # extra query per customer (classic N+1).
+    customers = (
+        Contact.objects.filter(tenant=tenant, lifecycle=Contact.Lifecycle.CUSTOMER)
+        .select_related("account")
+        .annotate(last_activity=Max("activities__created_at"))
+    )
     for c in customers:
-        last = last_activity_at(c)
+        last = c.last_activity
         if last is None or last < cutoff:
             days_quiet = None if last is None else (now - last).days
             rows.append({"contact": c, "last_activity": last, "days_quiet": days_quiet})

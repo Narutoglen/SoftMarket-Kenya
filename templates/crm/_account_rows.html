@@ -6,7 +6,7 @@
       <div class="w-9 h-9 rounded-full bg-[var(--hairline)] flex items-center justify-center text-xs font-bold text-[var(--ink-display)]">{{ a.name|first }}</div>
       <div class="min-w-0 flex-1">
         <p class="text-sm font-semibold text-[var(--ink-display)] truncate">{{ a.name }}</p>
-        <p class="text-xs text-[var(--ink-muted)] truncate">{{ a.industry|default:"—" }}{% if a.contacts.count %} · {{ a.contacts.count }} contact{{ a.contacts.count|pluralize }}{% endif %}</p>
+        <p class="text-xs text-[var(--ink-muted)] truncate">{{ a.industry|default:"—" }}{% if a.contact_count %} · {{ a.contact_count }} contact{{ a.contact_count|pluralize }}{% endif %}</p>
       </div>
     </a>
   </li>

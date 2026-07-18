@@ -6,7 +6,8 @@ the `HX-Request` header — list/delete views return partials or an
 """
 
 from django.contrib import messages
-from django.db.models import Q
+from django.core.paginator import Paginator
+from django.db.models import Count, Q, Sum
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
@@ -37,10 +38,13 @@ def is_htmx(request):
 def dashboard(request):
     tenant = get_tenant(request)
     contacts_count = Contact.objects.filter(tenant=tenant).count()
-    open_pipeline = Opportunity.objects.filter(tenant=tenant).exclude(
-        stage__in=[Opportunity.Stage.WON, Opportunity.Stage.LOST]
+    # Aggregate in the database instead of materialising every open deal.
+    pipeline_value = (
+        Opportunity.objects.filter(tenant=tenant)
+        .exclude(stage__in=[Opportunity.Stage.WON, Opportunity.Stage.LOST])
+        .aggregate(total=Sum("amount"))["total"]
+        or 0
     )
-    pipeline_value = sum(o.amount for o in open_pipeline)
     hot_leads = Lead.objects.filter(tenant=tenant, rating=Lead.Rating.HOT).count()
     tasks_due = Activity.objects.filter(
         tenant=tenant, type=Activity.Type.TASK, done=False
@@ -69,7 +73,8 @@ def contact_list(request):
             Q(first_name__icontains=q) | Q(last_name__icontains=q)
             | Q(email__icontains=q) | Q(phone__icontains=q)
         )
-    ctx = {"tenant": tenant, "contacts": qs, "q": q}
+    page_obj = Paginator(qs, 50).get_page(request.GET.get("page"))
+    ctx = {"tenant": tenant, "contacts": page_obj.object_list, "page_obj": page_obj, "q": q}
     if is_htmx(request):
         return render(request, "crm/_contact_rows.html", ctx)
     return render(request, "crm/contact_list.html", ctx)
@@ -132,10 +137,17 @@ def contact_delete(request, pk):
 def account_list(request):
     tenant = get_tenant(request)
     q = request.GET.get("q", "").strip()
-    qs = Account.objects.filter(tenant=tenant)
+    # contact_count is annotated so the row template does not fire a COUNT
+    # query (previously two) per rendered account.
+    qs = (
+        Account.objects.filter(tenant=tenant)
+        .annotate(contact_count=Count("contacts"))
+        .order_by("name")  # stable ordering so pagination is deterministic
+    )
     if q:
         qs = qs.filter(Q(name__icontains=q) | Q(industry__icontains=q))
-    ctx = {"tenant": tenant, "accounts": qs, "q": q}
+    page_obj = Paginator(qs, 50).get_page(request.GET.get("page"))
+    ctx = {"tenant": tenant, "accounts": page_obj.object_list, "page_obj": page_obj, "q": q}
     if is_htmx(request):
         return render(request, "crm/_account_rows.html", ctx)
     return render(request, "crm/account_list.html", ctx)
@@ -232,17 +244,25 @@ def activity_toggle(request, pk):
 # M6: stages come from the tenant's TenantStage config (services.tenant_stages),
 # so each white-label instance renders its own branded pipeline.
 # ---------------------------------------------------------------------------
-def _stage_summary(tenant):
+def _stage_summary(tenant, stages=None):
     """Per-stage open value + weighted forecast, reused by board + API."""
-    stages = services.tenant_stages(tenant)
+    if stages is None:
+        stages = services.tenant_stages(tenant)
+    # One grouped query for every stage instead of a query per stage.
+    totals = {
+        row["stage"]: row
+        for row in Opportunity.objects.filter(tenant=tenant)
+        .values("stage")
+        .annotate(count=Count("id"), value=Sum("amount"))
+    }
     open_value = 0
     weighted = 0
     won_value = 0
     lost_value = 0
     by_stage = []
     for ts in stages:
-        opps = list(Opportunity.objects.filter(tenant=tenant, stage=ts.key))
-        value = sum(o.amount for o in opps)
+        row = totals.get(ts.key, {})
+        value = row.get("value") or 0
         if ts.is_won:
             won_value = value
         elif ts.is_lost:
@@ -253,7 +273,7 @@ def _stage_summary(tenant):
         by_stage.append({
             "stage": ts.key,
             "stage_label": ts.label,
-            "count": len(opps),
+            "count": row.get("count") or 0,
             "value": value,
         })
     return {
@@ -265,11 +285,22 @@ def _stage_summary(tenant):
     }
 
 
-def _board_columns(tenant):
-    stages = services.tenant_stages(tenant)
+def _board_columns(tenant, stages=None):
+    if stages is None:
+        stages = services.tenant_stages(tenant)
+    # One query for the whole board; bucket rows per stage in Python instead
+    # of a query per column.
+    by_stage = {}
+    board_qs = (
+        Opportunity.objects.filter(tenant=tenant)
+        .select_related("contact", "account")  # cards render both names
+        .order_by("order", "-created_at")
+    )
+    for opp in board_qs:
+        by_stage.setdefault(opp.stage, []).append(opp)
     columns = []
     for ts in stages:
-        opps = list(Opportunity.objects.filter(tenant=tenant, stage=ts.key).order_by("order", "-created_at"))
+        opps = by_stage.get(ts.key, [])
         columns.append({
             "stage": ts.key,
             "stage_label": ts.label,
@@ -284,8 +315,11 @@ def _board_columns(tenant):
 
 def pipeline_board(request):
     tenant = get_tenant(request)
-    summary = _stage_summary(tenant)
-    columns = _board_columns(tenant)
+    # Fetch the tenant's stages once and share them across both helpers so the
+    # board renders without a duplicate TenantStage query.
+    stages = services.tenant_stages(tenant)
+    summary = _stage_summary(tenant, stages=stages)
+    columns = _board_columns(tenant, stages=stages)
     ctx = {"tenant": tenant, "active": "pipeline", "columns": columns, "summary": summary}
     if is_htmx(request):
         return render(request, "crm/_pipeline_columns.html", ctx)
@@ -294,7 +328,11 @@ def pipeline_board(request):
 
 def pipeline_list(request):
     tenant = get_tenant(request)
-    opps = Opportunity.objects.filter(tenant=tenant).order_by("stage", "order", "-created_at")
+    opps = (
+        Opportunity.objects.filter(tenant=tenant)
+        .select_related("contact")
+        .order_by("stage", "order", "-created_at")
+    )
     summary = _stage_summary(tenant)
     return render(request, "crm/pipeline_list.html", {
         "tenant": tenant, "active": "pipeline", "opps": opps, "summary": summary,
@@ -483,8 +521,10 @@ def lead_list(request):
     qs = Lead.objects.filter(tenant=tenant)
     if rating:
         qs = qs.filter(rating=rating)
+    page_obj = Paginator(qs, 50).get_page(request.GET.get("page"))
     return render(request, "crm/lead_list.html", {
-        "tenant": tenant, "leads": qs, "rating_filter": rating or "",
+        "tenant": tenant, "leads": page_obj.object_list, "page_obj": page_obj,
+        "rating_filter": rating or "",
     })
 
 

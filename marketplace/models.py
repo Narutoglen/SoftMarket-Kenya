@@ -99,6 +99,10 @@ class ProjectRequest(TimeStampedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            # Admin/list/analytics constantly filter on status.
+            models.Index(fields=["status"], name="idx_projectrequest_status"),
+        ]
 
     def __str__(self):
         return f"{self.name} - {self.service_label}"
@@ -147,6 +151,10 @@ class Payment(TimeStampedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            # Paid-deposit aggregation on the analytics dashboard.
+            models.Index(fields=["status"], name="idx_payment_status"),
+        ]
 
     def __str__(self):
         return f"{self.project} - KSh {self.amount} ({self.get_status_display()})"

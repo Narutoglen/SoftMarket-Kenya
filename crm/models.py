@@ -110,6 +110,10 @@ class Contact(InstanceScopedModel):
 
     class Meta:
         ordering = ["last_name", "first_name"]
+        indexes = [
+            # Churn radar / lifecycle filters are always tenant-scoped.
+            models.Index(fields=["tenant", "lifecycle"], name="idx_contact_tenant_lifecycle"),
+        ]
 
     @property
     def full_name(self):
@@ -144,6 +148,10 @@ class Activity(InstanceScopedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            # Follow-up buckets: open tasks per tenant.
+            models.Index(fields=["tenant", "type", "done"], name="idx_activity_tenant_type_done"),
+        ]
 
     def __str__(self):
         return f"{self.get_type_display()}: {self.subject or self.contact}"
@@ -193,6 +201,10 @@ class Lead(InstanceScopedModel):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            # Hot-lead counts + rating filters, always tenant-scoped.
+            models.Index(fields=["tenant", "rating"], name="idx_lead_tenant_rating"),
+        ]
 
     @property
     def full_name(self):
@@ -237,6 +249,10 @@ class Opportunity(InstanceScopedModel):
 
     class Meta:
         ordering = ["stage", "order", "-created_at"]
+        indexes = [
+            # Kanban columns + pipeline forecast group by stage per tenant.
+            models.Index(fields=["tenant", "stage"], name="idx_opp_tenant_stage"),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.get_stage_display()})"
