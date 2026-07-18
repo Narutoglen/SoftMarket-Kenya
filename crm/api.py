@@ -40,6 +40,24 @@ def resolve_tenant(request):
     return Tenant.objects.filter(slug=slug, active=True).first()
 
 
+def paginated_response(request, qs, serializer_class):
+    """Shared limit/offset pagination envelope (same shape as leads/contacts)."""
+    try:
+        limit = min(int(request.GET.get("limit", 100)), 500)
+        offset = max(int(request.GET.get("offset", 0)), 0)
+    except (TypeError, ValueError):
+        limit, offset = 100, 0
+    total = qs.count()
+    page = qs[offset:offset + limit]
+    return Response({
+        "count": total,
+        "limit": limit,
+        "offset": offset,
+        "next_offset": offset + limit if offset + limit < total else None,
+        "results": serializer_class(page, many=True).data,
+    })
+
+
 class LeadSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(read_only=True)
 
@@ -254,8 +272,10 @@ class AccountListView(APIView):
         tenant = resolve_tenant(request)
         if not tenant:
             return Response({"detail": "Unknown CRM instance."}, status=404)
-        return Response(AccountSerializer(
-            Account.objects.filter(tenant=tenant), many=True).data)
+        # Paginated like leads/contacts: no full-table dumps to the client.
+        return paginated_response(
+            request, Account.objects.filter(tenant=tenant), AccountSerializer
+        )
 
 
 class OpportunityListView(APIView):
@@ -265,8 +285,10 @@ class OpportunityListView(APIView):
         tenant = resolve_tenant(request)
         if not tenant:
             return Response({"detail": "Unknown CRM instance."}, status=404)
-        return Response(OpportunitySerializer(
-            Opportunity.objects.filter(tenant=tenant), many=True).data)
+        # Paginated like leads/contacts: no full-table dumps to the client.
+        return paginated_response(
+            request, Opportunity.objects.filter(tenant=tenant), OpportunitySerializer
+        )
 
 
 class PipelineView(APIView):

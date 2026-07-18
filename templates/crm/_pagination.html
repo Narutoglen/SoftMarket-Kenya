@@ -1,0 +1,16 @@
+{% comment %}Prev/next pager for paginated list pages. Expects `page_obj`; preserves ?q= / ?rating= filters.{% endcomment %}
+{% if page_obj.has_other_pages %}
+<nav class="flex items-center justify-between mt-4 text-sm text-[var(--ink-muted)]" aria-label="Pagination">
+  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} ({{ page_obj.paginator.count }} total)</span>
+  <div class="flex gap-2">
+    {% if page_obj.has_previous %}
+    <a class="px-3 py-1.5 rounded-lg border border-[var(--hairline)] hover:bg-[var(--surface)] font-semibold"
+       href="?page={{ page_obj.previous_page_number }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}{% if rating_filter %}&amp;rating={{ rating_filter|urlencode }}{% endif %}">Previous</a>
+    {% endif %}
+    {% if page_obj.has_next %}
+    <a class="px-3 py-1.5 rounded-lg border border-[var(--hairline)] hover:bg-[var(--surface)] font-semibold"
+       href="?page={{ page_obj.next_page_number }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}{% if rating_filter %}&amp;rating={{ rating_filter|urlencode }}{% endif %}">Next</a>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}

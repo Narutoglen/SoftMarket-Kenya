@@ -34,6 +34,10 @@ DEFAULT_SERVICES = [
 
 
 def seed_default_services():
+    # Called from hot paths (homepage GET, lead POST). One cheap EXISTS query
+    # short-circuits the 7 get_or_create round-trips once seeding has happened.
+    if ServiceCategory.objects.exists():
+        return
     for name, slug, min_price, max_price, deposit, monthly in DEFAULT_SERVICES:
         ServiceCategory.objects.get_or_create(
             slug=slug,

@@ -232,3 +232,15 @@ class MarketplaceFlowTests(TestCase):
         )
 
         self.assertIsNotNone(post.published_at)
+
+
+class SeedGuardTests(TestCase):
+    def test_homepage_does_not_reseed_when_services_exist(self):
+        from .models import ServiceCategory
+        from .services import seed_default_services
+
+        seed_default_services()
+        self.assertEqual(ServiceCategory.objects.count(), 7)
+        # Once seeded, the hot path costs a single EXISTS query.
+        with self.assertNumQueries(1):
+            seed_default_services()

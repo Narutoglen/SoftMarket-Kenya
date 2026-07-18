@@ -237,3 +237,96 @@ class SecondTenantPreviewTests(TestCase):
         # only GreenVault's own contact counts
         self.assertEqual(resp.context["tenant"].contacts.count(), 1)
         self.assertContains(resp, "GreenVault Foods")
+
+
+class QueryCountTests(TestCase):
+    """Regression net for the N+1 fixes: view query counts must stay flat as
+    data volume grows."""
+
+    def setUp(self):
+        self.tenant = make_tenant()
+        services.tenant_stages(self.tenant)
+        for i in range(12):
+            contact = Contact.objects.create(
+                tenant=self.tenant, first_name=f"C{i}", email=f"c{i}@x.com",
+                lifecycle=Contact.Lifecycle.CUSTOMER,
+            )
+            Opportunity.objects.create(
+                tenant=self.tenant, name=f"Deal {i}", contact=contact,
+                stage=["prospecting", "proposal", "won", "lost"][i % 4],
+                amount=10_000 + i,
+            )
+
+    def test_pipeline_board_query_count_is_flat(self):
+        c = client_for()
+        # tenant resolve + session/auth-ish + stages + 1 board query + 1 summary query
+        with self.assertNumQueries(4):
+            resp = c.get(reverse("crm:pipeline_board"))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_pipeline_summary_uses_single_aggregate(self):
+        with self.assertNumQueries(1):
+            summary = services.pipeline_summary(self.tenant)
+        self.assertEqual(summary["won_value"], sum(
+            o.amount for o in Opportunity.objects.filter(tenant=self.tenant, stage="won")
+        ))
+
+    def test_churn_candidates_single_query(self):
+        with self.assertNumQueries(1):
+            churn = services.churn_candidates(self.tenant)
+        self.assertEqual(len(churn), 12)  # no activities yet -> all quiet
+
+    def test_account_list_no_per_row_count_queries(self):
+        from .models import Account
+        for i in range(8):
+            Account.objects.create(tenant=self.tenant, name=f"Acme {i}")
+        c = client_for()
+        # tenant resolve + 1 count (paginator) + 1 page query
+        with self.assertNumQueries(3):
+            resp = c.get(reverse("crm:account_list"))
+        self.assertEqual(resp.status_code, 200)
+
+
+class PaginationTests(TestCase):
+    def setUp(self):
+        self.tenant = make_tenant()
+        contact = Contact.objects.create(
+            tenant=self.tenant, first_name="P", email="p@x.com",
+        )
+        for i in range(7):
+            Opportunity.objects.create(
+                tenant=self.tenant, name=f"Deal {i}", contact=contact,
+                stage="prospecting", amount=1_000,
+            )
+
+    def test_opportunity_api_is_paginated(self):
+        c = client_for()
+        resp = c.get(reverse("crm:opportunity_list_api"), {"limit": 3, "offset": 0})
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(data["count"], 7)
+        self.assertEqual(len(data["results"]), 3)
+        self.assertEqual(data["next_offset"], 3)
+
+    def test_account_api_is_paginated(self):
+        from .models import Account
+        for i in range(4):
+            Account.objects.create(tenant=self.tenant, name=f"Biz {i}")
+        c = client_for()
+        resp = c.get(reverse("crm:account_list_api"), {"limit": 2})
+        data = resp.json()
+        self.assertEqual(data["count"], 4)
+        self.assertEqual(len(data["results"]), 2)
+
+    def test_contact_list_page_param(self):
+        for i in range(55):
+            Contact.objects.create(
+                tenant=self.tenant, first_name=f"Bulk{i}", email=f"b{i}@x.com",
+            )
+        c = client_for()
+        resp = c.get(reverse("crm:contact_list"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.context["contacts"]), 50)
+        resp2 = c.get(reverse("crm:contact_list"), {"page": 2})
+        self.assertEqual(resp2.status_code, 200)
+        self.assertEqual(len(resp2.context["contacts"]), 6)  # 55 bulk + 1 setUp

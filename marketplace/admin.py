@@ -91,6 +91,7 @@ class ProjectRequestAdmin(admin.ModelAdmin):
 @admin.register(Assignment)
 class AssignmentAdmin(admin.ModelAdmin):
     list_display = ("project", "developer", "score", "status", "created_at")
+    list_select_related = ("project", "developer")
     list_filter = ("status", "developer__status")
     search_fields = ("project__name", "developer__name", "developer__stack")
 
@@ -98,6 +99,7 @@ class AssignmentAdmin(admin.ModelAdmin):
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
     list_display = ("project", "amount", "phone", "status", "mpesa_receipt", "created_at")
+    list_select_related = ("project",)
     list_filter = ("status", "created_at")
     search_fields = ("project__name", "phone", "checkout_request_id", "mpesa_receipt")
     readonly_fields = ("callback_payload", "merchant_request_id", "checkout_request_id")
