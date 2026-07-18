@@ -237,3 +237,50 @@ class SecondTenantPreviewTests(TestCase):
         # only GreenVault's own contact counts
         self.assertEqual(resp.context["tenant"].contacts.count(), 1)
         self.assertContains(resp, "GreenVault Foods")
+
+
+class CrmSmokeCharacterizationTests(TestCase):
+    """Safe smoke tests for CURRENT CRM behaviour on main (front office is
+    open — no auth fixes on this branch). Kept deliberately fix-agnostic."""
+
+    def setUp(self):
+        self.tenant = make_tenant()
+
+    def test_dashboard_renders(self):
+        c = Client(SERVER_NAME="127.0.0.1")
+        resp = c.get(reverse("crm:dashboard"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context["tenant"].slug, "softmarket")
+
+    def test_contact_and_account_lists_render(self):
+        c = Client(SERVER_NAME="127.0.0.1")
+        self.assertEqual(c.get(reverse("crm:contact_list")).status_code, 200)
+        self.assertEqual(c.get(reverse("crm:account_list")).status_code, 200)
+        self.assertEqual(c.get(reverse("crm:lead_list")).status_code, 200)
+        self.assertEqual(c.get(reverse("crm:pipeline_board")).status_code, 200)
+
+    def test_public_lead_intake_api_creates_lead(self):
+        c = Client(SERVER_NAME="127.0.0.1")
+        before = Lead.objects.filter(tenant=self.tenant).count()
+        resp = c.post(reverse("crm:lead_intake_api"), {
+            "first_name": "Smoke",
+            "last_name": "Lead",
+            "email": "smokelead@x.com",
+            "territory": "nairobi",
+        })
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(
+            Lead.objects.filter(tenant=self.tenant).count(), before + 1
+        )
+
+    def test_pipeline_summary_totals_are_consistent(self):
+        contact = Contact.objects.create(
+            tenant=self.tenant, first_name="P", email="p@x.com",
+        )
+        Opportunity.objects.create(
+            tenant=self.tenant, name="Deal", contact=contact,
+            stage=Opportunity.Stage.PROPOSAL, amount=100_000,
+        )
+        summary = services.pipeline_summary(self.tenant)
+        self.assertEqual(summary["open_pipeline_value"], 100_000)
+        self.assertGreaterEqual(summary["weighted_forecast"], 0)
