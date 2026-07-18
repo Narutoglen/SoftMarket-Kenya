@@ -1,9 +1,10 @@
 """JSON API for the white-label CRM core.
 
-Style mirrors ``marketplace.api``: DRF ``APIView`` + ``AllowAny`` for the
-public intake endpoint (no session/CSRF), and simple list/detail views for the
-internal front office. All data is scoped to a Tenant resolved from the
-``X-CRM-Instance`` header (defaults to ``softmarket``).
+Style mirrors ``marketplace.api``: DRF ``APIView``. The public lead-intake
+POST stays anonymous (throttled); every other endpoint is internal and
+requires a staff session (``IsAdminUser``) — tenant scoping via the
+``X-CRM-Instance`` header (default ``softmarket``) is a routing convenience,
+NOT an authorization boundary.
 
 Endpoints (namespaced under /api/crm/):
   POST /api/crm/leads/            public web-form intake -> auto BANT + assign
@@ -19,8 +20,10 @@ Endpoints (namespaced under /api/crm/):
 """
 
 from rest_framework import serializers
-from rest_framework.permissions import AllowAny
+from rest_framework.authentication import SessionAuthentication
+from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from .models import (
@@ -114,8 +117,24 @@ class ActivitySerializer(serializers.ModelSerializer):
 # Public intake: web-form -> lead (automation entry point)
 # ---------------------------------------------------------------------------
 class LeadIntakeView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []  # JSON API — no session/CSRF
+    """POST is the public web-form intake (anonymous, throttled).
+
+    GET lists the tenant's leads and is internal — staff only.
+    """
+
+    authentication_classes = [SessionAuthentication]
+
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [AllowAny()]
+        return [IsAdminUser()]
+
+    def get_throttles(self):
+        if self.request.method == "POST":
+            throttle = ScopedRateThrottle()
+            throttle.scope = "public-write"
+            return [throttle]
+        return []
 
     def get(self, request):
         # GET /api/crm/leads/ lists leads (documented contract + REST
@@ -158,7 +177,8 @@ class LeadIntakeView(APIView):
 
 
 class LeadListView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
+    authentication_classes = [SessionAuthentication]
 
     def get(self, request):
         tenant = resolve_tenant(request)
@@ -186,7 +206,8 @@ class LeadListView(APIView):
 
 
 class ContactListView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
+    authentication_classes = [SessionAuthentication]
 
     def get(self, request):
         tenant = resolve_tenant(request)
@@ -211,7 +232,8 @@ class ContactListView(APIView):
 
 
 class ContactDetailView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
+    authentication_classes = [SessionAuthentication]
 
     def get(self, request, pk):
         tenant = resolve_tenant(request)
@@ -224,8 +246,8 @@ class ContactDetailView(APIView):
 
 
 class ActivityCreateView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [IsAdminUser]
+    authentication_classes = [SessionAuthentication]
 
     def post(self, request, pk):
         tenant = resolve_tenant(request)
@@ -248,7 +270,8 @@ class ActivityCreateView(APIView):
 
 
 class AccountListView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
+    authentication_classes = [SessionAuthentication]
 
     def get(self, request):
         tenant = resolve_tenant(request)
@@ -259,7 +282,8 @@ class AccountListView(APIView):
 
 
 class OpportunityListView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
+    authentication_classes = [SessionAuthentication]
 
     def get(self, request):
         tenant = resolve_tenant(request)
@@ -270,7 +294,8 @@ class OpportunityListView(APIView):
 
 
 class PipelineView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
+    authentication_classes = [SessionAuthentication]
 
     def get(self, request):
         tenant = resolve_tenant(request)
@@ -280,8 +305,8 @@ class PipelineView(APIView):
 
 
 class LeadConvertView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [IsAdminUser]
+    authentication_classes = [SessionAuthentication]
 
     def post(self, request, pk):
         tenant = resolve_tenant(request)
@@ -299,8 +324,8 @@ class LeadConvertView(APIView):
 
 
 class ContactMergeView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [IsAdminUser]
+    authentication_classes = [SessionAuthentication]
 
     def post(self, request):
         tenant = resolve_tenant(request)

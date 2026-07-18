@@ -7,6 +7,7 @@ follow-up/churn buckets, and the integration enqueue path.
 The browser already proves the UI; these tests are the regression net.
 """
 
+from django.contrib.auth.models import User
 from django.test import TestCase, Client
 from django.urls import reverse
 
@@ -30,11 +31,25 @@ def make_tenant(slug="softmarket", **kwargs):
     return t
 
 
-def client_for(tenant_slug=None):
+def staff_login(client):
+    """The CRM front office + API are staff-only; log a staff user in."""
+    user, created = User.objects.get_or_create(
+        username="crm-staff", defaults={"is_staff": True}
+    )
+    if created:
+        user.set_password("password")
+        user.save()
+    client.login(username="crm-staff", password="password")
+    return user
+
+
+def client_for(tenant_slug=None, staff=True):
     """Test client that resolves the tenant via the X-CRM-Instance header."""
     c = Client(SERVER_NAME="127.0.0.1")
     if tenant_slug:
         c.defaults["HTTP_X_CRM_INSTANCE"] = tenant_slug
+    if staff:
+        staff_login(c)
     return c
 
 
@@ -52,7 +67,7 @@ class TenantIsolationTests(TestCase):
         make_tenant("softmarket")
         other = make_tenant("otherco")
         # request with no instance header resolves to softmarket
-        c = Client(SERVER_NAME="127.0.0.1")
+        c = client_for()
         resp = c.get(reverse("crm:dashboard"))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context["tenant"].slug, "softmarket")
@@ -237,3 +252,87 @@ class SecondTenantPreviewTests(TestCase):
         # only GreenVault's own contact counts
         self.assertEqual(resp.context["tenant"].contacts.count(), 1)
         self.assertContains(resp, "GreenVault Foods")
+
+
+class CrmAccessControlTests(TestCase):
+    """Regression net for the security hardening: the CRM front office and
+    JSON API must be staff-only; only the public lead intake stays open."""
+
+    def setUp(self):
+        self.tenant = make_tenant()
+        self.contact = Contact.objects.create(
+            tenant=self.tenant, first_name="Secret", email="secret@x.com",
+        )
+
+    def test_anonymous_cannot_view_crm_pages(self):
+        c = client_for(staff=False)
+        for name, args in [
+            ("crm:dashboard", []),
+            ("crm:contact_list", []),
+            ("crm:contact_detail", [self.contact.pk]),
+            ("crm:account_list", []),
+            ("crm:lead_list", []),
+            ("crm:pipeline_board", []),
+            ("crm:crm_settings", []),
+        ]:
+            resp = c.get(reverse(name, args=args))
+            # staff_member_required redirects anonymous users to the login page
+            self.assertEqual(resp.status_code, 302, name)
+            self.assertIn("login", resp["Location"], name)
+
+    def test_anonymous_cannot_delete_contact(self):
+        c = client_for(staff=False)
+        resp = c.post(reverse("crm:contact_delete", args=[self.contact.pk]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(Contact.objects.filter(pk=self.contact.pk).exists())
+
+    def test_anonymous_api_reads_denied(self):
+        c = client_for(staff=False)
+        for name in ["crm:contact_list_api", "crm:account_list_api",
+                     "crm:opportunity_list_api", "crm:pipeline_api",
+                     "crm:lead_list_api"]:
+            resp = c.get(reverse(name))
+            self.assertEqual(resp.status_code, 403, name)
+        # GET on the intake route (lead listing) is internal too
+        resp = c.get(reverse("crm:lead_intake_api"))
+        self.assertEqual(resp.status_code, 403)
+
+    def test_anonymous_api_writes_denied(self):
+        c = client_for(staff=False)
+        resp = c.post(reverse("crm:contact_merge"), {"email": "secret@x.com"})
+        self.assertEqual(resp.status_code, 403)
+        resp = c.post(
+            reverse("crm:activity_create_api", args=[self.contact.pk]),
+            {"subject": "spy note"},
+        )
+        self.assertEqual(resp.status_code, 403)
+
+    def test_public_lead_intake_still_open(self):
+        c = client_for(staff=False)
+        resp = c.post(reverse("crm:lead_intake_api"), {
+            "first_name": "Open", "email": "open@x.com",
+        })
+        self.assertEqual(resp.status_code, 201)
+        self.assertTrue(Lead.objects.filter(email="open@x.com").exists())
+
+    def test_staff_api_read_allowed_and_tenant_scoped(self):
+        other = make_tenant("otherco")
+        Contact.objects.create(tenant=other, first_name="Other", email="o@x.com")
+        c = client_for()  # softmarket + staff
+        resp = c.get(reverse("crm:contact_list_api"))
+        self.assertEqual(resp.status_code, 200)
+        emails = [r["email"] for r in resp.json()["results"]]
+        self.assertIn("secret@x.com", emails)
+        self.assertNotIn("o@x.com", emails)
+
+    def test_settings_save_rejects_bad_hex_color(self):
+        c = client_for()
+        resp = c.post(reverse("crm:crm_settings_save"), {
+            "brand_primary_color": "red;} body{display:none",
+            "brand_accent_color": "#112233",
+            "logo_url": "", "name": self.tenant.name,
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.tenant.refresh_from_db()
+        self.assertEqual(self.tenant.brand_primary_color, "#6d28d9")  # unchanged
+        self.assertEqual(self.tenant.brand_accent_color, "#112233")

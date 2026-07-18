@@ -317,6 +317,8 @@
     <form class="quote-form" id="quoteForm" name="project-brief" method="POST" action="{% url 'marketplace:home' %}">
       {% csrf_token %}
       <input type="hidden" name="form-name" value="project-brief" />
+      <!-- Honeypot: hidden spam trap; real users never fill this. -->
+      <input type="text" name="website_url" value="" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;height:0;width:0;opacity:0" />
       <input type="hidden" name="utm_source" />
       <input type="hidden" name="utm_medium" />
       <input type="hidden" name="utm_campaign" />

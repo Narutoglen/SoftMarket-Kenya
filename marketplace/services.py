@@ -321,23 +321,58 @@ def normalize_phone(phone):
 
 
 def handle_mpesa_callback(payload):
+    if not isinstance(payload, dict):
+        return None
     body = payload.get("Body", {})
-    stk = body.get("stkCallback", {})
-    checkout_id = stk.get("CheckoutRequestID", "")
+    stk = body.get("stkCallback", {}) if isinstance(body, dict) else {}
+    if not isinstance(stk, dict):
+        return None
+    checkout_id = stk.get("CheckoutRequestID") or ""
+    # A blank checkout id must never match: payments created before the STK
+    # push have checkout_request_id="" and would otherwise be attacker-markable.
+    if not checkout_id:
+        return None
     payment = Payment.objects.filter(checkout_request_id=checkout_id).first()
     if not payment:
         return None
 
+    # Idempotency / replay safety: callbacks may only settle an in-flight
+    # payment. Once a payment is terminal (paid/failed/cancelled/refunded),
+    # further callbacks — including replayed failures after a success — are
+    # ignored instead of overwriting the recorded outcome.
+    if payment.status not in {Payment.Status.PENDING, Payment.Status.STK_SENT}:
+        return payment
+
     result_code = str(stk.get("ResultCode", ""))
     payment.result_code = result_code
-    payment.result_description = stk.get("ResultDesc", "")
+    payment.result_description = str(stk.get("ResultDesc", ""))
     payment.callback_payload = payload
 
-    metadata = stk.get("CallbackMetadata", {}).get("Item", [])
-    values = {item.get("Name"): item.get("Value") for item in metadata}
+    metadata = stk.get("CallbackMetadata", {})
+    items = metadata.get("Item", []) if isinstance(metadata, dict) else []
+    values = {
+        item.get("Name"): item.get("Value")
+        for item in items
+        if isinstance(item, dict)
+    }
     if result_code == "0":
+        # Validate the settled amount against what we asked for. A success
+        # callback for the wrong amount is never accepted as payment.
+        callback_amount = values.get("Amount")
+        if callback_amount is not None:
+            try:
+                amount_matches = int(float(callback_amount)) == int(payment.amount)
+            except (TypeError, ValueError):
+                amount_matches = False
+            if not amount_matches:
+                payment.result_description = (
+                    f"Amount mismatch: callback reported {callback_amount!r}, "
+                    f"expected {payment.amount}. Payment left for manual review."
+                )
+                payment.save()
+                return payment
         payment.status = Payment.Status.PAID
-        payment.mpesa_receipt = values.get("MpesaReceiptNumber", "")
+        payment.mpesa_receipt = str(values.get("MpesaReceiptNumber", "") or "")
         payment.project.status = ProjectRequest.Status.DEPOSIT_PAID
         payment.project.save(update_fields=["status", "updated_at"])
     else:
@@ -377,6 +412,21 @@ def analytics_summary():
     }
 
 
+def sanitize_spreadsheet_cell(value):
+    """Neutralise spreadsheet formula injection in exported cells.
+
+    Values originate from the public project-request form, so a lead named
+    ``=HYPERLINK(...)`` (or starting with ``+ - @``, tab or CR) would execute
+    as a formula when staff open the export in Excel/LibreOffice. Prefixing a
+    single quote makes Excel treat the cell as literal text.
+    """
+    if not isinstance(value, str) or not value:
+        return value
+    if value[0] in ("=", "+", "-", "@", "\t", "\r"):
+        return f"'{value}"
+    return value
+
+
 def project_requests_csv():
     buffer = StringIO()
     writer = csv.writer(buffer)
@@ -402,21 +452,24 @@ def project_requests_csv():
     for project in ProjectRequest.objects.all():
         writer.writerow(
             [
-                timezone.localtime(project.created_at).isoformat(),
-                project.name,
-                project.phone,
-                project.email,
-                project.service_label,
-                project.budget,
-                project.timeline,
-                project.estimated_min,
-                project.estimated_max,
-                project.deposit_amount,
-                project.status,
-                project.utm_source,
-                project.utm_medium,
-                project.utm_campaign,
-                project.details,
+                sanitize_spreadsheet_cell(value)
+                for value in [
+                    timezone.localtime(project.created_at).isoformat(),
+                    project.name,
+                    project.phone,
+                    project.email,
+                    project.service_label,
+                    project.budget,
+                    project.timeline,
+                    project.estimated_min,
+                    project.estimated_max,
+                    project.deposit_amount,
+                    project.status,
+                    project.utm_source,
+                    project.utm_medium,
+                    project.utm_campaign,
+                    project.details,
+                ]
             ]
         )
     return buffer.getvalue()
@@ -470,8 +523,9 @@ def project_requests_xlsx():
             if isinstance(value, int):
                 cells.append(f'<c r="{cell_ref}"><v>{value}</v></c>')
             else:
+                safe_value = sanitize_spreadsheet_cell(str(value))
                 cells.append(
-                    f'<c r="{cell_ref}" t="inlineStr"><is><t>{escape(str(value))}</t></is></c>'
+                    f'<c r="{cell_ref}" t="inlineStr"><is><t>{escape(safe_value)}</t></is></c>'
                 )
         sheet_rows.append(f"<row r=\"{row_idx}\">{''.join(cells)}</row>")
 

@@ -5,7 +5,10 @@ the `HX-Request` header — list/delete views return partials or an
 `HX-Redirect`, while plain requests get the full page.
 """
 
+import re
+
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -34,6 +37,7 @@ def is_htmx(request):
 # ---------------------------------------------------------------------------
 # Dashboard
 # ---------------------------------------------------------------------------
+@staff_member_required
 def dashboard(request):
     tenant = get_tenant(request)
     contacts_count = Contact.objects.filter(tenant=tenant).count()
@@ -60,6 +64,7 @@ def dashboard(request):
 # ---------------------------------------------------------------------------
 # Contacts
 # ---------------------------------------------------------------------------
+@staff_member_required
 def contact_list(request):
     tenant = get_tenant(request)
     q = request.GET.get("q", "").strip()
@@ -75,6 +80,7 @@ def contact_list(request):
     return render(request, "crm/contact_list.html", ctx)
 
 
+@staff_member_required
 def contact_detail(request, pk):
     tenant = get_tenant(request)
     contact = get_object_or_404(Contact, tenant=tenant, pk=pk)
@@ -86,6 +92,7 @@ def contact_detail(request, pk):
     })
 
 
+@staff_member_required
 def contact_form(request, pk=None):
     tenant = get_tenant(request)
     contact = get_object_or_404(Contact, tenant=tenant, pk=pk) if pk else None
@@ -114,6 +121,7 @@ def contact_form(request, pk=None):
     })
 
 
+@staff_member_required
 @require_POST
 def contact_delete(request, pk):
     tenant = get_tenant(request)
@@ -129,6 +137,7 @@ def contact_delete(request, pk):
 # ---------------------------------------------------------------------------
 # Accounts
 # ---------------------------------------------------------------------------
+@staff_member_required
 def account_list(request):
     tenant = get_tenant(request)
     q = request.GET.get("q", "").strip()
@@ -141,6 +150,7 @@ def account_list(request):
     return render(request, "crm/account_list.html", ctx)
 
 
+@staff_member_required
 def account_detail(request, pk):
     tenant = get_tenant(request)
     account = get_object_or_404(Account, tenant=tenant, pk=pk)
@@ -152,6 +162,7 @@ def account_detail(request, pk):
     })
 
 
+@staff_member_required
 def account_form(request, pk=None):
     tenant = get_tenant(request)
     account = get_object_or_404(Account, tenant=tenant, pk=pk) if pk else None
@@ -177,6 +188,7 @@ def account_form(request, pk=None):
     })
 
 
+@staff_member_required
 @require_POST
 def account_delete(request, pk):
     tenant = get_tenant(request)
@@ -192,6 +204,7 @@ def account_delete(request, pk):
 # ---------------------------------------------------------------------------
 # Activities (Milestone 2 — 360 timeline log + task toggle)
 # ---------------------------------------------------------------------------
+@staff_member_required
 def activity_create(request, contact_pk):
     tenant = get_tenant(request)
     contact = get_object_or_404(Contact, tenant=tenant, pk=contact_pk)
@@ -217,6 +230,7 @@ def activity_create(request, contact_pk):
     })
 
 
+@staff_member_required
 @require_POST
 def activity_toggle(request, pk):
     """HTMX toggle of a task's `done` checkbox — swaps just the timeline row."""
@@ -282,6 +296,7 @@ def _board_columns(tenant):
     return columns
 
 
+@staff_member_required
 def pipeline_board(request):
     tenant = get_tenant(request)
     summary = _stage_summary(tenant)
@@ -292,6 +307,7 @@ def pipeline_board(request):
     return render(request, "crm/pipeline_board.html", ctx)
 
 
+@staff_member_required
 def pipeline_list(request):
     tenant = get_tenant(request)
     opps = Opportunity.objects.filter(tenant=tenant).order_by("stage", "order", "-created_at")
@@ -301,6 +317,7 @@ def pipeline_list(request):
     })
 
 
+@staff_member_required
 @require_POST
 def opportunity_move(request, pk):
     """HTMX endpoint: move a deal to a new stage (+ optional new order).
@@ -336,6 +353,7 @@ def opportunity_move(request, pk):
 # ---------------------------------------------------------------------------
 # Follow-ups + churn (Milestone 5 — to-do list, check-off, churn radar)
 # ---------------------------------------------------------------------------
+@staff_member_required
 def followups(request):
     """Rep's daily to-do: open follow-up tasks bucketed by due date, plus the
     churn radar (customers gone quiet)."""
@@ -349,6 +367,7 @@ def followups(request):
     })
 
 
+@staff_member_required
 @require_POST
 def followup_toggle(request, pk):
     """Check off (or re-open) a follow-up task from the to-do list. HTMX swaps
@@ -367,6 +386,7 @@ def followup_toggle(request, pk):
     return redirect("crm:followups")
 
 
+@staff_member_required
 @require_POST
 def contact_lifecycle(request, pk):
     """Transition a contact's lifecycle stage (e.g. reactivate a churned
@@ -383,6 +403,7 @@ def contact_lifecycle(request, pk):
 # ---------------------------------------------------------------------------
 # White-label config (Milestone 6 — branding, stages, integrations)
 # ---------------------------------------------------------------------------
+@staff_member_required
 @require_GET
 def crm_settings(request):
     tenant = get_tenant(request)
@@ -398,12 +419,22 @@ def crm_settings(request):
     })
 
 
+_HEX_COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
+
+
+@staff_member_required
 @require_POST
 def crm_settings_save(request):
     """Persist branding colors/logo + per-tenant pipeline stages + integration toggles."""
     tenant = get_tenant(request)
-    tenant.brand_primary_color = request.POST.get("brand_primary_color", tenant.brand_primary_color)
-    tenant.brand_accent_color = request.POST.get("brand_accent_color", tenant.brand_accent_color)
+    # Brand colors are rendered into inline styles — only accept #rrggbb so a
+    # malformed/malicious value can never escape the style attribute.
+    primary = request.POST.get("brand_primary_color", "")
+    accent = request.POST.get("brand_accent_color", "")
+    if _HEX_COLOR.match(primary):
+        tenant.brand_primary_color = primary
+    if _HEX_COLOR.match(accent):
+        tenant.brand_accent_color = accent
     tenant.logo_url = request.POST.get("logo_url", tenant.logo_url)
     tenant.name = request.POST.get("name", tenant.name)
     tenant.save(update_fields=["name", "brand_primary_color", "brand_accent_color", "logo_url", "updated_at"])
@@ -437,6 +468,7 @@ def crm_settings_save(request):
     return redirect("crm:crm_settings")
 
 
+@staff_member_required
 @require_POST
 def integration_send(request):
     """Demo enqueue: prove the outbound queue path for a channel (no live call)."""
@@ -477,6 +509,7 @@ def lead_intake(request):
     return render(request, "crm/lead_form.html", {"tenant": tenant, "form": form})
 
 
+@staff_member_required
 def lead_list(request):
     tenant = get_tenant(request)
     rating = request.GET.get("rating")
@@ -488,12 +521,14 @@ def lead_list(request):
     })
 
 
+@staff_member_required
 def lead_detail(request, pk):
     tenant = get_tenant(request)
     lead = get_object_or_404(Lead, tenant=tenant, pk=pk)
     return render(request, "crm/lead_detail.html", {"tenant": tenant, "lead": lead})
 
 
+@staff_member_required
 @require_POST
 def lead_convert(request, pk):
     """Promote a lead into a Contact (the 360 hub). HTMX swaps the badge."""
