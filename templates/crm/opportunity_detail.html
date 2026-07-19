@@ -94,10 +94,7 @@
 
       <!-- INVOICES pane (P2 — coming next; shows the contract we proved) -->
       <div class="pane hidden" id="pane-invs">
-        <div class="rounded-xl border border-dashed border-[var(--hairline)] p-4 text-center">
-          <p class="text-sm font-semibold text-[var(--ink-display)]">Invoicing + eTIMS</p>
-          <p class="text-xs text-[var(--ink-muted)] mt-1">Generate an invoice → posts to KRA eTIMS. Wired in the next milestone (reuses IntegrationConfig + IntegrationMessage).</p>
-        </div>
+        {% include "crm/_opp_invoices.html" with invoices=opp.invoices.all %}
       </div>
 
       <!-- DOCS pane -->

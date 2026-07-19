@@ -18,6 +18,7 @@ Borrowed from FrugalTech CRM teaching:
 """
 
 from django.db import models
+from decimal import Decimal
 
 
 from marketplace.models import TimeStampedModel
@@ -107,6 +108,8 @@ class Contact(InstanceScopedModel):
     )
     # Territory/zipping used by automation routing (e.g. Kenyan county or postal code).
     territory = models.CharField(max_length=80, blank=True, help_text="County / region / ZIP for lead routing")
+    # KRA PIN (buyer) for eTIMS invoice submission.
+    billing_pin = models.CharField(max_length=20, blank=True, help_text="KRA PIN / VAT number for eTIMS")
 
     class Meta:
         ordering = ["last_name", "first_name"]
@@ -302,6 +305,65 @@ class IntegrationConfig(InstanceScopedModel):
 
     def __str__(self):
         return f"{self.get_channel_display()} ({'on' if self.enabled else 'off'})"
+
+
+class Invoice(InstanceScopedModel):
+    """Deal-linked sales invoice. Generates an eTIMS payload on create.
+
+    P2: the invoice is created from the deal's Invoices tab. On save we
+    enqueue an `IntegrationMessage(etims)` carrying the KRA eTIMS payload
+    (reusing the M6 queue contract). Live eTIMS posting is a later worker —
+    here we prove the model + enqueue path, not the third-party call.
+    """
+
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        SENT = "sent", "Sent"
+        PAID = "paid", "Paid"
+        CANCELLED = "cancelled", "Cancelled"
+
+    class ETIMSStatus(models.TextChoices):
+        NOT_SENT = "not_sent", "Not submitted"
+        QUEUED = "queued", "Queued"
+        SUBMITTED = "submitted", "Submitted"
+        FAILED = "failed", "Failed"
+
+    opportunity = models.ForeignKey(
+        Opportunity, on_delete=models.CASCADE, related_name="invoices"
+    )
+    contact = models.ForeignKey(
+        Contact, on_delete=models.CASCADE, related_name="invoices"
+    )
+    number = models.CharField(max_length=40, unique=True)
+    # Money: Kenya VAT is 16%. Store base + vat; total is derived.
+    amount_excl_vat = models.DecimalField(max_digits=12, decimal_places=2)
+    vat_rate = models.DecimalField(max_digits=5, decimal_places=2, default=16.00)
+    status = models.CharField(
+        max_length=12, choices=Status.choices, default=Status.DRAFT
+    )
+    etims_status = models.CharField(
+        max_length=12, choices=ETIMSStatus.choices, default=ETIMSStatus.NOT_SENT
+    )
+    issue_date = models.DateField(auto_now_add=True)
+    due_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-issue_date", "-id"]
+
+    @property
+    def vat_amount(self):
+        rate = Decimal(str(self.vat_rate))
+        return (self.amount_excl_vat * rate / Decimal(100)).quantize(
+            Decimal("0.01")
+        )
+
+    @property
+    def total(self):
+        return (self.amount_excl_vat + self.vat_amount).quantize(Decimal("0.01"))
+
+    def __str__(self):
+        return f"INV {self.number} · {self.opportunity.name} ({self.status})"
 
 
 class IntegrationMessage(InstanceScopedModel):

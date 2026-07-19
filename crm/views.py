@@ -10,11 +10,12 @@ from django.db.models import Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
+from decimal import Decimal
 
 from .api import resolve_tenant
 from .forms import AccountForm, ActivityForm, ContactForm, PublicLeadForm
 from .models import (
-    Account, Activity, Contact, IntegrationConfig, IntegrationMessage,
+    Account, Activity, Contact, Invoice, IntegrationConfig, IntegrationMessage,
     Lead, Opportunity, Tenant, TenantStage,
 )
 from . import services
@@ -547,5 +548,45 @@ def opportunity_task_create(request, pk):
         tasks = opp.activities.filter(type=Activity.Type.TASK).order_by("done", "due_at")
         return render(request, "crm/_opp_tasks.html", {
             "tenant": tenant, "opp": opp, "tasks": tasks,
+        })
+    return redirect("crm:opportunity_detail", pk=opp.pk)
+
+
+@require_POST
+def opportunity_invoice_create(request, pk):
+    """Create a deal-linked invoice from the Invoices tab and enqueue the KRA
+    eTIMS submission (reuses the M6 IntegrationMessage queue contract). No live
+    third-party call yet — we prove the model + enqueue path."""
+    tenant = get_tenant(request)
+    opp = get_object_or_404(Opportunity, tenant=tenant, pk=pk)
+    try:
+        amount = Decimal(request.POST.get("amount") or "0")
+    except Exception:
+        amount = Decimal("0")
+    amount = max(amount, Decimal("0"))
+    if amount > 0:
+        count = opp.invoices.count() + 1
+        number = f"INV-{opp.pk}-{count:03d}"
+        inv = Invoice.objects.create(
+            tenant=tenant, opportunity=opp, contact=opp.contact,
+            number=number, amount_excl_vat=amount, status=Invoice.Status.DRAFT,
+        )
+        # Enqueue the eTIMS payload (worker posts it later).
+        services.enqueue_integration_message(
+            tenant, "etims", recipient=opp.contact.email or "",
+            payload={
+                "invoice_number": inv.number,
+                "buyer_pin": opp.contact.billing_pin or "",
+                "amount_excl_vat": str(inv.amount_excl_vat),
+                "vat_rate": str(inv.vat_rate),
+                "total": str(inv.total),
+            },
+        )
+        inv.etims_status = Invoice.ETIMSStatus.QUEUED
+        inv.save(update_fields=["etims_status"])
+    if is_htmx(request):
+        return render(request, "crm/_opp_invoices.html", {
+            "tenant": tenant, "opp": opp,
+            "invoices": opp.invoices.all(),
         })
     return redirect("crm:opportunity_detail", pk=opp.pk)
