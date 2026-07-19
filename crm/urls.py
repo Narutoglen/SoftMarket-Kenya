@@ -23,6 +23,8 @@ urlpatterns = [
     path("crm/pipeline/", views.pipeline_board, name="pipeline_board"),
     path("crm/pipeline/list/", views.pipeline_list, name="pipeline_list"),
     path("crm/opportunities/<int:pk>/move/", views.opportunity_move, name="opportunity_move"),
+    path("crm/opportunities/<int:pk>/", views.opportunity_detail, name="opportunity_detail"),
+    path("crm/opportunities/<int:pk>/tasks/", views.opportunity_task_create, name="opportunity_task_create"),
     # --- Follow-ups + churn (Milestone 5) ---
     path("crm/followups/", views.followups, name="followups"),
     path("crm/followups/<int:pk>/toggle/", views.followup_toggle, name="followup_toggle"),

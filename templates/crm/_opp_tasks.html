@@ -1,0 +1,22 @@
+{% comment %}Deal-linked task rail (HTMX partial). Swapped by opportunity_task_create
+and toggled in place by activity_toggle. Each task is an Activity(type=task)
+linked to the Opportunity so the work lives in the deal.{% endcomment %}
+<form hx-post="{% url 'crm:opportunity_task_create' opp.pk %}" hx-target="#pane-tasks" hx-swap="outerHTML"
+      class="flex gap-2 mb-3">
+  <input name="subject" placeholder="New task from this deal…"
+         class="flex-1 rounded-xl bg-[var(--page)] border border-[var(--hairline)] px-3 py-2 text-sm text-[var(--ink-display)] placeholder:text-[var(--ink-muted)] focus:border-[var(--accent)] outline-none" />
+  <button class="rounded-xl brand-bg text-white font-bold text-sm px-4">+ Add</button>
+</form>
+
+<div class="space-y-2" id="task-list">
+  {% for t in tasks %}
+  <div class="flex items-center gap-3 rounded-xl border border-[var(--hairline)] bg-[var(--page)] p-3 {% if t.done %}opacity-60{% endif %}">
+    <button hx-post="{% url 'crm:activity_toggle' t.pk %}" hx-target="#task-list" hx-swap="outerHTML"
+            class="w-4 h-4 rounded-md border-2 flex-none {% if t.done %}border-emerald-400 bg-emerald-400{% else %}border-[var(--ink-muted)]{% endif %}"></button>
+    <span class="flex-1 text-sm {% if t.done %}line-through text-[var(--ink-muted)]{% else %}text-[var(--ink-display)]{% endif %}">{{ t.subject }}</span>
+    {% if t.due_at %}<span class="text-[11px] text-[var(--ink-muted)]">{{ t.due_at|date:"M d" }}</span>{% endif %}
+  </div>
+  {% empty %}
+  <p class="text-sm text-[var(--ink-muted)]">No tasks yet — add one to start the delivery work.</p>
+  {% endfor %}
+</div>

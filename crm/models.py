@@ -136,6 +136,13 @@ class Activity(InstanceScopedModel):
     contact = models.ForeignKey(
         Contact, on_delete=models.CASCADE, related_name="activities"
     )
+    # Bitrix24-style: tasks/notes created from a deal stay linked to it so the
+    # work lives in the deal's right-rail (Opportunity detail page). Nullable so
+    # contact-level activities (legacy) keep working.
+    opportunity = models.ForeignKey(
+        "crm.Opportunity", on_delete=models.CASCADE, null=True, blank=True,
+        related_name="activities",
+    )
     type = models.CharField(max_length=20, choices=Type.choices, default=Type.NOTE)
     subject = models.CharField(max_length=200, blank=True)
     notes = models.TextField(blank=True)

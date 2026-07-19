@@ -504,3 +504,48 @@ def lead_convert(request, pk):
         return render(request, "crm/_lead_status.html", {"lead": lead, "contact": contact})
     messages.success(request, f"Lead converted to {contact.full_name}.")
     return redirect("crm:contact_detail", pk=contact.pk)
+
+
+# ---------------------------------------------------------------------------
+# Opportunity detail (the Bitrix24-style "deal as a workspace")
+# Two-panel page: left = deal intelligence + stage stepper; right = inline rail
+# (Tasks / Activities / Invoices / Documents) so the work stays in the deal.
+# ---------------------------------------------------------------------------
+def opportunity_detail(request, pk):
+    """Single-screen deal workspace. Tasks created here are deal-linked."""
+    tenant = get_tenant(request)
+    opp = get_object_or_404(Opportunity, tenant=tenant, pk=pk)
+    stages = services.tenant_stages(tenant)
+    current = next((s for s in stages if s.key == opp.stage), None)
+    weighted = round(opp.amount * (current.probability or 0) / 100) if current else 0
+    tasks = opp.activities.filter(type=Activity.Type.TASK).order_by("done", "due_at")
+    activities = opp.activities.exclude(type=Activity.Type.TASK).order_by("-created_at")[:30]
+    ctx = {
+        "tenant": tenant, "active": "pipeline", "opp": opp, "stages": stages,
+        "current_stage": current, "weighted": weighted,
+        "tasks": tasks, "activities": activities,
+    }
+    if is_htmx(request):
+        # Partial re-render when a task is toggled/added inside the rail.
+        return render(request, "crm/_opp_tasks.html", ctx)
+    return render(request, "crm/opportunity_detail.html", ctx)
+
+
+@require_POST
+def opportunity_task_create(request, pk):
+    """Create a deal-linked task from the right-rail. HTMX swaps the task list."""
+    tenant = get_tenant(request)
+    opp = get_object_or_404(Opportunity, tenant=tenant, pk=pk)
+    subject = (request.POST.get("subject") or "").strip()
+    if subject:
+        # Task is also a contact activity so it shows on the 360 timeline too.
+        Activity.objects.create(
+            tenant=tenant, contact=opp.contact, opportunity=opp,
+            type=Activity.Type.TASK, subject=subject, done=False,
+        )
+    if is_htmx(request):
+        tasks = opp.activities.filter(type=Activity.Type.TASK).order_by("done", "due_at")
+        return render(request, "crm/_opp_tasks.html", {
+            "tenant": tenant, "opp": opp, "tasks": tasks,
+        })
+    return redirect("crm:opportunity_detail", pk=opp.pk)

@@ -1,0 +1,128 @@
+{% extends "crm/base.html" %}
+{% load static %}
+
+{% block title %}{{ opp.name }} · {{ tenant.name }} CRM{% endblock %}
+
+{% block content %}
+<main class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+  <a href="{% url 'crm:pipeline_board' %}" class="text-sm text-[var(--ink-muted)] hover:brand-text">&larr; Pipeline</a>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-3">
+    <!-- LEFT: deal intelligence -->
+    <section class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-5">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h1 class="font-display text-2xl font-extrabold text-[var(--ink-display)] leading-tight">{{ opp.name }}</h1>
+          <p class="text-sm text-[var(--ink-muted)] mt-0.5">Opportunity · #{{ opp.pk }}</p>
+        </div>
+        <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-[color-mix(in_srgb,var(--accent)_18%,transparent)] text-[var(--accent2)]">{{ current_stage.label|default:opp.get_stage_display }}</span>
+      </div>
+
+      <p class="figure text-[34px] font-black text-[var(--ink-display)] mt-4 leading-none">KSh {{ opp.amount|floatformat:0 }}
+        {% if opp.amount %}<span class="text-base font-semibold text-[var(--ink-muted)]">/ deal</span>{% endif %}
+      </p>
+      <p class="text-sm text-[var(--ink-muted)] mt-1">Weighted: <span class="font-bold text-[var(--ink-display)]">KSh {{ weighted|floatformat:0 }}</span> ({{ current_stage.probability|default:0 }}% probability)</p>
+
+      <div class="grid grid-cols-3 gap-3 mt-4">
+        <div class="rounded-xl border border-[var(--hairline)] bg-[var(--page)] p-3">
+          <p class="text-[11px] font-semibold text-[var(--ink-muted)] uppercase">Client</p>
+          <a href="{{ opp.contact.get_absolute_url }}" class="text-sm font-semibold text-[var(--ink-display)] hover:brand-text">{{ opp.contact.full_name }}</a>
+          {% if opp.account %}<p class="text-xs text-[var(--ink-muted)]">{{ opp.account.name }}</p>{% endif %}
+        </div>
+        <div class="rounded-xl border border-[var(--hairline)] bg-[var(--page)] p-3">
+          <p class="text-[11px] font-semibold text-[var(--ink-muted)] uppercase">Owner</p>
+          <p class="text-sm font-semibold text-[var(--ink-display)]">{{ opp.owner|default:"Unassigned" }}</p>
+        </div>
+        <div class="rounded-xl border border-[var(--hairline)] bg-[var(--page)] p-3">
+          <p class="text-[11px] font-semibold text-[var(--ink-muted)] uppercase">Close by</p>
+          <p class="text-sm font-semibold text-[var(--ink-display)]">{{ opp.expected_close_date|default:"—" }}</p>
+        </div>
+      </div>
+
+      <!-- Stage stepper: click a stage to move the deal (HTMX) -->
+      <p class="text-[11px] font-semibold text-[var(--ink-muted)] uppercase mt-5 mb-2">Pipeline stage</p>
+      <div class="flex flex-wrap gap-2" id="stage-stepper">
+        {% for s in stages %}
+        <button hx-post="{% url 'crm:opportunity_move' opp.pk %}"
+                hx-vals='{"stage":"{{ s.key }}"}'
+                hx-target="#deal-workspace" hx-swap="outerHTML"
+                class="text-xs font-bold px-3 py-1.5 rounded-lg border transition
+                  {% if s.key == opp.stage %}border-[var(--accent)] text-[var(--ink-display)] brand-bg/10{% else %}border-[var(--hairline)] text-[var(--ink-muted)] hover:border-[var(--accent)]{% endif %}">
+          {{ s.label }}
+        </button>
+        {% endfor %}
+      </div>
+
+      <div class="flex gap-2 mt-4">
+        <button hx-post="{% url 'crm:opportunity_move' opp.pk %}" hx-vals='{"stage":"won"}'
+                hx-target="#deal-workspace" hx-swap="outerHTML"
+                class="flex-1 rounded-xl border border-emerald-500/50 text-emerald-400 font-bold py-2 text-sm hover:bg-emerald-500/10">Mark Won</button>
+        <button hx-post="{% url 'crm:opportunity_move' opp.pk %}" hx-vals='{"stage":"lost"}'
+                hx-target="#deal-workspace" hx-swap="outerHTML"
+                class="flex-1 rounded-xl border border-rose-500/50 text-rose-400 font-bold py-2 text-sm hover:bg-rose-500/10">Mark Lost</button>
+      </div>
+    </section>
+
+    <!-- RIGHT: inline work rail -->
+    <section id="deal-workspace" class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-5">
+      <div class="flex gap-1 mb-4" id="rail-tabs">
+        <button data-pane="tasks" class="flex-1 text-xs font-bold py-2 rounded-lg bg-[color-mix(in_srgb,var(--accent)_16%,transparent)] text-[var(--ink-display)]">Tasks</button>
+        <button data-pane="acts" class="flex-1 text-xs font-bold py-2 rounded-lg text-[var(--ink-muted)]">Activities</button>
+        <button data-pane="invs" class="flex-1 text-xs font-bold py-2 rounded-lg text-[var(--ink-muted)]">Invoices</button>
+        <button data-pane="docs" class="flex-1 text-xs font-bold py-2 rounded-lg text-[var(--ink-muted)]">Docs</button>
+      </div>
+
+      <!-- TASKS pane -->
+      <div class="pane" id="pane-tasks">
+        {% include "crm/_opp_tasks.html" %}
+      </div>
+
+      <!-- ACTIVITIES pane -->
+      <div class="pane hidden" id="pane-acts">
+        <div class="space-y-3">
+          {% for a in activities %}
+          <div class="border-l-2 border-[var(--accent)] pl-3">
+            <p class="text-sm font-semibold text-[var(--ink-display)]">{{ a.get_type_display }}: {{ a.subject }}</p>
+            {% if a.notes %}<p class="text-xs text-[var(--ink-muted)] mt-0.5">{{ a.notes }}</p>{% endif %}
+            <p class="text-[11px] text-[var(--ink-muted)] mt-1">{{ a.created_at|date:"M d, Y" }}</p>
+          </div>
+          {% empty %}
+          <p class="text-sm text-[var(--ink-muted)]">No activities logged against this deal yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- INVOICES pane (P2 — coming next; shows the contract we proved) -->
+      <div class="pane hidden" id="pane-invs">
+        <div class="rounded-xl border border-dashed border-[var(--hairline)] p-4 text-center">
+          <p class="text-sm font-semibold text-[var(--ink-display)]">Invoicing + eTIMS</p>
+          <p class="text-xs text-[var(--ink-muted)] mt-1">Generate an invoice → posts to KRA eTIMS. Wired in the next milestone (reuses IntegrationConfig + IntegrationMessage).</p>
+        </div>
+      </div>
+
+      <!-- DOCS pane -->
+      <div class="pane hidden" id="pane-docs">
+        <div class="rounded-xl border border-dashed border-[var(--hairline)] p-4 text-center">
+          <p class="text-sm font-semibold text-[var(--ink-display)]">Documents</p>
+          <p class="text-xs text-[var(--ink-muted)] mt-1">Upload proposals / contracts scoped to this deal. Planned module.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+  document.querySelectorAll('#rail-tabs button').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('#rail-tabs button').forEach(function (x) {
+        x.classList.remove('bg-[color-mix(in_srgb,var(--accent)_16%,transparent)]', 'text-[var(--ink-display)]');
+        x.classList.add('text-[var(--ink-muted)]');
+      });
+      b.classList.add('bg-[color-mix(in_srgb,var(--accent)_16%,transparent)]', 'text-[var(--ink-display)]');
+      b.classList.remove('text-[var(--ink-muted)]');
+      document.querySelectorAll('.pane').forEach(function (p) { p.classList.add('hidden'); });
+      document.getElementById('pane-' + b.dataset.pane).classList.remove('hidden');
+    };
+  });
+</script>
+{% endblock %}
