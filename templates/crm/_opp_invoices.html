@@ -24,6 +24,11 @@ submission via IntegrationMessage. Live eTIMS posting is a later worker.{% endco
       <span>VAT ({{ inv.vat_rate|floatformat:0 }}%): KSh {{ inv.vat_amount|floatformat:2 }}</span>
     </div>
     <p class="text-sm font-bold text-[var(--ink-display)] mt-0.5">Total: KSh {{ inv.total|floatformat:2 }}</p>
+    <button hx-post="{% url 'crm:opportunity_pay_request' opp.pk inv.pk %}"
+            hx-target="#pane-invs" hx-swap="outerHTML"
+            class="mt-2 w-full rounded-xl border border-[color-mix(in_srgb,var(--accent)_50%,transparent)] text-[var(--accent2)] font-bold text-sm py-1.5 hover:bg-[color-mix(in_srgb,var(--accent)_12%,transparent)]">
+      Request M-Pesa payment
+    </button>
   </div>
   {% empty %}
   <p class="text-sm text-[var(--ink-muted)]">No invoices yet. Generate one — it queues to KRA eTIMS automatically.</p>

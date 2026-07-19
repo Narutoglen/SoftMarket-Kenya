@@ -590,3 +590,33 @@ def opportunity_invoice_create(request, pk):
             "invoices": opp.invoices.all(),
         })
     return redirect("crm:opportunity_detail", pk=opp.pk)
+
+
+@require_POST
+def opportunity_pay_request(request, pk, invoice_pk):
+    """Request M-Pesa STK push for an invoice. Enqueues IntegrationMessage(mpesa)
+    with amount + phone (reuses the M6 queue contract). Live STK call = later worker.
+    The buyer phone comes from the contact; the tenant's shortcode lives in its
+    IntegrationConfig(mpesa).config_json."""
+    tenant = get_tenant(request)
+    opp = get_object_or_404(Opportunity, tenant=tenant, pk=pk)
+    inv = get_object_or_404(Invoice, tenant=tenant, pk=invoice_pk, opportunity=opp)
+    phone = (opp.contact.phone or "").strip().replace(" ", "")
+    if phone and inv.total > 0:
+        services.enqueue_integration_message(
+            tenant, "mpesa", recipient=phone,
+            payload={
+                "invoice_number": inv.number,
+                "phone": phone,
+                "amount": str(inv.total),
+                "opportunity": opp.name,
+            },
+        )
+        inv.status = Invoice.Status.SENT
+        inv.save(update_fields=["status"])
+    if is_htmx(request):
+        return render(request, "crm/_opp_invoices.html", {
+            "tenant": tenant, "opp": opp,
+            "invoices": opp.invoices.all(),
+        })
+    return redirect("crm:opportunity_detail", pk=opp.pk)
