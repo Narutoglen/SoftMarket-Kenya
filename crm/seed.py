@@ -27,12 +27,17 @@ def seed_softmarket_crm():
             "brand_accent_color": "#22d3ee",
             "logo_url": TENANT_LOGO_URL,
             "default_lead_owner": "Brian Mukwe",
+            "is_public": True,
         },
     )
     # Keep branding current on every run (idempotent).
     if tenant.logo_url != TENANT_LOGO_URL:
         tenant.logo_url = TENANT_LOGO_URL
         tenant.save(update_fields=["logo_url"])
+    # Force the public flag so the marketing site stays open (plan a).
+    if not tenant.is_public:
+        tenant.is_public = True
+        tenant.save(update_fields=["is_public"])
 
     # Demo account + contacts (the 360 hub).
     acme, _ = Account.objects.get_or_create(
@@ -147,8 +152,15 @@ def seed_second_tenant():
             "brand_accent_color": "#f59e0b",     # amber
             "logo_url": "",
             "default_lead_owner": "Laurine Achieng",
+            "is_public": False,
+            "access_code": "gv-demo-2026",
         },
     )
+    # Force private + demo code on every run so the gate stays in effect.
+    if tenant.is_public or tenant.access_code != "gv-demo-2026":
+        tenant.is_public = False
+        tenant.access_code = "gv-demo-2026"
+        tenant.save(update_fields=["is_public", "access_code"])
 
     # Per-tenant pipeline stages (different from SoftMarket's defaults).
     stage_specs = [

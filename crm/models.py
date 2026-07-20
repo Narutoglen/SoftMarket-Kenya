@@ -42,6 +42,15 @@ class Tenant(TimeStampedModel):
         max_length=120, blank=True, help_text="Fallback owner name if no territory match."
     )
     active = models.BooleanField(default=True)
+    # Public tenants (e.g. the company marketing/demo site) are open to anyone.
+    # Private tenants (paying clients) require a tenant login session. This keeps
+    # the SoftMarket public site browsing with NO login popup, while gating each
+    # client's data behind an authenticated session.
+    is_public = models.BooleanField(default=True, help_text="Open to anyone (no login). Untick for paying-client instances.")
+    # Shared access code for the lightweight tenant gate (plan a). Blank = no code
+    # required (defaults to open). Per-tenant, not per-user — the white-label client
+    # gate, not staff SSO.
+    access_code = models.CharField(max_length=64, blank=True, help_text="Client access code for the tenant login gate (plan a).")
 
     class Meta:
         ordering = ["name"]

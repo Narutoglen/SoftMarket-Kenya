@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Client login · SoftMarket CRM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --accent:#6d28d9; --accent2:#22d3ee; --page:#020617; --surface:#0f172a; --hairline:#1e293b; --ink-display:#f8fafc; --ink-muted:#94a3b8; }
+    body { font-family: 'Manrope', system-ui, sans-serif; }
+  </style>
+</head>
+<body class="bg-[var(--page)] text-[var(--ink-display)] min-h-screen flex items-center justify-center antialiased">
+  <div class="w-full max-w-sm">
+    <div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-7">
+      <div class="flex items-center gap-2.5 mb-1">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,var(--accent),var(--accent2));">
+          <span class="text-white font-extrabold">S</span>
+        </div>
+        <p class="font-display font-extrabold text-lg">SoftMarket <span style="color:var(--accent2)">CRM</span></p>
+      </div>
+      <p class="text-sm text-[var(--ink-muted)] mb-5">
+        {% if tenant %}Sign in to <span class="text-[var(--ink-display)] font-semibold">{{ tenant.name }}</span>{% else %}Client sign in{% endif %}
+      </p>
+
+      {% if error %}<p class="text-sm text-rose-400 mb-3">{{ error }}</p>{% endif %}
+
+      <form method="post" action="{% url 'crm:tenant_login_submit' %}" class="space-y-3">
+        {% csrf_token %}
+        <input type="hidden" name="instance" value="{{ slug }}" />
+        <input name="code" type="password" autofocus placeholder="Client access code"
+               class="w-full rounded-xl bg-[var(--page)] border border-[var(--hairline)] px-3 py-2.5 text-sm text-[var(--ink-display)] placeholder:text-[var(--ink-muted)] focus:border-[var(--accent)] outline-none" />
+        <button class="w-full rounded-xl py-2.5 font-bold text-white" style="background:var(--accent);">Enter workspace</button>
+      </form>
+
+      <a href="{% url 'crm:dashboard' %}" class="block text-center text-xs text-[var(--ink-muted)] mt-4 hover:underline">Back to SoftMarket</a>
+    </div>
+    <p class="text-center text-[11px] text-[var(--ink-muted)] mt-4">Prospects: the public SoftMarket site needs no login.</p>
+  </div>
+</body>
+</html>

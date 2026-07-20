@@ -87,6 +87,11 @@
           <i data-lucide="sun" class="hidden dark:inline-block w-4 h-4"></i>
           <i data-lucide="moon" class="inline-block dark:hidden w-4 h-4"></i>
         </button>
+        {% if tenant.is_public %}
+        <a href="{% url 'crm:tenant_login' %}" class="text-xs font-semibold px-3 py-2 rounded-xl border border-[var(--hairline)] text-[var(--ink-muted)] hover:text-[var(--ink-display)] transition">Client login</a>
+        {% else %}
+        <a href="{% url 'crm:tenant_logout' %}" class="text-xs font-semibold px-3 py-2 rounded-xl border border-[var(--hairline)] text-[var(--ink-muted)] hover:text-[var(--ink-display)] transition">Log out</a>
+        {% endif %}
       </div>
     </div>
   </header>

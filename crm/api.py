@@ -35,9 +35,22 @@ from . import services
 
 
 def resolve_tenant(request):
-    """Resolve the active CRM instance from header or default 'softmarket'."""
-    slug = request.headers.get("X-CRM-Instance") or request.GET.get("instance") or "softmarket"
-    return Tenant.objects.filter(slug=slug, active=True).first()
+    """Resolve the active CRM instance.
+
+    Order: explicit ?instance=/X-CRM-Instance header -> a tenant the visitor has
+    authenticated into this session (private tenants) -> the default 'softmarket'
+    public tenant.
+    """
+    slug = request.headers.get("X-CRM-Instance") or request.GET.get("instance")
+    if slug:
+        return Tenant.objects.filter(slug=slug, active=True).first()
+    # Private-tenant session choice (set by the tenant login view).
+    session_slug = request.session.get("crm_tenant")
+    if session_slug:
+        t = Tenant.objects.filter(slug=session_slug, active=True).first()
+        if t:
+            return t
+    return Tenant.objects.filter(slug="softmarket", active=True).first()
 
 
 class LeadSerializer(serializers.ModelSerializer):

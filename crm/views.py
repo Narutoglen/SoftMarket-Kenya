@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 from decimal import Decimal
 
@@ -28,8 +29,71 @@ def get_tenant(request):
     return tenant
 
 
+def require_tenant_access(view_func):
+    """Gate private (paying-client) tenants behind a tenant login session.
+
+    Public tenants (e.g. the SoftMarket marketing/demo site) are always open —
+    a prospect browsing the site never sees a login. Only a non-public tenant
+    redirects to the tenant login page (which is instant to satisfy).
+    """
+    from functools import wraps
+
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        tenant = resolve_tenant(request)
+        if tenant is None:
+            raise Http404("CRM instance not found.")
+        if not tenant.is_public and request.session.get("crm_tenant") != tenant.slug:
+            return redirect(f"{reverse('crm:tenant_login')}?instance={tenant.slug}")
+        return view_func(request, *args, **kwargs)
+    return _wrapped
+
+
 def is_htmx(request):
     return request.headers.get("HX-Request") == "true"
+
+
+# ---------------------------------------------------------------------------
+# Per-tenant login (plan a) — keeps the public site open, gates private tenants
+# ---------------------------------------------------------------------------
+@require_GET
+def tenant_login(request):
+    """Show the tenant login form. Public tenants never reach here (middleware
+    lets them through); this only renders for private tenants or a direct visit."""
+    slug = request.GET.get("instance") or request.session.get("crm_tenant") or "softmarket"
+    tenant = Tenant.objects.filter(slug=slug, active=True).first()
+    # If somehow a public tenant lands here, just go to its dashboard.
+    if tenant and tenant.is_public:
+        return redirect("crm:dashboard")
+    return render(request, "crm/tenant_login.html", {
+        "tenant": tenant, "active": "", "slug": slug,
+    })
+
+
+@require_POST
+def tenant_login_submit(request):
+    """Validate the tenant access code and start a tenant session. Lightweight:
+    one shared code per tenant (stored on the Tenant), no Django User accounts —
+    this is the white-label client gate, not staff SSO."""
+    slug = request.POST.get("instance") or request.session.get("crm_tenant") or "softmarket"
+    code = (request.POST.get("code") or "").strip()
+    tenant = Tenant.objects.filter(slug=slug, active=True).first()
+    if tenant is None:
+        raise Http404("CRM instance not found.")
+    expected = (getattr(tenant, "access_code", "") or "").strip()
+    if expected and code == expected:
+        request.session["crm_tenant"] = tenant.slug
+        request.session.modified = True
+        return redirect("crm:dashboard")
+    # Wrong/empty code -> re-render the form with an error (no lockout spam).
+    return render(request, "crm/tenant_login.html", {
+        "tenant": tenant, "active": "", "slug": slug, "error": "Invalid access code.",
+    })
+
+
+def tenant_logout(request):
+    request.session.pop("crm_tenant", None)
+    return redirect("crm:dashboard")
 
 
 # ---------------------------------------------------------------------------
