@@ -67,7 +67,9 @@
         {% endif %}
         <div class="leading-tight">
           <p class="font-display font-extrabold text-[15px] tracking-tight text-[var(--ink-display)]">{{ tenant.name }} <span class="brand-text">CRM</span></p>
-          <p class="text-[11px] text-[var(--ink-muted)] -mt-0.5">Front office</p>
+          <p class="text-[11px] text-[var(--ink-muted)] -mt-0.5">
+            {% if tenant.is_demo %}Demo workspace{% else %}Front office{% endif %}
+          </p>
         </div>
       </a>
 
@@ -95,6 +97,16 @@
       </div>
     </div>
   </header>
+
+  {% if tenant.is_demo %}
+  <div class="no-print bg-[color-mix(in_srgb,var(--accent)_14%,transparent)] border-b border-[color-mix(in_srgb,var(--accent)_25%,transparent)]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-center gap-3 text-[13px] text-[var(--ink-body)]">
+      <i data-lucide="flask-conical" class="w-4 h-4 text-[var(--accent)]"></i>
+      <span>You're viewing a <span class="font-semibold">demo workspace</span> with sample data.
+        <a href="{% url 'crm:client_access' %}" class="font-semibold text-[var(--accent)] hover:underline">Sign up</a> for your own private CRM.</span>
+    </div>
+  </div>
+  {% endif %}
 
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
 

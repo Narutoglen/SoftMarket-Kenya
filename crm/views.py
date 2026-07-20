@@ -26,6 +26,14 @@ def get_tenant(request):
     tenant = resolve_tenant(request)
     if not tenant:
         raise Http404("CRM instance not found.")
+    # Mark the demo state: an anonymous visitor on the PUBLIC company instance
+    # (i.e. not logged into any private tenant) is browsing the sample workspace.
+    # Signed-up clients never see this flag.
+    tenant.is_demo = (
+        not request.session.get("crm_tenant")
+        and tenant.is_public
+        and tenant.slug == "softmarket"
+    )
     return tenant
 
 
