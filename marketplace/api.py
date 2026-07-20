@@ -17,6 +17,7 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from .forms import DeveloperApplicationForm, ProjectRequestForm
@@ -191,6 +192,8 @@ class ProcessView(APIView):
 class LeadCreateView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []  # JSON API — no session/CSRF needed
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "public-write"
 
     def post(self, request):
         seed_default_services()
@@ -216,6 +219,8 @@ class LeadCreateView(APIView):
 class DeveloperApplicationCreateView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "public-write"
 
     def post(self, request):
         form = DeveloperApplicationForm(request.data)

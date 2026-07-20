@@ -29,7 +29,10 @@ def env_int(name, default):
         return default
 
 
-DEBUG = env_bool("DJANGO_DEBUG", True)
+# Secure by default: debug mode must be explicitly opted into via
+# DJANGO_DEBUG=True (local dev). A deploy that forgets the env var now runs
+# hardened instead of exposing tracebacks + the dev secret key.
+DEBUG = env_bool("DJANGO_DEBUG", False)
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 
 if not SECRET_KEY:
@@ -196,9 +199,10 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT", not DEBUG)
 SESSION_COOKIE_SECURE = env_bool("DJANGO_SESSION_COOKIE_SECURE", not DEBUG)
 CSRF_COOKIE_SECURE = env_bool("DJANGO_CSRF_COOKIE_SECURE", not DEBUG)
-SECURE_HSTS_SECONDS = env_int("DJANGO_SECURE_HSTS_SECONDS", 3600 if not DEBUG else 0)
+SECURE_HSTS_SECONDS = env_int("DJANGO_SECURE_HSTS_SECONDS", 60 * 60 * 24 * 30 if not DEBUG else 0)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", False)
 SECURE_HSTS_PRELOAD = env_bool("DJANGO_SECURE_HSTS_PRELOAD", False)
+SECURE_REFERRER_POLICY = os.environ.get("DJANGO_SECURE_REFERRER_POLICY", "same-origin")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -209,10 +213,16 @@ CORS_ALLOWED_ORIGINS = env_list(
     "http://localhost:3000,http://localhost:3100,https://softmarket-kenya-2qmt8bwvb-narutoglens-projects.vercel.app",
 )
 CORS_ALLOW_CREDENTIALS = False
+# Only the JSON API is meant to be consumed cross-origin; keep CORS headers off
+# the server-rendered pages, admin, and payment callbacks.
+CORS_URLS_REGEX = r"^/api/.*$"
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
     "DEFAULT_AUTHENTICATION_CLASSES": [],
+    # Anonymous write endpoints (lead intake, developer applications) opt into
+    # the "public-write" scope to cap spam/abuse.
+    "DEFAULT_THROTTLE_RATES": {"public-write": "30/hour"},
 }
 
 EMAIL_BACKEND = os.environ.get(
@@ -236,4 +246,8 @@ MPESA_CONSUMER_SECRET = os.environ.get("MPESA_CONSUMER_SECRET", "")
 MPESA_BUSINESS_SHORTCODE = os.environ.get("MPESA_BUSINESS_SHORTCODE", "")
 MPESA_PASSKEY = os.environ.get("MPESA_PASSKEY", "")
 MPESA_CALLBACK_URL = os.environ.get("MPESA_CALLBACK_URL", "")
+# Shared secret appended to the callback URL (?token=...). Safaricom offers no
+# signature on STK callbacks, so an unguessable token in the registered
+# callback URL is the standard way to reject forged "payment success" POSTs.
+MPESA_CALLBACK_TOKEN = os.environ.get("MPESA_CALLBACK_TOKEN", "")
 MPESA_TRANSACTION_TYPE = os.environ.get("MPESA_TRANSACTION_TYPE", "CustomerPayBillOnline")

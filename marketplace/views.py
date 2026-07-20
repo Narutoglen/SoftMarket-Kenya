@@ -1,7 +1,11 @@
+import json
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils.crypto import constant_time_compare
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -117,7 +121,19 @@ def initiate_mpesa_deposit(request, project_id):
 @csrf_exempt
 @require_POST
 def mpesa_callback(request):
-    payload = parsed_json_body(request)
+    # Safaricom STK callbacks carry no signature, so the registered callback
+    # URL embeds a shared-secret token (?token=...). When configured, reject
+    # any POST that does not present it — otherwise anyone could forge a
+    # "payment success" callback and mark deposits as paid.
+    expected_token = settings.MPESA_CALLBACK_TOKEN
+    if expected_token and not constant_time_compare(
+        request.GET.get("token", ""), expected_token
+    ):
+        return JsonResponse({"ok": False, "error": "invalid token"}, status=403)
+    try:
+        payload = parsed_json_body(request)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"ok": False, "error": "invalid JSON"}, status=400)
     payment = handle_mpesa_callback(payload)
     return JsonResponse({"ok": True, "payment_id": payment.id if payment else None})
 
