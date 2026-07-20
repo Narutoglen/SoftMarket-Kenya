@@ -122,12 +122,12 @@
     </main>
   </div>
 
-  <footer class="no-print max-w-7xl mx-auto px-4 sm:px-6 py-8 text-center text-xs text-[var(--ink-muted)]">
-    {{ tenant.name }} CRM — white-label front office.
+  <footer class="no-print max-w-7xl mx-auto px-4 sm:px-6 py-6 text-center text-[11px] text-[var(--ink-muted)] opacity-70">
+    Powered by <span class="font-semibold">SoftMarket CRM</span>
   </footer>
 
-  {# Non-blocking confirm modal. Replaces window.confirm() (which freezes the
-     page in headless/embedded browsers) for any element carrying hx-confirm. #}
+  <!-- Non-blocking confirm modal. Replaces window.confirm() (which freezes the
+       page in headless/embedded browsers) for any element carrying hx-confirm. -->
   <div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true">
     <div class="w-full max-w-sm rounded-2xl bg-[var(--surface)] border border-[var(--hairline)] p-5 shadow-2xl">
       <p id="confirm-text" class="text-sm text-[var(--ink-body)] mb-5"></p>
