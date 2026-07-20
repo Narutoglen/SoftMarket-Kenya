@@ -53,6 +53,9 @@ class Tenant(TimeStampedModel):
     access_code = models.CharField(max_length=64, blank=True, help_text="Client access code for the tenant login gate (plan a).")
     # Who owns/admins this workspace (captured at self-serve sign-up).
     contact_email = models.EmailField(blank=True, help_text="Workspace owner email (set at sign-up).")
+    # True while the tenant is running the seeded sample dataset (onboarding).
+    # Cleared when the owner dismisses the sample / imports real data.
+    has_sample_data = models.BooleanField(default=False, help_text="Tenant is showing the seeded onboarding sample.")
 
     class Meta:
         ordering = ["name"]

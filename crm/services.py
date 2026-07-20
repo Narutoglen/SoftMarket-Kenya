@@ -9,6 +9,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models import F
+from decimal import Decimal
 from django.utils import timezone
 
 from .models import (
@@ -425,5 +426,92 @@ def create_workspace(business_name: str, email: str) -> Tenant:
     )
     ensure_integration_configs(tenant)
     # tenant_stages() auto-falls back to defaults, so no explicit stage rows needed.
+    return tenant
+
+
+def seed_demo_for_tenant(tenant: Tenant, owner_name: str = "Owner"):
+    """Populate a NEW tenant with a re-branded sample dataset for onboarding.
+
+    The new owner lands in a populated, familiar CRM they can click through and
+    edit. Sample records are clearly marked (tenant.has_sample_data) so they can
+    be bulk-cleared via clear_sample_data() once the owner is ready for real data.
+    """
+    from django.utils import timezone
+    from datetime import timedelta
+    from .models import Account, Contact, Opportunity, Activity, Invoice
+
+    biz = tenant.name
+    now = timezone.now()
+    owner = tenant.default_lead_owner or owner_name
+
+    acct, _ = Account.objects.get_or_create(
+        tenant=tenant, name=f"{biz} (Sample Retail)",
+        defaults={"industry": "Retail"},
+    )
+    c1, _ = Contact.objects.update_or_create(
+        tenant=tenant, email=f"sample.client@{tenant.slug}.co.ke",
+        defaults={"first_name": "Sample", "last_name": "Client",
+                  "phone": "0712345678", "account": acct,
+                  "territory": "nairobi", "lifecycle": Contact.Lifecycle.CUSTOMER},
+    )
+    c2, _ = Contact.objects.update_or_create(
+        tenant=tenant, email=f"sample.lead@{tenant.slug}.co.ke",
+        defaults={"first_name": "Sample", "last_name": "Prospect",
+                  "phone": "0723456789", "account": acct,
+                  "territory": "nakuru", "lifecycle": Contact.Lifecycle.LEAD},
+    )
+
+    sample_deals = [
+        ("POS Integration", c1, Opportunity.Stage.PROPOSAL, 350000, owner),
+        ("Loyalty Module", c2, Opportunity.Stage.QUALIFICATION, 180000, owner),
+        ("Inventory Sync", c1, Opportunity.Stage.PROSPECTING, 120000, owner),
+        ("Wholesale Rollout", c2, Opportunity.Stage.NEGOTIATION, 640000, owner),
+        ("Starter Pack", c1, Opportunity.Stage.WON, 90000, owner),
+    ]
+    for name, contact, stage, amount, own in sample_deals:
+        Opportunity.objects.get_or_create(
+            tenant=tenant, name=f"{biz} — {name}", contact=contact,
+            defaults={"stage": stage, "amount": amount, "owner": own},
+        )
+
+    # A couple of onboarding tasks.
+    Activity.objects.get_or_create(
+        tenant=tenant, contact=c2, type=Activity.Type.TASK,
+        subject=f"Call {c2.full_name} re: {biz} quote",
+        defaults={"due_at": now + timedelta(days=2)},
+    )
+    Activity.objects.get_or_create(
+        tenant=tenant, contact=c1, type=Activity.Type.TASK,
+        subject="Send the proposal",
+        defaults={"due_at": now + timedelta(days=1)},
+    )
+
+    # One sample invoice so the Invoices rail isn't empty.
+    opp = Opportunity.objects.filter(tenant=tenant, stage=Opportunity.Stage.WON).first()
+    if opp:
+        Invoice.objects.get_or_create(
+            tenant=tenant, opportunity=opp,
+            defaults={"contact": c1, "amount_excl_vat": Decimal("100000.00"),
+                      "vat_rate": Decimal("16.00"), "status": Invoice.Status.DRAFT},
+        )
+
+    tenant.has_sample_data = True
+    tenant.save(update_fields=["has_sample_data"])
+    return tenant
+
+
+def clear_sample_data(tenant: Tenant):
+    """Bulk-delete the seeded onboarding sample for a tenant."""
+    from .models import Account, Contact, Opportunity, Activity, Invoice, Lead, IntegrationMessage
+
+    Invoice.objects.filter(tenant=tenant).delete()
+    Activity.objects.filter(tenant=tenant).delete()
+    Opportunity.objects.filter(tenant=tenant).delete()
+    Lead.objects.filter(tenant=tenant).delete()
+    Contact.objects.filter(tenant=tenant).delete()
+    Account.objects.filter(tenant=tenant).delete()
+    IntegrationMessage.objects.filter(tenant=tenant).delete()
+    tenant.has_sample_data = False
+    tenant.save(update_fields=["has_sample_data"])
     return tenant
 

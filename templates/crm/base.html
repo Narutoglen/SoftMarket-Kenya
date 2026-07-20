@@ -89,6 +89,12 @@
           <i data-lucide="sun" class="hidden dark:inline-block w-4 h-4"></i>
           <i data-lucide="moon" class="inline-block dark:hidden w-4 h-4"></i>
         </button>
+        {% if tenant.has_sample_data and not tenant.is_public %}
+        <form method="post" action="{% url 'crm:clear_sample_data' %}" class="inline">
+          {% csrf_token %}
+          <button type="submit" class="text-xs font-semibold px-3 py-2 rounded-xl border border-[var(--hairline)] text-[var(--ink-muted)] hover:text-[var(--ink-display)] transition">Clear sample data</button>
+        </form>
+        {% endif %}
         {% if tenant.is_public %}
         <a href="{% url 'crm:client_access' %}" class="text-xs font-semibold px-3 py-2 rounded-xl border border-[var(--hairline)] text-[var(--ink-muted)] hover:text-[var(--ink-display)] transition">Client login</a>
         {% else %}
@@ -200,5 +206,29 @@
       }
     })();
   </script>
+
+  {% if request.session.show_tour and not tenant.is_demo %}
+  <div id="tour-card" class="no-print fixed bottom-4 right-4 z-40 w-[min(92vw,22rem)] rounded-2xl bg-[var(--surface)] border border-[var(--hairline)] shadow-2xl p-5">
+    <div class="flex items-start gap-3">
+      <div class="w-9 h-9 rounded-xl brand-grad flex items-center justify-center shrink-0">
+        <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-display font-bold text-[var(--ink-display)]">Welcome to {{ tenant.name }} CRM</p>
+        <p class="text-sm text-[var(--ink-muted)] mt-0.5">We dropped in sample data so you can explore. Work through these:</p>
+        <ol class="mt-3 space-y-1.5 text-sm text-[var(--ink-body)] list-decimal list-inside">
+          <li>Browse the <a class="font-semibold brand-link hover:underline" href="{% url 'crm:pipeline_board' %}">pipeline</a> — sample deals are loaded.</li>
+          <li>Open a deal, then <span class="font-semibold">Generate invoice</span> (queues KRA eTIMS).</li>
+          <li>Hit <span class="font-semibold">Request M-Pesa payment</span> to see the cash loop.</li>
+          <li>Add your <a class="font-semibold brand-link hover:underline" href="{% url 'crm:contact_list' %}">first real contact</a>.</li>
+          <li>When ready, <span class="font-semibold">Clear sample data</span> (top-right) to start fresh.</li>
+        </ol>
+        <button hx-post="{% url 'crm:dismiss_tour' %}" hx-target="#tour-card" hx-swap="outerHTML"
+                class="mt-4 w-full rounded-xl py-2 text-sm font-bold text-white" style="background:var(--accent);">Got it</button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
 </body>
 </html>

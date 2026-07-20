@@ -32,6 +32,8 @@ urlpatterns = [
     path("crm/client-access/", views.client_access, name="client_access"),
     path("crm/login/submit/", views.tenant_login_submit, name="tenant_login_submit"),
     path("crm/logout/", views.tenant_logout, name="tenant_logout"),
+    path("crm/onboarding/clear-sample/", views.clear_sample_data_view, name="clear_sample_data"),
+    path("crm/onboarding/dismiss-tour/", views.dismiss_tour, name="dismiss_tour"),
     # --- Follow-ups + churn (Milestone 5) ---
     path("crm/followups/", views.followups, name="followups"),
     path("crm/followups/<int:pk>/toggle/", views.followup_toggle, name="followup_toggle"),

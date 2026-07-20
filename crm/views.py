@@ -117,6 +117,9 @@ def tenant_login_submit(request):
         tenant = services.create_workspace(business, email)
         request.session["crm_tenant"] = tenant.slug
         request.session.modified = True
+        # Onboarding: land the new owner in a populated, re-branded sample workspace.
+        services.seed_demo_for_tenant(tenant, owner_name="Owner")
+        request.session["show_tour"] = True
         return redirect("crm:dashboard")
 
     # mode == login
@@ -138,6 +141,24 @@ def tenant_login_submit(request):
 
 def tenant_logout(request):
     request.session.pop("crm_tenant", None)
+    return redirect("crm:dashboard")
+
+
+@require_POST
+def clear_sample_data_view(request):
+    """Bulk-clear the onboarding sample for the active tenant (owner-only)."""
+    tenant = get_tenant(request)
+    services.clear_sample_data(tenant)
+    if is_htmx(request):
+        return HttpResponse(status=204)
+    return redirect("crm:dashboard")
+
+
+def dismiss_tour(request):
+    """Remember that this visitor dismissed the guided tour this session."""
+    request.session["show_tour"] = False
+    if is_htmx(request):
+        return HttpResponse(status=204)
     return redirect("crm:dashboard")
 
 
