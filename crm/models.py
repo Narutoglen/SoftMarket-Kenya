@@ -64,6 +64,32 @@ class Tenant(TimeStampedModel):
         return self.name
 
 
+class TenantMembership(TimeStampedModel):
+    """Links a Django auth User to a Tenant they can access (per-user auth).
+
+    Replaces the shared access-code gate: each client user has their own login,
+    and belongs to one or more tenants. The user's ``active_tenant`` (pinned in
+    the session) decides which workspace they're viewing.
+    """
+
+    ROLE_OWNER = "owner"
+    ROLE_STAFF = "staff"
+    ROLE_CHOICES = [(ROLE_OWNER, "Owner"), (ROLE_STAFF, "Staff")]
+
+    user = models.ForeignKey(
+        "auth.User", on_delete=models.CASCADE, related_name="tenant_memberships"
+    )
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="members")
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=ROLE_STAFF)
+
+    class Meta:
+        unique_together = [("user", "tenant")]
+        ordering = ["tenant__name"]
+
+    def __str__(self):
+        return f"{self.user} @ {self.tenant}"
+
+
 class InstanceScopedModel(TimeStampedModel):
     """Abstract base: every CRM record belongs to one Tenant (white-label)."""
 

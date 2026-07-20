@@ -153,14 +153,13 @@ def seed_second_tenant():
             "logo_url": "",
             "default_lead_owner": "Laurine Achieng",
             "is_public": False,
-            "access_code": "gv-demo-2026",
         },
     )
-    # Force private + demo code on every run so the gate stays in effect.
-    if tenant.is_public or tenant.access_code != "gv-demo-2026":
+    # Force private on every run so the auth gate stays in effect (auth is
+    # per-user via TenantMembership, no shared code needed).
+    if tenant.is_public:
         tenant.is_public = False
-        tenant.access_code = "gv-demo-2026"
-        tenant.save(update_fields=["is_public", "access_code"])
+        tenant.save(update_fields=["is_public"])
 
     # Per-tenant pipeline stages (different from SoftMarket's defaults).
     stage_specs = [

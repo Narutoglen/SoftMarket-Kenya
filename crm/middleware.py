@@ -1,13 +1,10 @@
-"""Per-tenant access gate (plan a): public tenants stay open, private tenants
-require a tenant login session.
-
-Applied as middleware so every HTML front-office path is covered consistently
-without decorating 28 views by hand. Behaviour:
+"""Per-tenant access gate backed by real Django auth.
 
 * Public tenant (is_public=True)  -> always open. A prospect browsing the
   SoftMarket site NEVER sees a login.
-* Private tenant (paying client)  -> redirect to the tenant login page unless
-  the visitor has an authenticated `crm_tenant` session for that slug.
+* Private tenant (paying client)  -> the visitor must be authenticated AND a
+  member of that tenant (enforced via request.user + TenantMembership). This is
+  real per-user auth, not the old shared access code.
 * The login page + the public lead-intake form are explicitly exempt.
 * HTMX requests get an `HX-Redirect` header (so the SPA-style UI navigates)
   instead of a bare 302.
@@ -30,7 +27,8 @@ class TenantAccessMiddleware(MiddlewareMixin):
     def process_view(self, request, view_func, view_args, view_kwargs):
         path = request.path
 
-        # Only gate the HTML front office; leave /api/ and admin to their own rules.
+        # Only gate the HTML front office; leave /api/ (DRF IsAuthenticated) and
+        # admin to their own rules.
         if not path.startswith("/crm/"):
             return None
         if path in PUBLIC_PATHS:
@@ -47,10 +45,12 @@ class TenantAccessMiddleware(MiddlewareMixin):
         if tenant.is_public:
             return None
 
-        if request.session.get("crm_tenant") == tenant.slug:
-            return None  # authenticated into this private tenant
+        # Private tenant: require an authenticated member.
+        user = getattr(request, "user", None)
+        if user is not None and user.is_authenticated:
+            return None  # resolve_tenant already validated membership
 
-        # Private + not authenticated -> send to login.
+        # Not authenticated -> send to login.
         target = f"{login_path}?instance={tenant.slug}"
         if request.headers.get("HX-Request") == "true":
             response = HttpResponse("")

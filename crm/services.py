@@ -407,20 +407,17 @@ def normalize_slug(value: str) -> str:
 def create_workspace(business_name: str, email: str) -> Tenant:
     """Create a new PRIVATE white-label tenant for a self-served client.
 
-    Generates a fresh access code, sets the owner email, and provisions the
-    default pipeline stages + integration configs so the workspace is usable
-    immediately. Returns the Tenant (caller starts the session after).
+    Provisions the default pipeline stages + integration configs so the
+    workspace is usable immediately. Auth is real Django auth (per-user
+    TenantMembership), so no shared access code is generated. Returns the Tenant.
     """
-    import secrets
     from marketplace.models import TimeStampedModel  # noqa: F401  (ensures app loaded)
 
     slug = normalize_slug(business_name)
-    code = secrets.token_urlsafe(10)
     tenant = Tenant.objects.create(
         slug=slug,
         name=business_name.strip() or slug,
         is_public=False,
-        access_code=code,
         contact_email=email.strip(),
         default_lead_owner="Owner",
     )
@@ -491,7 +488,8 @@ def seed_demo_for_tenant(tenant: Tenant, owner_name: str = "Owner"):
     if opp:
         Invoice.objects.get_or_create(
             tenant=tenant, opportunity=opp,
-            defaults={"contact": c1, "amount_excl_vat": Decimal("100000.00"),
+            defaults={"contact": c1, "number": f"INV-{opp.pk}-001",
+                      "amount_excl_vat": Decimal("100000.00"),
                       "vat_rate": Decimal("16.00"), "status": Invoice.Status.DRAFT},
         )
 

@@ -38,7 +38,6 @@
 
       {% if error %}<p class="text-sm text-rose-400 mb-3">{{ error }}</p>{% endif %}
 
-      <!-- Tab switch -->
       <div class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-[color-mix(in_srgb,var(--page)_60%,transparent)] border border-[var(--hairline)] mb-5">
         <button id="tab-signup" type="button" onclick="showTab('signup')"
                 class="py-2 rounded-lg text-sm font-semibold text-[var(--ink-muted)]">Sign up</button>
@@ -51,21 +50,19 @@
         <input type="hidden" name="instance" value="{{ slug }}" />
         <input type="hidden" id="mode" name="mode" value="{{ mode|default:'login' }}" />
 
-        <!-- Sign up pane -->
         <div id="pane-signup" class="space-y-3 {% if mode != 'signup' %}hidden{% endif %}">
           <input name="business" type="text" placeholder="Business name" value="{{ business|default:'' }}"
                  class="inp" />
           <input name="email" type="email" placeholder="Work email" value="{{ email|default:'' }}"
                  class="inp" />
+          <input name="password" type="password" placeholder="Create a password" class="inp" />
           <button type="submit" class="w-full rounded-xl py-2.5 font-bold text-white" style="background:var(--accent);">Create my workspace</button>
-          <p class="text-[11px] text-[var(--ink-muted)] text-center">We'll create your private CRM and generate an access code.</p>
+          <p class="text-[11px] text-[var(--ink-muted)] text-center">We'll create your private CRM (your own login, isolated data).</p>
         </div>
 
-        <!-- Log in pane -->
         <div id="pane-login" class="space-y-3 {% if mode == 'signup' %}hidden{% endif %}">
-          {% if tenant %}<p class="text-xs text-[var(--ink-muted)]">{{ tenant.name }} — enter your access code</p>{% endif %}
-          <input name="code" type="password" autofocus placeholder="Client access code"
-                 class="inp" />
+          <input name="email" type="email" autofocus placeholder="Work email" class="inp" />
+          <input name="password" type="password" placeholder="Password" class="inp" />
           <button type="submit" class="w-full rounded-xl py-2.5 font-bold text-white" style="background:var(--accent);">Enter workspace</button>
         </div>
       </form>
