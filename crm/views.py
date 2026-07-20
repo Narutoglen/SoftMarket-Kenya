@@ -54,15 +54,16 @@ def is_htmx(request):
 
 
 # ---------------------------------------------------------------------------
-# Per-tenant login (plan a) — keeps the public site open, gates private tenants
+# Client access gateway (plan a) — Sign up (new workspace) or Log in (existing)
 # ---------------------------------------------------------------------------
 @require_GET
 def tenant_login(request):
-    """Show the tenant login form. Public tenants never reach here (middleware
-    lets them through); this only renders for private tenants or a direct visit."""
+    """Client access gateway: leads with Sign up (new workspace) or Log in
+    (existing client). The public SoftMarket site never forces this — it's the
+    'Client login' entry point, not a popup."""
     slug = request.GET.get("instance") or request.session.get("crm_tenant") or "softmarket"
     tenant = Tenant.objects.filter(slug=slug, active=True).first()
-    # If somehow a public tenant lands here, just go to its dashboard.
+    # If a public tenant somehow lands here, just go to its dashboard.
     if tenant and tenant.is_public:
         return redirect("crm:dashboard")
     return render(request, "crm/tenant_login.html", {
@@ -70,12 +71,47 @@ def tenant_login(request):
     })
 
 
+@require_GET
+def client_access(request):
+    """Always-on client gateway for the public 'Client login' link. Unlike
+    tenant_login, this never redirects public visitors — it always shows the
+    Sign up / Log in entry point so the header button is never dead."""
+    slug = request.session.get("crm_tenant") or "softmarket"
+    return render(request, "crm/tenant_login.html", {
+        "tenant": None, "active": "", "slug": slug, "mode": request.GET.get("mode", "login"),
+    })
+
+
 @require_POST
 def tenant_login_submit(request):
-    """Validate the tenant access code and start a tenant session. Lightweight:
-    one shared code per tenant (stored on the Tenant), no Django User accounts —
-    this is the white-label client gate, not staff SSO."""
-    slug = request.POST.get("instance") or request.session.get("crm_tenant") or "softmarket"
+    """Branch on mode=signup|login.
+
+    signup: create a NEW private workspace for the business, set the session,
+            and drop the owner straight into their CRM.
+    login:  validate the tenant access code and start the session.
+    """
+    mode = request.POST.get("mode", "login")
+    slug = (request.POST.get("instance") or request.session.get("crm_tenant") or "softmarket").strip()
+
+    if mode == "signup":
+        business = (request.POST.get("business") or "").strip()
+        email = (request.POST.get("email") or "").strip()
+        if not business or not email:
+            return render(request, "crm/tenant_login.html", {
+                "tenant": None, "slug": slug, "mode": "signup",
+                "error": "Business name and email are required to create your workspace.",
+            })
+        if "@" not in email:
+            return render(request, "crm/tenant_login.html", {
+                "tenant": None, "slug": slug, "mode": "signup",
+                "error": "Enter a valid email address.",
+            })
+        tenant = services.create_workspace(business, email)
+        request.session["crm_tenant"] = tenant.slug
+        request.session.modified = True
+        return redirect("crm:dashboard")
+
+    # mode == login
     code = (request.POST.get("code") or "").strip()
     tenant = Tenant.objects.filter(slug=slug, active=True).first()
     if tenant is None:
@@ -85,9 +121,10 @@ def tenant_login_submit(request):
         request.session["crm_tenant"] = tenant.slug
         request.session.modified = True
         return redirect("crm:dashboard")
-    # Wrong/empty code -> re-render the form with an error (no lockout spam).
+    # Wrong/empty code -> re-render with error (no lockout spam).
     return render(request, "crm/tenant_login.html", {
-        "tenant": tenant, "active": "", "slug": slug, "error": "Invalid access code.",
+        "tenant": tenant, "active": "", "slug": slug, "mode": "login",
+        "error": "Invalid access code.",
     })
 
 

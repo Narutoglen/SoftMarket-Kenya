@@ -388,3 +388,42 @@ def tenant_stages(tenant: Tenant):
         ]
     return stages
 
+
+# ---------------------------------------------------------------------------
+# Self-serve workspace creation (client sign-up gate)
+def normalize_slug(value: str) -> str:
+    """Turn a business name into a url-safe tenant slug, de-duplicated."""
+    import re
+    base = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-") or "client"
+    slug = base
+    n = 1
+    while Tenant.objects.filter(slug=slug).exists():
+        n += 1
+        slug = f"{base}-{n}"
+    return slug
+
+
+def create_workspace(business_name: str, email: str) -> Tenant:
+    """Create a new PRIVATE white-label tenant for a self-served client.
+
+    Generates a fresh access code, sets the owner email, and provisions the
+    default pipeline stages + integration configs so the workspace is usable
+    immediately. Returns the Tenant (caller starts the session after).
+    """
+    import secrets
+    from marketplace.models import TimeStampedModel  # noqa: F401  (ensures app loaded)
+
+    slug = normalize_slug(business_name)
+    code = secrets.token_urlsafe(10)
+    tenant = Tenant.objects.create(
+        slug=slug,
+        name=business_name.strip() or slug,
+        is_public=False,
+        access_code=code,
+        contact_email=email.strip(),
+        default_lead_owner="Owner",
+    )
+    ensure_integration_configs(tenant)
+    # tenant_stages() auto-falls back to defaults, so no explicit stage rows needed.
+    return tenant
+

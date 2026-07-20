@@ -51,6 +51,8 @@ class Tenant(TimeStampedModel):
     # required (defaults to open). Per-tenant, not per-user — the white-label client
     # gate, not staff SSO.
     access_code = models.CharField(max_length=64, blank=True, help_text="Client access code for the tenant login gate (plan a).")
+    # Who owns/admins this workspace (captured at self-serve sign-up).
+    contact_email = models.EmailField(blank=True, help_text="Workspace owner email (set at sign-up).")
 
     class Meta:
         ordering = ["name"]

@@ -29,6 +29,7 @@ urlpatterns = [
     path("crm/opportunities/<int:pk>/invoices/<int:invoice_pk>/pay/", views.opportunity_pay_request, name="opportunity_pay_request"),
     # --- Per-tenant login gate (plan a) ---
     path("crm/login/", views.tenant_login, name="tenant_login"),
+    path("crm/client-access/", views.client_access, name="client_access"),
     path("crm/login/submit/", views.tenant_login_submit, name="tenant_login_submit"),
     path("crm/logout/", views.tenant_logout, name="tenant_logout"),
     # --- Follow-ups + churn (Milestone 5) ---
