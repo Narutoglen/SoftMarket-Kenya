@@ -1,4 +1,5 @@
-from django.contrib import admin
+import requests
+from django.contrib import admin, messages
 
 from .models import (
     Assignment,
@@ -67,7 +68,14 @@ def initiate_deposit_stk(modeladmin, request, queryset):
         if not project.deposit_amount:
             generate_quote(project)
         payment = create_deposit_payment(project)
-        mpesa.initiate_stk_push(payment)
+        try:
+            mpesa.initiate_stk_push(payment)
+        except requests.RequestException as exc:
+            # Keep processing the rest of the batch; record + surface the failure.
+            payment.status = Payment.Status.FAILED
+            payment.result_description = f"STK push failed: {exc}"
+            payment.save(update_fields=["status", "result_description", "updated_at"])
+            messages.error(request, f"STK push failed for {project}: {exc}")
 
 
 @admin.register(ProjectRequest)
