@@ -232,3 +232,79 @@ class MarketplaceFlowTests(TestCase):
         )
 
         self.assertIsNotNone(post.published_at)
+
+
+class SmokeCharacterizationTests(TestCase):
+    """Safe smoke/characterization tests for the CURRENT behaviour on main.
+
+    These assert only things that are already true before any of the sibling
+    hardening/performance PRs land, so they stay green as a baseline net.
+    """
+
+    def setUp(self):
+        ServiceCategory.objects.update_or_create(
+            slug="business-website",
+            defaults={
+                "name": "Business website",
+                "min_price": 20_000,
+                "max_price": 80_000,
+                "deposit_amount": 2_000,
+            },
+        )
+
+    def test_homepage_returns_200(self):
+        self.assertEqual(self.client.get(reverse("marketplace:home")).status_code, 200)
+
+    def test_public_marketing_pages_render(self):
+        for name in ["team", "about", "process", "blog_list"]:
+            resp = self.client.get(reverse(f"marketplace:{name}"))
+            self.assertEqual(resp.status_code, 200, name)
+
+    def test_robots_and_sitemap_render(self):
+        self.assertEqual(self.client.get(reverse("marketplace:robots")).status_code, 200)
+        self.assertEqual(self.client.get(reverse("marketplace:sitemap")).status_code, 200)
+
+    def test_services_api_lists_active_services(self):
+        resp = self.client.get(reverse("marketplace:api_services"))
+        self.assertEqual(resp.status_code, 200)
+        slugs = [row["slug"] for row in resp.json()]
+        self.assertIn("business-website", slugs)
+
+    def test_api_lead_post_creates_project_request(self):
+        before = ProjectRequest.objects.count()
+        resp = self.client.post(
+            reverse("marketplace:api_leads"),
+            data=json.dumps({
+                "name": "Smoke Client",
+                "phone": "0712345678",
+                "email": "smoke@example.com",
+                "service": "Business website",
+                "budget": "KSh 20,000-80,000",
+                "timeline": "Within 1-2 months",
+                "details": "Please build us a smoke-test website.",
+            }),
+            content_type="application/json",
+        )
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(ProjectRequest.objects.count(), before + 1)
+        self.assertTrue(
+            ProjectRequest.objects.filter(email="smoke@example.com").exists()
+        )
+
+    def test_html_project_brief_post_creates_project_request(self):
+        resp = self.client.post(
+            reverse("marketplace:home"),
+            {
+                "form-name": "project-brief",
+                "name": "HTML Client",
+                "phone": "0712345678",
+                "email": "html@example.com",
+                "service": "Business website",
+                "budget": "KSh 20,000-80,000",
+                "timeline": "Within 1-2 months",
+                "details": "HTML form smoke test.",
+            },
+            follow=True,
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(ProjectRequest.objects.filter(email="html@example.com").exists())

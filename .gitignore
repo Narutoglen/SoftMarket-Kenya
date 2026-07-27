@@ -10,3 +10,5 @@ node_modules/
 
 .vercel
 .env*
+# ...but the committed template is not a secret.
+!.env.example
