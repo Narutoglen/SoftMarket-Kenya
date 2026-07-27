@@ -3,7 +3,7 @@
   "run_id": "hermes-2026-07-27-v6-SoftMarket-Kenya",
   "project": "SoftMarket-Kenya",
   "phase": "4.0",
-  "produced_at": "2026-07-27T22:41:13.633342",
+  "produced_at": "2026-07-27T22:41:58.829572",
   "runner_tier": "T1",
   "mode": "static-only",
   "findings": [
