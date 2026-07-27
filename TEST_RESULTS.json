@@ -2,7 +2,7 @@
   "schema": "hermes.tests.v6",
   "run_id": "hermes-2026-07-27-v6-SoftMarket-Kenya",
   "project": "SoftMarket-Kenya",
-  "produced_at": "2026-07-27T22:42:40.403209",
+  "produced_at": "2026-07-27T23:39:52.385809",
   "summary": {
     "status": "UNRUNNABLE_NO_SCRIPT",
     "passed": 0,
