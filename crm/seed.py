@@ -5,12 +5,17 @@ post-migrate signal. Creates the first tenant instance ('softmarket') plus a
 small demo dataset so the pipeline/reporting endpoints return real data.
 """
 
-from .models import (
-    Account, Activity, Contact, Lead, Opportunity, Tenant,
-    TenantStage, IntegrationConfig,
-)
 from . import services
-
+from .models import (
+    Account,
+    Activity,
+    Contact,
+    IntegrationConfig,
+    Lead,
+    Opportunity,
+    Tenant,
+    TenantStage,
+)
 
 # White-label logo (copied into static/img/ by the build). Persisted here so a
 # fresh seed reproduces the branded header; force-updated so re-runs fix a
@@ -96,8 +101,9 @@ def seed_softmarket_crm():
     )
 
     # --- Milestone 5: follow-up tasks + a churn candidate ---
-    from django.utils import timezone
     from datetime import timedelta
+
+    from django.utils import timezone
     now = timezone.now()
     # A quiet CUSTOMER with no activity → lands on the churn radar.
     c3, _ = Contact.objects.get_or_create(

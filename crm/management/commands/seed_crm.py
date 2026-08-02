@@ -10,8 +10,8 @@ has something to show in the front office.
 
 from django.core.management.base import BaseCommand
 
-from crm.seed import seed_softmarket_crm, seed_second_tenant
 from crm.models import Activity, Contact
+from crm.seed import seed_second_tenant, seed_softmarket_crm
 
 
 class Command(BaseCommand):

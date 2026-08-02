@@ -11,13 +11,20 @@ from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
+from . import services
 from .api import resolve_tenant
 from .forms import AccountForm, ActivityForm, ContactForm, PublicLeadForm
 from .models import (
-    Account, Activity, Contact, IntegrationConfig, IntegrationMessage,
-    Lead, Opportunity, Tenant, TenantStage,
+    Account,
+    Activity,
+    Contact,
+    IntegrationConfig,
+    IntegrationMessage,
+    Lead,
+    Opportunity,
+    Tenant,
+    TenantStage,
 )
-from . import services
 
 
 def get_tenant(request):

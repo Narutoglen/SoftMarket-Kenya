@@ -21,7 +21,6 @@ from .models import (
     ServiceCategory,
 )
 
-
 DEFAULT_SERVICES = [
     ("Business website", "business-website", 20_000, 80_000, 2_000, False),
     ("Ecommerce website", "ecommerce-website", 50_000, 500_000, 5_000, False),

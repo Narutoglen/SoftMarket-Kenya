@@ -19,7 +19,6 @@ Borrowed from FrugalTech CRM teaching:
 
 from django.db import models
 
-
 from marketplace.models import TimeStampedModel
 
 

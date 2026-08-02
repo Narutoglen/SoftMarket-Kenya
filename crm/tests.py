@@ -7,14 +7,20 @@ follow-up/churn buckets, and the integration enqueue path.
 The browser already proves the UI; these tests are the regression net.
 """
 
-from django.test import TestCase, Client
+from django.test import Client, TestCase
 from django.urls import reverse
 
-from .models import (
-    Activity, Contact, Lead, Opportunity, Tenant,
-    TenantStage, IntegrationConfig, IntegrationMessage,
-)
 from . import services
+from .models import (
+    Activity,
+    Contact,
+    IntegrationConfig,
+    IntegrationMessage,
+    Lead,
+    Opportunity,
+    Tenant,
+    TenantStage,
+)
 
 
 def make_tenant(slug="softmarket", **kwargs):
@@ -175,8 +181,9 @@ class FollowupChurnTests(TestCase):
         )
 
     def test_overdue_bucket(self):
-        from django.utils import timezone
         from datetime import timedelta
+
+        from django.utils import timezone
         Activity.objects.create(
             tenant=self.tenant, contact=self.contact, type=Activity.Type.TASK,
             subject="Overdue", due_at=timezone.now() - timedelta(days=2),
