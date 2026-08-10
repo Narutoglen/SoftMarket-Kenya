@@ -1,0 +1,37 @@
+{# Field-by-field provenance. The point is not the number — it is being able to
+   see, before you dial, that nobody has confirmed this phone since 2024. #}
+<div class="rounded-xl border border-[var(--hairline)] bg-[var(--page)] p-4">
+  <div class="flex items-center gap-3 mb-3">
+    <div class="relative w-12 h-12 shrink-0">
+      <svg viewBox="0 0 36 36" class="w-12 h-12 -rotate-90">
+        <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--hairline)" stroke-width="3.5"/>
+        <circle cx="18" cy="18" r="15.9" fill="none" stroke-width="3.5" stroke-linecap="round"
+                stroke-dasharray="{{ trust.score }} 100"
+                stroke="{% if trust.band == 'good' %}#10b981{% elif trust.band == 'watch' %}#f59e0b{% else %}#f43f5e{% endif %}"/>
+      </svg>
+      <span class="absolute inset-0 flex items-center justify-center figure text-sm text-[var(--ink-display)]">{{ trust.score }}</span>
+    </div>
+    <div class="min-w-0">
+      <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-muted)]">Trust score</p>
+      <p class="text-[11px] text-[var(--ink-muted)] mt-0.5">
+        {{ trust.verified_count }} of {{ trust.field_count }} fields confirmed by evidence.
+      </p>
+    </div>
+  </div>
+
+  <ul class="space-y-1.5">
+    {% for f in trust.fields %}
+    <li class="flex items-center gap-2 text-[11px]">
+      <span class="w-1.5 h-1.5 rounded-full shrink-0
+        {% if f.state == 'verified' %}bg-emerald-500
+        {% elif f.state == 'unverified' %}bg-sky-500
+        {% elif f.state == 'aging' %}bg-amber-500
+        {% elif f.state == 'stale' %}bg-rose-500
+        {% else %}bg-[var(--hairline)]{% endif %}"></span>
+      <span class="font-semibold text-[var(--ink-body)] w-20 shrink-0">{{ f.label }}</span>
+      <span class="text-[var(--ink-muted)] truncate flex-1" title="{{ f.explanation }}">{{ f.explanation }}</span>
+      <span class="text-[var(--ink-muted)] tabular-nums shrink-0">{{ f.confidence }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>

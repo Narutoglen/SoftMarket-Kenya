@@ -31,6 +31,29 @@ urlpatterns = [
     path("crm/settings/", views.crm_settings, name="crm_settings"),
     path("crm/settings/save/", views.crm_settings_save, name="crm_settings_save"),
     path("crm/integrations/send/", views.integration_send, name="integration_send"),
+    # --- M7: the agent console ---
+    path("crm/agent/", views.agent_inbox, name="agent_inbox"),
+    path("crm/agent/run/", views.agent_run_now, name="agent_run_now"),
+    path("crm/agent/sweep/", views.agent_sweep, name="agent_sweep"),
+    path("crm/agent/suggestions/<int:pk>/", views.suggestion_decide, name="suggestion_decide"),
+    path("crm/agent/questions/<int:pk>/", views.question_answer, name="question_answer"),
+    # --- Bonus 1: data trust + decay radar ---
+    path("crm/trust/", views.trust_dashboard, name="trust_dashboard"),
+    path("crm/trust/verify/", views.trust_queue_verification, name="trust_queue_verification"),
+    # --- Bonus 2: payments-aware pipeline ---
+    path("crm/payments/", views.payments_console, name="payments_console"),
+    path("crm/payments/ingest/", views.payment_ingest, name="payment_ingest"),
+    path("crm/payments/<int:pk>/resolve/", views.payment_resolve, name="payment_resolve"),
+    # Server-to-server: Safaricom Daraja C2B confirmation.
+    path("hooks/mpesa/confirmation/", views.mpesa_confirmation, name="mpesa_confirmation"),
+    # --- Bonus 3: client-facing deal rooms ---
+    path("crm/rooms/", views.deal_rooms, name="deal_rooms"),
+    path("crm/rooms/open/<int:opportunity_pk>/", views.deal_room_create, name="deal_room_create"),
+    path("crm/rooms/<int:pk>/toggle/", views.deal_room_toggle, name="deal_room_toggle"),
+    # The buyer-facing page lives off /crm/ on purpose — it is not the CRM.
+    path("room/<str:token>/", views.deal_room_public, name="deal_room_public"),
+    path("room/<str:token>/accept/", views.deal_room_accept, name="deal_room_accept"),
+
     # --- Leads (Milestone 3 — public intake + front office) ---
     path("leads/new/", views.lead_intake, name="lead_intake"),
     path("crm/leads/", views.lead_list, name="lead_list"),
@@ -52,4 +75,15 @@ urlpatterns = [
     path("api/crm/pipeline/", api.PipelineView.as_view(), name="pipeline_api"),
     path("api/crm/leads/<int:pk>/convert/", api.LeadConvertView.as_view(), name="lead_convert_api"),
     path("api/crm/contacts/merge/", api.ContactMergeView.as_view(), name="contact_merge"),
+
+    # --- M7 + bonuses: agent, trust and payments over JSON ---
+    path("api/crm/agent/tasks/", api.AgentTaskView.as_view(), name="agent_tasks_api"),
+    path("api/crm/agent/runs/", api.AgentRunListView.as_view(), name="agent_runs_api"),
+    path("api/crm/agent/suggestions/", api.SuggestionListView.as_view(), name="suggestions_api"),
+    path(
+        "api/crm/agent/suggestions/<int:pk>/",
+        api.SuggestionDecideView.as_view(), name="suggestion_decide_api",
+    ),
+    path("api/crm/trust/", api.TrustView.as_view(), name="trust_api"),
+    path("api/crm/payments/", api.PaymentView.as_view(), name="payments_api"),
 ]

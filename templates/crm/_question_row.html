@@ -1,0 +1,23 @@
+{# Something the agent could not settle from evidence. An open question is a
+   better outcome than a confident wrong answer, so these get real estate. #}
+<div class="rounded-xl border border-[var(--hairline)] bg-[var(--page)] p-4" id="question-{{ question.pk }}">
+  <p class="text-[11px] text-[var(--ink-muted)] mb-1">
+    <a class="brand-link font-semibold" href="/crm/{{ question.subject_type }}s/{{ question.subject_id }}/">{{ question.subject_label }}</a>
+  </p>
+  <p class="text-sm text-[var(--ink-display)] font-semibold">{{ question.question }}</p>
+  {% if question.context %}
+  <p class="text-[11px] text-[var(--ink-muted)] mt-1">{{ question.context }}</p>
+  {% endif %}
+
+  {% if question.status == 'open' %}
+  <form hx-post="{% url 'crm:question_answer' pk=question.pk %}"
+        hx-target="#question-{{ question.pk }}" hx-swap="outerHTML"
+        class="mt-3 flex gap-2">
+    <input name="answer" required placeholder="Answer it…"
+           class="flex-1 rounded-lg bg-[var(--surface)] border border-[var(--hairline)] px-3 py-1.5 text-xs outline-none focus:border-[var(--accent)]" />
+    <button class="text-[11px] font-bold px-3 py-1.5 rounded-lg brand-grad text-white hover:opacity-90 transition">Send</button>
+  </form>
+  {% else %}
+  <p class="mt-2 text-xs text-[var(--ink-body)] pl-3 border-l-2 brand-border">{{ question.answer }}</p>
+  {% endif %}
+</div>

@@ -26,9 +26,14 @@ from rest_framework.views import APIView
 from .models import (
     Account,
     Activity,
+    AgentRun,
+    AgentTask,
     Contact,
     Lead,
     Opportunity,
+    PaymentEvent,
+    Subject,
+    Suggestion,
     Tenant,
 )
 from . import services
@@ -316,3 +321,244 @@ class ContactMergeView(APIView):
         primary = dups[0]
         merged = services.merge_contacts(primary, dups[1:])
         return Response({"merged": merged, "primary_id": primary.id})
+
+
+# ---------------------------------------------------------------------------
+# M7 — the agent, the trust layer and payments over JSON
+#
+# Same contract as the HTML front office, so an external dashboard or a mobile
+# app sees exactly what a rep sees, including the reasoning.
+# ---------------------------------------------------------------------------
+class AgentTaskView(APIView):
+    """GET the queue; POST to queue (and optionally run) a task."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        tenant = resolve_tenant(request)
+        if not tenant:
+            return Response({"detail": "Unknown CRM instance."}, status=404)
+        from .agent import queue as agent_queue
+
+        return Response({
+            "depth": agent_queue.queue_depth(tenant),
+            "upcoming": [
+                {
+                    "id": t.id, "kind": t.kind, "subject_type": t.subject_type,
+                    "subject_id": t.subject_id, "subject": t.subject_label,
+                    "reason": t.reason, "due_at": t.due_at,
+                    "scheduled_by_agent": t.scheduled_by_agent, "status": t.status,
+                }
+                for t in agent_queue.upcoming(tenant, limit=50)
+            ],
+        })
+
+    def post(self, request):
+        tenant = resolve_tenant(request)
+        if not tenant:
+            return Response({"detail": "Unknown CRM instance."}, status=404)
+        from .agent import queue as agent_queue, runner as agent_runner
+
+        data = request.data
+        subject_type = data.get("subject_type", Subject.CONTACT)
+        subject_id = int(data.get("subject_id", 0) or 0)
+        kind = data.get("kind", AgentTask.Kind.RESEARCH_CONTACT)
+        reason = data.get("reason", "Queued over the API.")
+
+        if data.get("run_now"):
+            run = agent_runner.run_now(tenant, kind, subject_type, subject_id, reason=reason)
+            return Response({
+                "run_id": run.id, "status": run.status, "brief": run.brief,
+                "steps": [
+                    {"tool": s.tool, "summary": s.summary, "ok": s.ok}
+                    for s in run.steps.all()
+                ],
+            }, status=201)
+
+        task = agent_queue.schedule(
+            tenant=tenant, kind=kind, subject_type=subject_type,
+            subject_id=subject_id, reason=reason,
+            due_in_days=int(data.get("due_in_days", 0) or 0),
+        )
+        return Response({"task_id": task.id, "due_at": task.due_at}, status=201)
+
+
+class AgentRunListView(APIView):
+    """The Agent tab as data: runs, their briefs, and every step taken."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        tenant = resolve_tenant(request)
+        if not tenant:
+            return Response({"detail": "Unknown CRM instance."}, status=404)
+        qs = AgentRun.objects.filter(tenant=tenant).select_related("task")
+        subject_type = request.GET.get("subject_type")
+        subject_id = request.GET.get("subject_id")
+        if subject_type and subject_id:
+            qs = qs.filter(task__subject_type=subject_type, task__subject_id=subject_id)
+        return Response({
+            "results": [
+                {
+                    "id": run.id, "status": run.status, "planner": run.planner,
+                    "model": run.model, "brief": run.brief,
+                    "started_at": run.started_at, "finished_at": run.finished_at,
+                    "subject": run.task.subject_label if run.task else None,
+                    "reason": run.task.reason if run.task else "",
+                    "steps": [
+                        {
+                            "seq": s.seq, "tool": s.tool, "summary": s.summary,
+                            "ok": s.ok, "duration_ms": s.duration_ms,
+                            "input": s.tool_input, "output": s.tool_output,
+                        }
+                        for s in run.steps.all()
+                    ],
+                }
+                for run in qs[:25]
+            ]
+        })
+
+
+class SuggestionListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        tenant = resolve_tenant(request)
+        if not tenant:
+            return Response({"detail": "Unknown CRM instance."}, status=404)
+        qs = Suggestion.objects.filter(tenant=tenant)
+        status_filter = request.GET.get("status", Suggestion.Status.PENDING)
+        if status_filter != "all":
+            qs = qs.filter(status=status_filter)
+        return Response({
+            "results": [
+                {
+                    "id": s.id, "subject_type": s.subject_type, "subject_id": s.subject_id,
+                    "subject": s.subject_label, "field": s.field,
+                    "current_value": s.current_value, "proposed_value": s.proposed_value,
+                    "confidence": s.confidence, "rationale": s.rationale,
+                    "status": s.status, "source": s.evidence.source if s.evidence else "",
+                }
+                for s in qs[:100]
+            ]
+        })
+
+
+class SuggestionDecideView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request, pk):
+        tenant = resolve_tenant(request)
+        if not tenant:
+            return Response({"detail": "Unknown CRM instance."}, status=404)
+        suggestion = Suggestion.objects.filter(tenant=tenant, pk=pk).first()
+        if not suggestion:
+            return Response({"detail": "Suggestion not found."}, status=404)
+        from .agent import evidence as ledger
+
+        decision = request.data.get("decision")
+        who = request.data.get("by", "api")
+        if decision == "accept":
+            ledger.accept_suggestion(suggestion, decided_by=who)
+        elif decision == "reject":
+            ledger.reject_suggestion(suggestion, decided_by=who)
+        else:
+            return Response({"detail": "decision must be 'accept' or 'reject'."}, status=400)
+        return Response({"id": suggestion.id, "status": suggestion.status})
+
+
+class TrustView(APIView):
+    """Portfolio trust, the decay radar, or one record's field-by-field report."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        tenant = resolve_tenant(request)
+        if not tenant:
+            return Response({"detail": "Unknown CRM instance."}, status=404)
+        from . import trust as trust_service
+        from .agent import evidence as ledger
+
+        subject_type = request.GET.get("subject_type")
+        subject_id = request.GET.get("subject_id")
+        if subject_type and subject_id:
+            subject = ledger.resolve_subject(tenant, subject_type, int(subject_id))
+            if subject is None:
+                return Response({"detail": "Not found."}, status=404)
+            report = trust_service.trust_report(subject, subject_type)
+            return Response({
+                "score": report["score"], "band": report["band"],
+                "fields": [
+                    {
+                        "field": f["field"], "label": f["label"], "state": f["state"],
+                        "confidence": f["confidence"], "source": f["source"],
+                        "verified_at": f["verified_at"], "explanation": f["explanation"],
+                    }
+                    for f in report["fields"]
+                ],
+            })
+
+        return Response({
+            "portfolio": trust_service.portfolio_trust(tenant),
+            "radar": [
+                {
+                    "subject_type": row["subject_type"], "id": row["object"].pk,
+                    "label": row["label"], "score": row["score"], "band": row["band"],
+                    "problems": [f["field"] for f in row["problems"]],
+                }
+                for row in trust_service.decay_radar(tenant, limit=50)
+            ],
+        })
+
+
+class PaymentView(APIView):
+    """GET the payment ledger; POST a confirmation to reconcile it."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        tenant = resolve_tenant(request)
+        if not tenant:
+            return Response({"detail": "Unknown CRM instance."}, status=404)
+        from . import payments as payments_service
+
+        qs = PaymentEvent.objects.filter(tenant=tenant)
+        if request.GET.get("status"):
+            qs = qs.filter(status=request.GET["status"])
+        return Response({
+            "summary": payments_service.payment_summary(tenant),
+            "results": [
+                {
+                    "id": p.id, "ref": p.external_ref, "amount": str(p.amount),
+                    "payer_name": p.payer_name, "phone": p.phone, "status": p.status,
+                    "paid_at": p.paid_at, "contact_id": p.contact_id,
+                    "opportunity_id": p.opportunity_id,
+                    "match_confidence": p.match_confidence, "match_reason": p.match_reason,
+                }
+                for p in qs[:100]
+            ],
+        })
+
+    def post(self, request):
+        tenant = resolve_tenant(request)
+        if not tenant:
+            return Response({"detail": "Unknown CRM instance."}, status=404)
+        from . import payments as payments_service
+
+        text = request.data.get("text", "")
+        payload = request.data.get("payload")
+        if not text and not payload:
+            return Response(
+                {"detail": "Send either 'text' (the SMS) or 'payload' (a Daraja body)."},
+                status=400,
+            )
+        payment = payments_service.record_payment(tenant, text=text, payload=payload)
+        return Response({
+            "id": payment.id, "status": payment.status, "amount": str(payment.amount),
+            "contact_id": payment.contact_id, "opportunity_id": payment.opportunity_id,
+            "match_confidence": payment.match_confidence,
+            "match_reason": payment.match_reason,
+        }, status=201)

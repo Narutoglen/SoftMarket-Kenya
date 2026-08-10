@@ -101,6 +101,14 @@
         <a class="nav-item {% if active == 'leads' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface)] transition" href="{% url 'crm:lead_list' %}"><i data-lucide="target" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Leads</a>
         <a class="nav-item {% if active == 'pipeline' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface)] transition" href="{% url 'crm:pipeline_board' %}"><i data-lucide="kanban" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Pipeline</a>
         <a class="nav-item {% if active == 'followups' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface)] transition" href="{% url 'crm:followups' %}"><i data-lucide="check-circle" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Follow-ups</a>
+
+        <p class="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--ink-muted)]">Autonomy</p>
+        <a class="nav-item {% if active == 'agent' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface)] transition" href="{% url 'crm:agent_inbox' %}"><i data-lucide="sparkles" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Agent</a>
+        <a class="nav-item {% if active == 'trust' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface)] transition" href="{% url 'crm:trust_dashboard' %}"><i data-lucide="shield-check" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Data trust</a>
+        <a class="nav-item {% if active == 'payments' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface)] transition" href="{% url 'crm:payments_console' %}"><i data-lucide="banknote" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Payments</a>
+        <a class="nav-item {% if active == 'rooms' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface)] transition" href="{% url 'crm:deal_rooms' %}"><i data-lucide="presentation" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Deal rooms</a>
+
+        <p class="pt-4 pb-1 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--ink-muted)]">Setup</p>
         <a class="nav-item {% if active == 'settings' %}active{% endif %} flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[var(--ink-muted)] hover:bg-[var(--surface)] transition" href="{% url 'crm:crm_settings' %}"><i data-lucide="settings" class="nav-ico w-4 h-4 text-[var(--ink-muted)]"></i> Settings</a>
       </nav>
     </aside>
@@ -148,6 +156,12 @@
         if (match) evt.detail.parameters['csrfmiddlewaretoken'] = match[1];
       });
       if (window.lucide) window.lucide.createIcons();
+      // HTMX swaps in markup containing <i data-lucide> placeholders, which
+      // lucide only walks on load — re-run it after every swap or the icons
+      // silently vanish from anything the agent panels replace.
+      document.body.addEventListener('htmx:afterSwap', function () {
+        if (window.lucide) window.lucide.createIcons();
+      });
 
       // --- Non-blocking confirm for hx-confirm elements ---
       // HTMX 2.0 calls `htmx.config.confirm` (which defaults to the blocking

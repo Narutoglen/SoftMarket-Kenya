@@ -128,6 +128,85 @@ def seed_softmarket_crm():
     )
     # Ensure the four integration channel configs exist for this tenant.
     services.ensure_integration_configs(tenant)
+
+    # --- M7+: give the agent, the trust radar and the deal room something real
+    # to work with. Without this the demo shows empty states, which reads as
+    # broken rather than as clean.
+    _seed_agent_fodder(tenant, acme, c1, c2, c3)
+    return tenant
+
+
+def _seed_agent_fodder(tenant, account, mary, john, grace):
+    """Demo material for the agentic layer.
+
+    Deliberately *imperfect* data: a signature block the agent can mine, an
+    account with no website, and a contact nobody has confirmed in years. A
+    seed where everything is already correct proves nothing.
+    """
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from .models import DealRoom, IntegrationConfig, Opportunity
+
+    # A logged email carrying a signature block — the agent's raw material.
+    Activity.objects.get_or_create(
+        tenant=tenant, contact=john, type=Activity.Type.EMAIL,
+        subject="Re: Loyalty module pricing",
+        defaults={"notes": (
+            "Thanks for sending this through — the three-branch option works for us.\n"
+            "Can you confirm the rollout dates?\n\n"
+            "Regards,\n"
+            "John Kamau\n"
+            "Procurement Manager\n"
+            "Acme Retail Ltd\n"
+            "+254 722 000 002\n"
+        )},
+    )
+
+    # A contact who has gone stale: created long ago, never confirmed since.
+    Contact.objects.filter(pk=grace.pk).update(
+        created_at=timezone.now() - timedelta(days=900)
+    )
+
+    # Close dates so the deal review has something honest to forecast.
+    for offset, name in ((14, "Acme POS Integration"), (30, "Nakuru Mart Wholesale Rollout")):
+        Opportunity.objects.filter(tenant=tenant, name=name, expected_close_date=None).update(
+            expected_close_date=(timezone.now() + timedelta(days=offset)).date()
+        )
+
+    # M-Pesa switched on with a paybill, so deal rooms can show how to pay and
+    # the reconciliation engine has somewhere to send people.
+    IntegrationConfig.objects.update_or_create(
+        tenant=tenant, channel=IntegrationConfig.Channel.MPESA,
+        defaults={
+            "enabled": True,
+            "config_json": {
+                "paybill": "247247",
+                "account_hint": "Use the quote reference as the account number",
+            },
+        },
+    )
+
+    # A deal room already shared with the buyer.
+    proposal = Opportunity.objects.filter(tenant=tenant, name="Acme POS Integration").first()
+    if proposal and not hasattr(proposal, "deal_room"):
+        DealRoom.objects.get_or_create(
+            tenant=tenant, opportunity=proposal,
+            defaults={
+                "headline": "POS integration for Acme Retail",
+                "summary": (
+                    "Hi Mary — everything for the POS rollout in one place: what is included, "
+                    "what it costs, and how to get started."
+                ),
+                "line_items": [
+                    {"label": "POS integration (3 branches)", "qty": 3, "unit_price": 90000},
+                    {"label": "Staff training + go-live support", "qty": 1, "unit_price": 80000},
+                ],
+                "terms": "50% to begin, balance on go-live. Includes 3 months of support.",
+                "next_step": "Accept to lock in the February install slot.",
+            },
+        )
     return tenant
 
 

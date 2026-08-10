@@ -1,0 +1,96 @@
+{% extends "crm/base.html" %}
+{% block title %}Data trust · {{ tenant.name }} CRM{% endblock %}
+{% block content %}
+
+<div class="mb-5 flex items-start gap-3 flex-wrap">
+  <div>
+    <h1 class="font-display font-extrabold text-2xl text-[var(--ink-display)]">Data trust</h1>
+    <p class="text-xs text-[var(--ink-muted)] mt-0.5">
+      Every field carries where it came from and when it was last confirmed. Records rot quietly;
+      this is where you see it happening.
+    </p>
+  </div>
+  <form method="post" action="{% url 'crm:trust_queue_verification' %}" class="ml-auto">
+    {% csrf_token %}
+    <button class="text-xs font-bold px-3 py-1.5 rounded-lg brand-grad text-white hover:opacity-90 transition inline-flex items-center gap-1.5">
+      <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Ask the agent to re-verify
+    </button>
+  </form>
+</div>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+  <div class="rounded-xl border border-[var(--hairline)] bg-[var(--surface)] px-4 py-3">
+    <p class="figure text-2xl {% if portfolio.band == 'good' %}text-emerald-500{% elif portfolio.band == 'watch' %}text-amber-500{% else %}text-rose-500{% endif %}">{{ portfolio.average_score }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] uppercase tracking-[0.14em]">Average trust</p>
+  </div>
+  <div class="rounded-xl border border-[var(--hairline)] bg-[var(--surface)] px-4 py-3">
+    <p class="figure text-2xl text-[var(--ink-display)]">{{ portfolio.records }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] uppercase tracking-[0.14em]">Contacts scored</p>
+  </div>
+  <div class="rounded-xl border border-[var(--hairline)] bg-[var(--surface)] px-4 py-3">
+    <p class="figure text-2xl text-[var(--ink-display)]">{{ portfolio.missing_fields }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] uppercase tracking-[0.14em]">Blank fields</p>
+  </div>
+  <div class="rounded-xl border border-[var(--hairline)] bg-[var(--surface)] px-4 py-3">
+    <p class="figure text-2xl text-[var(--ink-display)]">{{ portfolio.stale_fields }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] uppercase tracking-[0.14em]">Decayed past use</p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-6">
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-muted)] flex items-center gap-2 mb-3">
+      <i data-lucide="trending-down" class="w-3.5 h-3.5"></i> Decay radar
+    </h2>
+    <div class="rounded-xl border border-[var(--hairline)] bg-[var(--page)] divide-y divide-[var(--hairline)]">
+      {% for row in radar %}
+      <div class="px-4 py-3 flex items-center gap-3">
+        <div class="w-10 shrink-0 text-center">
+          <p class="figure text-lg {% if row.band == 'good' %}text-emerald-500{% elif row.band == 'watch' %}text-amber-500{% else %}text-rose-500{% endif %}">{{ row.score }}</p>
+        </div>
+        <div class="min-w-0 flex-1">
+          <a href="{{ row.url }}" class="text-sm font-semibold brand-link truncate block">{{ row.label }}</a>
+          <p class="text-[11px] text-[var(--ink-muted)] truncate">
+            {% for f in row.problems %}{{ f.label }} ({{ f.state }}){% if not forloop.last %}, {% endif %}{% endfor %}
+          </p>
+        </div>
+        <form method="post" action="{% url 'crm:agent_run_now' %}" class="shrink-0">
+          {% csrf_token %}
+          <input type="hidden" name="subject_type" value="{{ row.subject_type }}" />
+          <input type="hidden" name="subject_id" value="{{ row.object.pk }}" />
+          <input type="hidden" name="kind" value="verify_field" />
+          <input type="hidden" name="next" value="/crm/trust/" />
+          <input type="hidden" name="reason" value="Re-verify from the decay radar." />
+          <button class="text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-[var(--hairline)] text-[var(--ink-muted)] hover:bg-[var(--surface)] transition">
+            Verify
+          </button>
+        </form>
+      </div>
+      {% empty %}
+      <p class="px-4 py-4 text-sm text-[var(--ink-muted)]">Nothing has decayed past the threshold. Rare and good.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-muted)] flex items-center gap-2 mb-3">
+      <i data-lucide="badge-check" class="w-3.5 h-3.5"></i> Recently confirmed
+    </h2>
+    <div class="rounded-xl border border-[var(--hairline)] bg-[var(--page)] divide-y divide-[var(--hairline)]">
+      {% for e in recent %}
+      <div class="px-4 py-2.5">
+        <p class="text-xs text-[var(--ink-display)]">
+          <span class="font-semibold">{{ e.field }}</span> = {{ e.value|truncatechars:40 }}
+        </p>
+        <p class="text-[11px] text-[var(--ink-muted)] mt-0.5">
+          <code>{{ e.source }}</code> · {{ e.observed_at|date:"j M, H:i" }}
+          {% if e.source_detail %} · {{ e.source_detail|truncatechars:40 }}{% endif %}
+        </p>
+      </div>
+      {% empty %}
+      <p class="px-4 py-3 text-sm text-[var(--ink-muted)]">Nothing confirmed in the last two weeks.</p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

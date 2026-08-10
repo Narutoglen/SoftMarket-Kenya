@@ -24,6 +24,52 @@
   </div>
 </section>
 
+{# What happened overnight. The agent works whether or not anyone is logged in,
+   so the dashboard opens with its report rather than burying it in a tab. #}
+<section class="mt-6 rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] overflow-hidden">
+  <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--hairline)]">
+    <h2 class="font-display font-bold text-[var(--ink-display)] flex items-center gap-2">
+      <i data-lucide="sparkles" class="w-4 h-4 brand-text"></i> While you were away
+    </h2>
+    <a href="{% url 'crm:agent_inbox' %}" class="text-xs font-semibold brand-link hover:underline">Agent console</a>
+  </div>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 divide-x divide-[var(--hairline)] border-b border-[var(--hairline)]">
+    <div class="px-4 py-3">
+      <p class="figure text-2xl {% if pending_suggestions %}text-amber-500{% else %}text-[var(--ink-display)]{% endif %}">{{ pending_suggestions }}</p>
+      <p class="text-[11px] text-[var(--ink-muted)] uppercase tracking-[0.14em]">To review</p>
+    </div>
+    <div class="px-4 py-3">
+      <p class="figure text-2xl {% if portfolio_trust.band == 'good' %}text-emerald-500{% elif portfolio_trust.band == 'watch' %}text-amber-500{% else %}text-rose-500{% endif %}">{{ portfolio_trust.average_score }}</p>
+      <p class="text-[11px] text-[var(--ink-muted)] uppercase tracking-[0.14em]">Data trust</p>
+    </div>
+    <div class="px-4 py-3">
+      <p class="figure text-2xl text-emerald-500">KSh {{ payments_summary.collected|floatformat:0 }}</p>
+      <p class="text-[11px] text-[var(--ink-muted)] uppercase tracking-[0.14em]">Collected</p>
+    </div>
+    <div class="px-4 py-3">
+      <p class="figure text-2xl {% if payments_summary.needs_review %}text-amber-500{% else %}text-[var(--ink-display)]{% endif %}">{{ payments_summary.needs_review }}</p>
+      <p class="text-[11px] text-[var(--ink-muted)] uppercase tracking-[0.14em]">Payments to settle</p>
+    </div>
+  </div>
+
+  <ul class="divide-y divide-[var(--hairline)]">
+    {% for run in agent_runs %}
+    <li class="px-4 py-2.5">
+      <p class="text-sm text-[var(--ink-body)]">{{ run.brief|truncatechars:160 }}</p>
+      <p class="text-[11px] text-[var(--ink-muted)] mt-0.5">
+        {{ run.started_at|date:"j M, H:i" }}{% if run.task %} · {{ run.task.subject_label }}{% endif %}
+      </p>
+    </li>
+    {% empty %}
+    <li class="px-4 py-4 text-sm text-[var(--ink-muted)] text-center">
+      The agent has not run yet.
+      <a class="brand-link font-semibold hover:underline" href="{% url 'crm:agent_inbox' %}">Queue a sweep</a>.
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
 <section class="mt-6 rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] overflow-hidden">
   <div class="flex items-center justify-between px-4 py-3 border-b border-[var(--hairline)]">
     <h2 class="font-display font-bold text-[var(--ink-display)]">Recent contacts</h2>

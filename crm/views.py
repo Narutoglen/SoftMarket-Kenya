@@ -5,19 +5,29 @@ the `HX-Request` header — list/delete views return partials or an
 `HX-Redirect`, while plain requests get the full page.
 """
 
+import json
+
 from django.contrib import messages
 from django.db.models import Q
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from .api import resolve_tenant
 from .forms import AccountForm, ActivityForm, ContactForm, PublicLeadForm
 from .models import (
-    Account, Activity, Contact, IntegrationConfig, IntegrationMessage,
-    Lead, Opportunity, Tenant, TenantStage,
+    Account, Activity, AgentQuestion, AgentRun, AgentTask, Contact, DealRoom,
+    IntegrationConfig, IntegrationMessage, Lead, Opportunity, PaymentEvent,
+    Subject, Suggestion, Tenant, TenantStage,
 )
+from . import dealroom as dealroom_service
+from . import payments as payments_service
 from . import services
+from . import trust as trust_service
+from .agent import evidence as ledger
+from .agent import queue as agent_queue
+from .agent import runner as agent_runner
 
 
 def get_tenant(request):
@@ -54,6 +64,11 @@ def dashboard(request):
         "hot_leads": hot_leads,
         "tasks_due": tasks_due,
         "recent_contacts": recent_contacts,
+        # What happened while nobody was logged in.
+        "agent_runs": agent_runner.recent_runs(tenant, limit=4),
+        "pending_suggestions": ledger.pending_suggestions(tenant).count(),
+        "portfolio_trust": trust_service.portfolio_trust(tenant),
+        "payments_summary": payments_service.payment_summary(tenant),
     })
 
 
@@ -83,6 +98,23 @@ def contact_detail(request, pk):
         "contact": contact,
         "activities": contact.activities.all()[:50],
         "opportunities": contact.opportunities.all()[:50],
+        # The Agent tab and the trust panel: what the agent did to this record,
+        # and how much of the record still deserves belief.
+        "agent_runs": agent_runner.runs_for_subject(tenant, Subject.CONTACT, contact.pk),
+        "agent_upcoming": AgentTask.objects.filter(
+            tenant=tenant, subject_type=Subject.CONTACT, subject_id=contact.pk,
+            status=AgentTask.Status.QUEUED,
+        ).order_by("due_at")[:5],
+        "suggestions": Suggestion.objects.filter(
+            tenant=tenant, subject_type=Subject.CONTACT, subject_id=contact.pk,
+            status=Suggestion.Status.PENDING,
+        ),
+        "questions": AgentQuestion.objects.filter(
+            tenant=tenant, subject_type=Subject.CONTACT, subject_id=contact.pk,
+            status=AgentQuestion.Status.OPEN,
+        ),
+        "trust": trust_service.trust_report(contact, Subject.CONTACT),
+        "payments": contact.payments.all()[:10],
     })
 
 
@@ -149,6 +181,12 @@ def account_detail(request, pk):
         "account": account,
         "contacts": account.contacts.all(),
         "opportunities": account.opportunities.all(),
+        "agent_runs": agent_runner.runs_for_subject(tenant, Subject.ACCOUNT, account.pk),
+        "suggestions": Suggestion.objects.filter(
+            tenant=tenant, subject_type=Subject.ACCOUNT, subject_id=account.pk,
+            status=Suggestion.Status.PENDING,
+        ),
+        "trust": trust_service.trust_report(account, Subject.ACCOUNT),
     })
 
 
@@ -504,3 +542,291 @@ def lead_convert(request, pk):
         return render(request, "crm/_lead_status.html", {"lead": lead, "contact": contact})
     messages.success(request, f"Lead converted to {contact.full_name}.")
     return redirect("crm:contact_detail", pk=contact.pk)
+
+
+# ---------------------------------------------------------------------------
+# M7 — the agent console
+#
+# Three things a rep needs from an autonomous colleague: what did you change,
+# what are you asking me, and what are you about to do next.
+# ---------------------------------------------------------------------------
+def agent_inbox(request):
+    tenant = get_tenant(request)
+    return render(request, "crm/agent_inbox.html", {
+        "tenant": tenant,
+        "active": "agent",
+        "suggestions": ledger.pending_suggestions(tenant).order_by("-confidence", "-created_at"),
+        "questions": AgentQuestion.objects.filter(
+            tenant=tenant, status=AgentQuestion.Status.OPEN
+        ),
+        "runs": agent_runner.recent_runs(tenant, limit=15),
+        "upcoming": agent_queue.upcoming(tenant, limit=15),
+        "depth": agent_queue.queue_depth(tenant),
+        "planner": _planner_name(),
+    })
+
+
+def _planner_name():
+    """Which planner will actually run — say so rather than implying an LLM."""
+    from django.conf import settings
+
+    from .agent import brain
+
+    use_llm = getattr(settings, "CRM_AGENT_USE_LLM", True)
+    return "claude" if use_llm and brain.is_configured() else "playbook"
+
+
+@require_POST
+def suggestion_decide(request, pk):
+    """Accept or reject one proposed change."""
+    tenant = get_tenant(request)
+    suggestion = get_object_or_404(Suggestion, tenant=tenant, pk=pk)
+    decision = request.POST.get("decision", "")
+    who = request.POST.get("by", "") or (
+        request.user.get_username() if request.user.is_authenticated else "front office"
+    )
+    if decision == "accept":
+        ledger.accept_suggestion(suggestion, decided_by=who)
+    elif decision == "reject":
+        ledger.reject_suggestion(suggestion, decided_by=who)
+    if is_htmx(request):
+        return render(request, "crm/_suggestion_row.html",
+                      {"tenant": tenant, "suggestion": suggestion})
+    return redirect("crm:agent_inbox")
+
+
+@require_POST
+def question_answer(request, pk):
+    tenant = get_tenant(request)
+    question = get_object_or_404(AgentQuestion, tenant=tenant, pk=pk)
+    answer = request.POST.get("answer", "").strip()
+    if answer:
+        question.answer = answer
+        question.status = AgentQuestion.Status.ANSWERED
+        from django.utils import timezone
+
+        question.answered_at = timezone.now()
+        question.save(update_fields=["answer", "status", "answered_at", "updated_at"])
+    if is_htmx(request):
+        return render(request, "crm/_question_row.html",
+                      {"tenant": tenant, "question": question})
+    return redirect("crm:agent_inbox")
+
+
+@require_POST
+def agent_run_now(request):
+    """'Ask the agent' — queue a task for a record and run it immediately."""
+    tenant = get_tenant(request)
+    subject_type = request.POST.get("subject_type", Subject.CONTACT)
+    subject_id = int(request.POST.get("subject_id", 0) or 0)
+    kind = request.POST.get("kind") or {
+        Subject.CONTACT: AgentTask.Kind.RESEARCH_CONTACT,
+        Subject.ACCOUNT: AgentTask.Kind.ENRICH_ACCOUNT,
+        Subject.OPPORTUNITY: AgentTask.Kind.REVIEW_DEAL,
+    }.get(subject_type, AgentTask.Kind.BRIEF)
+    run = agent_runner.run_now(
+        tenant, kind, subject_type, subject_id,
+        reason=request.POST.get("reason", "A rep asked for a look."),
+    )
+    if is_htmx(request):
+        return render(request, "crm/_agent_runs.html", {
+            "tenant": tenant,
+            "agent_runs": agent_runner.runs_for_subject(tenant, subject_type, subject_id),
+            "subject_type": subject_type,
+            "subject_id": subject_id,
+        })
+    messages.success(request, run.brief or "The agent found nothing to change.")
+    return redirect(request.POST.get("next", "/crm/agent/"))
+
+
+@require_POST
+def agent_sweep(request):
+    """Queue tonight's work now — decayed records, open deals, unseen contacts."""
+    tenant = get_tenant(request)
+    queued = agent_runner.sweep(tenant)
+    messages.success(request, f"Queued {len(queued)} task(s) for the agent.")
+    return redirect("crm:agent_inbox")
+
+
+# ---------------------------------------------------------------------------
+# Bonus 1 — data trust score + decay radar
+# ---------------------------------------------------------------------------
+def trust_dashboard(request):
+    tenant = get_tenant(request)
+    return render(request, "crm/trust.html", {
+        "tenant": tenant,
+        "active": "trust",
+        "portfolio": trust_service.portfolio_trust(tenant),
+        "radar": trust_service.decay_radar(tenant, limit=25),
+        "recent": trust_service.recently_verified(tenant, days=14, limit=15),
+    })
+
+
+@require_POST
+def trust_queue_verification(request):
+    tenant = get_tenant(request)
+    queued = trust_service.queue_reverification(tenant, limit=15, threshold=55)
+    messages.success(
+        request, f"Asked the agent to re-verify {len(queued)} record(s)."
+    )
+    return redirect("crm:trust_dashboard")
+
+
+# ---------------------------------------------------------------------------
+# Bonus 2 — payments-aware pipeline
+# ---------------------------------------------------------------------------
+def payments_console(request):
+    tenant = get_tenant(request)
+    return render(request, "crm/payments.html", {
+        "tenant": tenant,
+        "active": "payments",
+        "summary": payments_service.payment_summary(tenant),
+        "payments": PaymentEvent.objects.filter(tenant=tenant).select_related(
+            "contact", "opportunity"
+        )[:50],
+    })
+
+
+@require_POST
+def payment_ingest(request):
+    """Paste an M-Pesa confirmation. Parsing and matching happen on save."""
+    tenant = get_tenant(request)
+    text = request.POST.get("text", "").strip()
+    if not text:
+        messages.error(request, "Paste the confirmation message first.")
+        return redirect("crm:payments_console")
+    payment = payments_service.record_payment(tenant, text=text)
+    if payment.status == PaymentEvent.Status.MATCHED:
+        messages.success(
+            request,
+            f"KSh {payment.amount:,.0f} matched to {payment.opportunity.name} — "
+            f"{payment.match_reason}",
+        )
+    else:
+        messages.success(
+            request, f"Recorded KSh {payment.amount:,.0f}. {payment.match_reason}"
+        )
+    return redirect("crm:payments_console")
+
+
+@require_POST
+def payment_resolve(request, pk):
+    """A human settles an ambiguous payment against a specific deal."""
+    tenant = get_tenant(request)
+    payment = get_object_or_404(PaymentEvent, tenant=tenant, pk=pk)
+    opportunity_id = request.POST.get("opportunity")
+    if request.POST.get("decision") == "ignore":
+        payment.status = PaymentEvent.Status.IGNORED
+        payment.save(update_fields=["status", "updated_at"])
+        messages.success(request, "Payment set aside.")
+        return redirect("crm:payments_console")
+    opportunity = get_object_or_404(Opportunity, tenant=tenant, pk=opportunity_id)
+    contact = payment.contact or opportunity.contact
+    payments_service.apply_match(
+        payment, contact, opportunity, 100,
+        "Attributed by a person from the review queue.",
+        decided_by=request.POST.get("by", "front office"),
+    )
+    messages.success(request, f"Booked against {opportunity.name}.")
+    return redirect("crm:payments_console")
+
+
+@csrf_exempt
+@require_POST
+def mpesa_confirmation(request):
+    """Daraja C2B confirmation endpoint.
+
+    CSRF-exempt because Safaricom posts server-to-server with no session. The
+    endpoint is idempotent on the transaction code, so a retried callback — of
+    which Daraja sends plenty — cannot double-count revenue.
+    """
+    tenant = resolve_tenant(request)
+    if not tenant:
+        return JsonResponse({"ResultCode": 1, "ResultDesc": "Unknown instance"}, status=404)
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except ValueError:
+        return JsonResponse({"ResultCode": 1, "ResultDesc": "Malformed payload"}, status=400)
+    payment = payments_service.record_payment(tenant, payload=payload)
+    # Safaricom retries anything that is not an explicit success.
+    return JsonResponse({
+        "ResultCode": 0,
+        "ResultDesc": "Accepted",
+        "crm": {"payment_id": payment.id, "status": payment.status},
+    })
+
+
+# ---------------------------------------------------------------------------
+# Bonus 3 — the client-facing deal room
+# ---------------------------------------------------------------------------
+def deal_rooms(request):
+    tenant = get_tenant(request)
+    rooms = DealRoom.objects.filter(tenant=tenant).select_related("opportunity")
+    rows = []
+    for room in rooms:
+        state, label = dealroom_service.engagement_label(room)
+        rows.append({"room": room, "state": state, "label": label,
+                     **dealroom_service.engagement(room)})
+    return render(request, "crm/deal_rooms.html", {
+        "tenant": tenant,
+        "active": "rooms",
+        "rows": rows,
+        "attention": dealroom_service.rooms_needing_attention(tenant),
+        "openable": Opportunity.objects.filter(tenant=tenant, deal_room__isnull=True)[:50],
+    })
+
+
+@require_POST
+def deal_room_create(request, opportunity_pk):
+    tenant = get_tenant(request)
+    opportunity = get_object_or_404(Opportunity, tenant=tenant, pk=opportunity_pk)
+    room = dealroom_service.ensure_room(opportunity)
+    messages.success(request, f"Deal room ready — share {room.get_absolute_url()}")
+    return redirect("crm:deal_rooms")
+
+
+@require_POST
+def deal_room_toggle(request, pk):
+    tenant = get_tenant(request)
+    room = get_object_or_404(DealRoom, tenant=tenant, pk=pk)
+    room.active = not room.active
+    room.save(update_fields=["active", "updated_at"])
+    messages.success(request, "Deal room " + ("re-opened." if room.active else "closed."))
+    return redirect("crm:deal_rooms")
+
+
+def deal_room_public(request, token):
+    """The buyer's view. No auth — the token is the credential."""
+    from django.utils import timezone
+
+    room = DealRoom.objects.filter(token=token, active=True).select_related(
+        "opportunity", "opportunity__contact", "tenant"
+    ).first()
+    if room is None or (room.expires_at and room.expires_at < timezone.now()):
+        raise Http404("This link is no longer active.")
+    dealroom_service.log_view(room, request)
+    return render(request, "crm/deal_room_public.html", {
+        "tenant": room.tenant,
+        "room": room,
+        "opportunity": room.opportunity,
+        "payment": dealroom_service.payment_instructions(room.tenant),
+        "total": room.total,
+    })
+
+
+@require_POST
+def deal_room_accept(request, token):
+    room = get_object_or_404(DealRoom, token=token, active=True)
+    dealroom_service.accept(
+        room,
+        name=request.POST.get("name", ""),
+        note=request.POST.get("note", ""),
+    )
+    return render(request, "crm/deal_room_public.html", {
+        "tenant": room.tenant,
+        "room": room,
+        "opportunity": room.opportunity,
+        "payment": dealroom_service.payment_instructions(room.tenant),
+        "total": room.total,
+        "just_accepted": True,
+    })

@@ -1,0 +1,97 @@
+{% extends "crm/base.html" %}
+{% block title %}Deal rooms · {{ tenant.name }} CRM{% endblock %}
+{% block content %}
+
+<div class="mb-5">
+  <h1 class="font-display font-extrabold text-2xl text-[var(--ink-display)]">Deal rooms</h1>
+  <p class="text-xs text-[var(--ink-muted)] mt-0.5">
+    One link per deal instead of a PDF attachment. You find out whether it was opened, how often,
+    and whether they accepted — silence stops being ambiguous.
+  </p>
+</div>
+
+{% if attention %}
+<section class="mb-6">
+  <h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-muted)] flex items-center gap-2 mb-3">
+    <i data-lucide="bell-ring" class="w-3.5 h-3.5"></i> Asking for a decision
+  </h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    {% for row in attention %}
+    <div class="rounded-xl border brand-border bg-[var(--surface)] px-4 py-3">
+      <p class="text-sm font-semibold text-[var(--ink-display)]">{{ row.room.opportunity.name }}</p>
+      <p class="text-[11px] text-[var(--ink-muted)] mt-0.5">{{ row.label }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<div class="rounded-xl border border-[var(--hairline)] bg-[var(--page)] divide-y divide-[var(--hairline)] mb-6">
+  {% for row in rows %}
+  <div class="px-4 py-3 flex items-start gap-3 flex-wrap">
+    <div class="min-w-0 flex-1">
+      <p class="text-sm font-semibold text-[var(--ink-display)]">{{ row.room.opportunity.name }}</p>
+      <p class="text-[11px] text-[var(--ink-muted)] mt-0.5">
+        {{ row.room.opportunity.contact.full_name }} ·
+        KSh {{ row.room.total|floatformat:0 }} ·
+        {{ row.views }} open{{ row.views|pluralize }} from {{ row.visitors }} device{{ row.visitors|pluralize }}
+        {% if row.last_viewed %} · last {{ row.last_viewed|date:"j M, H:i" }}{% endif %}
+      </p>
+      <p class="text-[11px] mt-1
+        {% if row.state == 'hot' %}text-emerald-500
+        {% elif row.state == 'accepted' %}text-emerald-500
+        {% elif row.state == 'cooling' %}text-amber-500
+        {% elif row.state == 'cold' %}text-rose-500
+        {% else %}text-[var(--ink-muted)]{% endif %}">{{ row.label }}</p>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <a href="{{ row.room.get_absolute_url }}" target="_blank" rel="noopener"
+         class="text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-[var(--hairline)] text-[var(--ink-muted)] hover:bg-[var(--surface)] transition inline-flex items-center gap-1">
+        <i data-lucide="external-link" class="w-3 h-3"></i> Open
+      </a>
+      <button type="button" data-copy="{{ row.room.get_absolute_url }}"
+              class="copy-link text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-[var(--hairline)] text-[var(--ink-muted)] hover:bg-[var(--surface)] transition">
+        Copy link
+      </button>
+      <form method="post" action="{% url 'crm:deal_room_toggle' pk=row.room.pk %}">
+        {% csrf_token %}
+        <button class="text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-[var(--hairline)] text-[var(--ink-muted)] hover:bg-[var(--surface)] transition">
+          {% if row.room.active %}Close{% else %}Re-open{% endif %}
+        </button>
+      </form>
+    </div>
+  </div>
+  {% empty %}
+  <p class="px-4 py-5 text-sm text-[var(--ink-muted)] text-center">No deal rooms yet.</p>
+  {% endfor %}
+</div>
+
+{% if openable %}
+<section>
+  <h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-muted)] mb-3">Open a room for…</h2>
+  <div class="flex flex-wrap gap-2">
+    {% for opp in openable %}
+    <form method="post" action="{% url 'crm:deal_room_create' opportunity_pk=opp.pk %}">
+      {% csrf_token %}
+      <button class="text-[11px] font-semibold px-3 py-1.5 rounded-lg border border-[var(--hairline)] text-[var(--ink-body)] hover:brand-border transition">
+        + {{ opp.name }}
+      </button>
+    </form>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<script>
+  document.querySelectorAll('.copy-link').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var url = window.location.origin + btn.dataset.copy;
+      navigator.clipboard.writeText(url).then(function () {
+        var original = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(function () { btn.textContent = original; }, 1500);
+      });
+    });
+  });
+</script>
+{% endblock %}

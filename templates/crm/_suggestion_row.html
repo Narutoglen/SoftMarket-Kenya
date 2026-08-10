@@ -1,0 +1,49 @@
+{# One proposed change. Everything a person needs to decide in five seconds:
+   what would change, where it came from, and how strong that source is. #}
+<div class="rounded-xl border border-[var(--hairline)] bg-[var(--page)] p-4" id="suggestion-{{ suggestion.pk }}">
+  <div class="flex items-start gap-3">
+    <div class="min-w-0 flex-1">
+      <p class="text-[11px] text-[var(--ink-muted)] mb-1">
+        <a class="brand-link font-semibold" href="/crm/{{ suggestion.subject_type }}s/{{ suggestion.subject_id }}/">{{ suggestion.subject_label }}</a>
+        · <span class="uppercase tracking-wider">{{ suggestion.field }}</span>
+      </p>
+      <p class="text-sm text-[var(--ink-display)] font-semibold break-words">
+        {% if suggestion.current_value %}
+        <span class="line-through opacity-50">{{ suggestion.current_value }}</span>
+        <i data-lucide="arrow-right" class="w-3.5 h-3.5 inline-block mx-1 -mt-0.5 text-[var(--ink-muted)]"></i>
+        {% endif %}
+        {{ suggestion.proposed_value }}
+      </p>
+      {% if suggestion.rationale %}
+      <p class="text-[11px] text-[var(--ink-muted)] mt-1.5">{{ suggestion.rationale }}</p>
+      {% endif %}
+      <p class="text-[11px] text-[var(--ink-muted)] mt-1">
+        {% if suggestion.evidence %}Source: <code>{{ suggestion.evidence.source }}</code> · {% endif %}
+        strength {{ suggestion.confidence }}/100
+      </p>
+    </div>
+
+    {% if suggestion.status == 'pending' %}
+    <div class="flex flex-col gap-1.5 shrink-0">
+      <button hx-post="{% url 'crm:suggestion_decide' pk=suggestion.pk %}"
+              hx-vals='{"decision": "accept"}'
+              hx-target="#suggestion-{{ suggestion.pk }}" hx-swap="outerHTML"
+              class="text-[11px] font-bold px-3 py-1.5 rounded-lg brand-grad text-white hover:opacity-90 transition">
+        Accept
+      </button>
+      <button hx-post="{% url 'crm:suggestion_decide' pk=suggestion.pk %}"
+              hx-vals='{"decision": "reject"}'
+              hx-target="#suggestion-{{ suggestion.pk }}" hx-swap="outerHTML"
+              class="text-[11px] font-semibold px-3 py-1.5 rounded-lg border border-[var(--hairline)] text-[var(--ink-muted)] hover:bg-[var(--surface)] transition">
+        Reject
+      </button>
+    </div>
+    {% else %}
+    <span class="shrink-0 text-[10px] font-bold px-2 py-1 rounded-full
+      {% if suggestion.status == 'accepted' %}bg-emerald-500/15 text-emerald-600 dark:text-emerald-400
+      {% else %}bg-[var(--hairline)] text-[var(--ink-muted)]{% endif %}">
+      {{ suggestion.get_status_display }}{% if suggestion.decided_by %} · {{ suggestion.decided_by }}{% endif %}
+    </span>
+    {% endif %}
+  </div>
+</div>

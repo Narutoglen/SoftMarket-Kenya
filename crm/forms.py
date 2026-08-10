@@ -20,7 +20,7 @@ class ContactForm(forms.ModelForm):
     class Meta:
         model = Contact
         fields = [
-            "first_name", "last_name", "email", "phone",
+            "first_name", "last_name", "email", "phone", "job_title",
             "date_of_birth", "personal_notes", "account",
             "lifecycle", "territory",
         ]
@@ -29,6 +29,7 @@ class ContactForm(forms.ModelForm):
             "last_name": forms.TextInput(attrs={"class": INPUT}),
             "email": forms.EmailInput(attrs={"class": INPUT}),
             "phone": forms.TextInput(attrs={"class": INPUT}),
+            "job_title": forms.TextInput(attrs={"class": INPUT, "placeholder": "e.g. Procurement Manager"}),
             "date_of_birth": forms.DateInput(attrs={"class": INPUT, "type": "date"}),
             "personal_notes": forms.Textarea(attrs={"class": INPUT + " h-24 resize-none"}),
             "account": forms.Select(attrs={"class": INPUT}),

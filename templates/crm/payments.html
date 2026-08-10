@@ -1,0 +1,105 @@
+{% extends "crm/base.html" %}
+{% block title %}Payments · {{ tenant.name }} CRM{% endblock %}
+{% block content %}
+
+<div class="mb-5">
+  <h1 class="font-display font-extrabold text-2xl text-[var(--ink-display)]">Payments</h1>
+  <p class="text-xs text-[var(--ink-muted)] mt-0.5">
+    Paste an M-Pesa confirmation and it finds the customer, finds the deal, and closes it.
+    Anything ambiguous waits for you rather than guessing.
+  </p>
+</div>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+  <div class="rounded-xl border border-[var(--hairline)] bg-[var(--surface)] px-4 py-3">
+    <p class="figure text-2xl text-emerald-500">KSh {{ summary.collected|floatformat:0 }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] uppercase tracking-[0.14em]">Collected</p>
+  </div>
+  <div class="rounded-xl border border-[var(--hairline)] bg-[var(--surface)] px-4 py-3">
+    <p class="figure text-2xl text-[var(--ink-display)]">{{ summary.matched }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] uppercase tracking-[0.14em]">Matched</p>
+  </div>
+  <div class="rounded-xl border border-[var(--hairline)] bg-[var(--surface)] px-4 py-3">
+    <p class="figure text-2xl text-amber-500">{{ summary.needs_review }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] uppercase tracking-[0.14em]">Needs review</p>
+  </div>
+  <div class="rounded-xl border border-[var(--hairline)] bg-[var(--surface)] px-4 py-3">
+    <p class="figure text-2xl text-[var(--ink-muted)]">{{ summary.unmatched }}</p>
+    <p class="text-[11px] text-[var(--ink-muted)] uppercase tracking-[0.14em]">Unmatched</p>
+  </div>
+</div>
+
+<form method="post" action="{% url 'crm:payment_ingest' %}"
+      class="rounded-xl border border-[var(--hairline)] bg-[var(--surface)] p-4 mb-6">
+  {% csrf_token %}
+  <label class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--ink-muted)] block mb-2">
+    Paste a confirmation
+  </label>
+  <textarea name="text" rows="2" required
+    placeholder="TGH4X8K9LM Confirmed. Ksh90,000.00 received from JOHN KAMAU 0722000002 on 9/8/26 at 3:45 PM"
+    class="w-full rounded-lg bg-[var(--page)] border border-[var(--hairline)] px-3 py-2 text-sm outline-none focus:border-[var(--accent)] resize-none"></textarea>
+  <div class="flex items-center justify-between gap-3 mt-2">
+    <p class="text-[11px] text-[var(--ink-muted)]">
+      Or point Daraja at <code>/hooks/mpesa/confirmation/</code> — same engine, no copy-paste.
+    </p>
+    <button class="text-xs font-bold px-4 py-1.5 rounded-lg brand-grad text-white hover:opacity-90 transition">
+      Reconcile
+    </button>
+  </div>
+</form>
+
+<div class="rounded-xl border border-[var(--hairline)] bg-[var(--page)] divide-y divide-[var(--hairline)]">
+  {% for p in payments %}
+  <div class="px-4 py-3">
+    <div class="flex items-start gap-3 flex-wrap">
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-semibold text-[var(--ink-display)]">
+          KSh {{ p.amount|floatformat:0 }}
+          <span class="text-[var(--ink-muted)] font-normal">from {{ p.payer_name|default:p.phone|default:"unknown" }}</span>
+        </p>
+        <p class="text-[11px] text-[var(--ink-muted)] mt-0.5">
+          {% if p.external_ref %}<code>{{ p.external_ref }}</code> · {% endif %}
+          {{ p.paid_at|date:"j M Y, H:i" }}
+          {% if p.contact %} · <a class="brand-link" href="{{ p.contact.get_absolute_url }}">{{ p.contact.full_name }}</a>{% endif %}
+          {% if p.opportunity %} · {{ p.opportunity.name }}{% endif %}
+        </p>
+        {% if p.match_reason %}
+        <p class="text-[11px] text-[var(--ink-muted)] mt-1 italic">{{ p.match_reason }}</p>
+        {% endif %}
+      </div>
+
+      <span class="text-[10px] font-bold px-2 py-1 rounded-full shrink-0
+        {% if p.status == 'matched' %}bg-emerald-500/15 text-emerald-600 dark:text-emerald-400
+        {% elif p.status == 'needs_review' %}bg-amber-500/15 text-amber-600 dark:text-amber-400
+        {% elif p.status == 'ignored' %}bg-[var(--hairline)] text-[var(--ink-muted)]
+        {% else %}bg-rose-500/15 text-rose-600 dark:text-rose-400{% endif %}">
+        {{ p.get_status_display }}{% if p.match_confidence %} · {{ p.match_confidence }}{% endif %}
+      </span>
+    </div>
+
+    {% if p.status == 'needs_review' and p.contact %}
+    <form method="post" action="{% url 'crm:payment_resolve' pk=p.pk %}" class="mt-2 flex items-center gap-2 flex-wrap">
+      {% csrf_token %}
+      <select name="opportunity"
+              class="rounded-lg bg-[var(--surface)] border border-[var(--hairline)] px-2 py-1 text-xs outline-none focus:border-[var(--accent)]">
+        {% for opp in p.contact.opportunities.all %}
+        <option value="{{ opp.pk }}" {% if p.opportunity_id == opp.pk %}selected{% endif %}>
+          {{ opp.name }} — KSh {{ opp.amount|floatformat:0 }}
+        </option>
+        {% endfor %}
+      </select>
+      <button class="text-[11px] font-bold px-3 py-1 rounded-lg brand-grad text-white hover:opacity-90 transition">
+        Book it
+      </button>
+      <button name="decision" value="ignore"
+              class="text-[11px] font-semibold px-3 py-1 rounded-lg border border-[var(--hairline)] text-[var(--ink-muted)] hover:bg-[var(--surface)] transition">
+        Not ours
+      </button>
+    </form>
+    {% endif %}
+  </div>
+  {% empty %}
+  <p class="px-4 py-5 text-sm text-[var(--ink-muted)] text-center">No payments recorded yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

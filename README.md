@@ -38,6 +38,90 @@ Then open:
 http://127.0.0.1:8000/
 ```
 
+## The CRM
+
+A white-label CRM core lives at `/crm/`. One codebase serves several clients as
+configured `Tenant` rows (SoftMarket is tenant #1, GreenVault is the proof there
+is no fork), with a contact-centric model: `Tenant → Account / Contact →
+Activity / Lead / Opportunity`.
+
+On top of that sits an **agentic layer** modelled on
+[trycompai/crm](https://github.com/trycompai/crm), rebuilt for Django.
+
+### The agent
+
+The agent is not a chat box bolted onto the CRM — the CRM is its workspace. It
+owns a work queue, runs on its own clock, and leaves an audit trail a sceptical
+rep can read.
+
+```powershell
+python manage.py run_agent --sweep            # queue work: decayed records, open deals, unseen contacts
+python manage.py run_agent --once --limit 5   # drain due tasks (put this behind cron)
+python manage.py run_agent --loop             # worker mode
+```
+
+Several dispatchers can run against one database: claiming is lease-based
+(`FOR UPDATE SKIP LOCKED` on Postgres), so they take disjoint work and a worker
+that dies just lets its lease expire.
+
+**Nothing about a person is guessed.** Tools report observations — "this string
+appeared under a sign-off on activity #91" — and an evidence ledger
+(`crm/agent/evidence.py`) prices the *source*, not the model's confidence:
+
+| Strength | Outcome |
+| --- | --- |
+| ≥ 70 (payment confirmation, signature block, form submission) | written to the record |
+| 25–69 (a mention in a note, a derived domain) | held as a suggestion for a human |
+| < 25, and `model.guess` at 0 | discarded, with the reason kept in the trail |
+
+The agent may correct *facts* (phone, job title, company domain). It may never
+touch *judgements* — lifecycle, pipeline stage, BANT, deal value — because an
+agent that can move a deal to Won can fabricate a quarter. Four versioned
+markdown skills in `crm/agent/skills/` govern how it works.
+
+**It runs with or without an API key.** With `ANTHROPIC_API_KEY` set, Claude
+plans each run; without one, a deterministic playbook drives the same eighteen
+tools, so the guard rails, tenant scoping and audit trail are identical either
+way. `/crm/agent/` tells you which planner is live.
+
+```text
+ANTHROPIC_API_KEY=sk-ant-...      # optional — enables the Claude planner
+CRM_AGENT_MODEL=claude-opus-5     # default
+CRM_AGENT_USE_LLM=False           # force the deterministic path
+```
+
+### Three things no other CRM does
+
+**Data trust score + decay radar** (`/crm/trust/`). Because every field carries
+provenance, each one can be scored on how much it still deserves belief — the
+strength of what confirmed it, decayed by a half-life tuned per field (a mobile
+number rots faster than an industry). Records roll up to a Trust Score, the
+radar surfaces the worst, and stale fields are handed back to the agent to
+re-verify. This attacks the industry's best-documented failure: most teams say
+under half their CRM data is accurate, and a database drifts from ~97% correct
+at month one to the mid-70s by month twelve.
+
+**Payments-aware pipeline** (`/crm/payments/`). Paste an M-Pesa confirmation —
+or point Daraja's C2B callback at `/hooks/mpesa/confirmation/` — and it parses
+the message, matches the payer by phone (the number *is* the account here),
+matches the amount to an open deal, closes the deal, logs it on the timeline,
+and records the paying number as verified evidence. Ambiguity is never resolved
+by guessing: two equally plausible deals go to a review queue with the reasoning
+shown. Replaying the same transaction code is a no-op, so revenue cannot be
+double-counted.
+
+**Client-facing deal rooms** (`/crm/rooms/`). One shareable link per deal
+instead of a PDF attachment: scope, price, M-Pesa instructions, and an Accept
+button. Opens are tracked, so "opened four times, never replied" becomes a
+signal the agent acts on rather than a hunch. Accepting is a commitment, not a
+payment — it logs and follows up, but only money moves a deal to Won.
+
+### JSON API
+
+Everything above is available under `/api/crm/` with the `X-CRM-Instance`
+header selecting the tenant — including `agent/runs/` (briefs plus every step),
+`agent/suggestions/`, `trust/` and `payments/`.
+
 ## Configure WhatsApp
 
 Update `BUSINESS_WHATSAPP_NUMBER` in `static/marketplace/script.js` with the real business WhatsApp number in international format.

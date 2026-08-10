@@ -1,0 +1,135 @@
+{% load static %}<!DOCTYPE html>
+{# The buyer's page. Deliberately not extending crm/base.html — this is not the
+   CRM and must never look or behave like an internal tool. No nav, no jargon,
+   nothing about the pipeline, and nothing about any other customer. #}
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>{{ room.headline|default:opportunity.name }} · {{ tenant.name }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: {{ tenant.brand_primary_color }};
+      --accent2: {{ tenant.brand_accent_color }};
+      --page: #ffffff; --surface: #f8fafc; --hairline: #e2e8f0;
+      --ink-body: #334155; --ink-display: #0f172a; --ink-muted: #64748b;
+    }
+    html { font-family: 'Manrope', system-ui, sans-serif; }
+    .font-display { font-family: 'Outfit', sans-serif; }
+    .figure { font-family: 'Outfit', sans-serif; font-weight: 900; letter-spacing: -0.02em; }
+    .brand-grad { background-image: linear-gradient(135deg, var(--accent), var(--accent2)); }
+    .brand-text { color: var(--accent); }
+    .brand-border { border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+  </style>
+</head>
+<body class="bg-[var(--surface)] text-[var(--ink-body)] antialiased">
+
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-10">
+
+  <header class="flex items-center gap-3 mb-8">
+    {% if tenant.logo_url %}
+    <img src="{{ tenant.logo_url }}" alt="{{ tenant.name }}" class="h-10 w-10 rounded-xl object-cover" />
+    {% else %}
+    <div class="h-10 w-10 rounded-xl brand-grad"></div>
+    {% endif %}
+    <div>
+      <p class="font-display font-extrabold text-[var(--ink-display)]">{{ tenant.name }}</p>
+      <p class="text-xs text-[var(--ink-muted)]">Prepared for {{ opportunity.contact.full_name }}</p>
+    </div>
+  </header>
+
+  {% if just_accepted or room.accepted_at %}
+  <div class="rounded-2xl border brand-border bg-white p-5 mb-6 flex items-start gap-3">
+    <div class="w-9 h-9 rounded-full brand-grad flex items-center justify-center text-white font-bold shrink-0">✓</div>
+    <div>
+      <p class="font-display font-bold text-[var(--ink-display)]">Accepted — thank you{% if room.accepted_by_name %}, {{ room.accepted_by_name }}{% endif %}.</p>
+      <p class="text-sm text-[var(--ink-muted)] mt-0.5">
+        We have been notified and will be in touch shortly. Payment details are below if you would
+        like to get started right away.
+      </p>
+    </div>
+  </div>
+  {% endif %}
+
+  <main class="rounded-2xl bg-white border border-[var(--hairline)] overflow-hidden">
+    <div class="brand-grad px-6 py-5 text-white">
+      <h1 class="font-display font-extrabold text-2xl">{{ room.headline|default:opportunity.name }}</h1>
+      {% if room.summary %}<p class="text-sm/relaxed opacity-90 mt-1">{{ room.summary }}</p>{% endif %}
+    </div>
+
+    <section class="px-6 py-5 border-b border-[var(--hairline)]">
+      <h2 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-muted)] mb-3">What is included</h2>
+      <table class="w-full text-sm">
+        <tbody class="divide-y divide-[var(--hairline)]">
+        {% for item in room.line_items %}
+          <tr>
+            <td class="py-2 pr-3 text-[var(--ink-body)]">{{ item.label }}</td>
+            <td class="py-2 px-2 text-right text-[var(--ink-muted)] whitespace-nowrap">× {{ item.qty|default:1 }}</td>
+            <td class="py-2 pl-3 text-right font-semibold text-[var(--ink-display)] whitespace-nowrap">
+              KSh {{ item.unit_price|floatformat:0 }}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr class="border-t-2 border-[var(--hairline)]">
+            <td colspan="2" class="pt-3 font-display font-bold text-[var(--ink-display)]">Total</td>
+            <td class="pt-3 text-right figure text-xl brand-text whitespace-nowrap">KSh {{ total|floatformat:0 }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
+
+    {% if room.terms %}
+    <section class="px-6 py-5 border-b border-[var(--hairline)]">
+      <h2 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-muted)] mb-2">Terms</h2>
+      <p class="text-sm text-[var(--ink-body)] whitespace-pre-line">{{ room.terms }}</p>
+    </section>
+    {% endif %}
+
+    {% if payment %}
+    <section class="px-6 py-5 border-b border-[var(--hairline)]">
+      <h2 class="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--ink-muted)] mb-2">Pay by M-Pesa</h2>
+      <div class="rounded-xl bg-[var(--surface)] border border-[var(--hairline)] p-4 text-sm">
+        {% if payment.paybill %}<p><span class="text-[var(--ink-muted)]">Paybill</span> <span class="font-bold text-[var(--ink-display)]">{{ payment.paybill }}</span></p>{% endif %}
+        {% if payment.till %}<p><span class="text-[var(--ink-muted)]">Till</span> <span class="font-bold text-[var(--ink-display)]">{{ payment.till }}</span></p>{% endif %}
+        <p class="mt-1"><span class="text-[var(--ink-muted)]">Account</span> <span class="font-bold text-[var(--ink-display)]">{{ opportunity.pk }}</span></p>
+        <p class="text-xs text-[var(--ink-muted)] mt-2">
+          Use the account number above and your payment will be matched to this quote automatically.
+        </p>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if not room.accepted_at %}
+    <section class="px-6 py-5">
+      <h2 class="font-display font-bold text-[var(--ink-display)] mb-1">{{ room.next_step|default:"Ready to go ahead?" }}</h2>
+      <p class="text-sm text-[var(--ink-muted)] mb-4">
+        Accepting confirms the scope and pricing above. It is not a payment.
+      </p>
+      <form method="post" action="{% url 'crm:deal_room_accept' token=room.token %}" class="space-y-3">
+        {% csrf_token %}
+        <input name="name" required placeholder="Your full name"
+               class="w-full rounded-xl border border-[var(--hairline)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none focus:border-[var(--accent)]" />
+        <textarea name="note" rows="2" placeholder="Anything you would like to add (optional)"
+               class="w-full rounded-xl border border-[var(--hairline)] bg-[var(--surface)] px-3 py-2.5 text-sm outline-none focus:border-[var(--accent)] resize-none"></textarea>
+        <button class="w-full brand-grad text-white font-display font-bold py-3 rounded-xl hover:opacity-90 transition">
+          Accept this quote
+        </button>
+      </form>
+    </section>
+    {% endif %}
+  </main>
+
+  <p class="text-center text-xs text-[var(--ink-muted)] mt-6">
+    Questions? Reply to the email this link came from and it reaches
+    {{ opportunity.owner|default:"our team" }} directly.
+  </p>
+</div>
+</body>
+</html>
