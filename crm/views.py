@@ -13,6 +13,7 @@ from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
+from decimal import Decimal
 
 from .api import resolve_tenant
 from .forms import AccountForm, ActivityForm, ContactForm, PublicLeadForm
@@ -34,11 +35,149 @@ def get_tenant(request):
     tenant = resolve_tenant(request)
     if not tenant:
         raise Http404("CRM instance not found.")
+    # Mark the demo state: an anonymous visitor on the PUBLIC company instance
+    # (i.e. not logged in) is browsing the sample workspace. Authenticated
+    # clients never see this flag.
+    user = getattr(request, "user", None)
+    tenant.is_demo = (
+        not (user is not None and user.is_authenticated)
+        and tenant.is_public
+        and tenant.slug == "softmarket"
+    )
     return tenant
+
+
+def require_tenant_access(view_func):
+    """Defensive auth gate for private tenants (the middleware is primary).
+
+    Requires an authenticated member of the resolved tenant. Public tenants are
+    always open. Most views rely on TenantAccessMiddleware; this decorator exists
+    for any view reached outside the /crm/ path.
+    """
+    from functools import wraps
+
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        tenant = resolve_tenant(request)
+        if tenant is None:
+            raise Http404("CRM instance not found.")
+        if tenant.is_public:
+            return view_func(request, *args, **kwargs)
+        user = getattr(request, "user", None)
+        if user is not None and user.is_authenticated:
+            return view_func(request, *args, **kwargs)
+        return redirect(f"{reverse('crm:tenant_login')}?instance={tenant.slug}")
+    return _wrapped
 
 
 def is_htmx(request):
     return request.headers.get("HX-Request") == "true"
+
+
+# ---------------------------------------------------------------------------
+# Client access gateway — real Django auth (per-user login / sign-up)
+# ---------------------------------------------------------------------------
+@require_GET
+def tenant_login(request):
+    """Client access gateway: Sign up (new workspace) or Log in (existing user)."""
+    slug = request.GET.get("instance") or request.session.get("active_tenant") or "softmarket"
+    tenant = Tenant.objects.filter(slug=slug, active=True).first()
+    if tenant and tenant.is_public:
+        return redirect("crm:dashboard")
+    return render(request, "crm/tenant_login.html", {
+        "tenant": tenant, "active": "", "slug": slug,
+    })
+
+
+@require_GET
+def client_access(request):
+    """Always-on client gateway for the public 'Client login' link."""
+    slug = request.session.get("active_tenant") or "softmarket"
+    return render(request, "crm/tenant_login.html", {
+        "tenant": None, "active": "", "slug": slug, "mode": request.GET.get("mode", "login"),
+    })
+
+
+@require_POST
+def tenant_login_submit(request):
+    """Branch on mode=signup|login. Both use real Django auth (per-user)."""
+    from django.contrib.auth import authenticate, login
+    from django.contrib.auth.models import User
+
+    mode = request.POST.get("mode", "login")
+    slug = (request.POST.get("instance") or request.session.get("active_tenant") or "softmarket").strip()
+
+    if mode == "signup":
+        business = (request.POST.get("business") or "").strip()
+        email = (request.POST.get("email") or "").strip()
+        password = (request.POST.get("password") or "").strip()
+        if not business or not email or not password:
+            return render(request, "crm/tenant_login.html", {
+                "tenant": None, "slug": slug, "mode": "signup",
+                "error": "Business name, email and password are required.",
+            })
+        if "@" not in email:
+            return render(request, "crm/tenant_login.html", {
+                "tenant": None, "slug": slug, "mode": "signup",
+                "error": "Enter a valid email address.",
+            })
+        if User.objects.filter(username=email).exists():
+            return render(request, "crm/tenant_login.html", {
+                "tenant": None, "slug": slug, "mode": "signup",
+                "error": "That email is already registered. Log in instead.",
+            })
+        # Create the user (username = email) + their private workspace.
+        user = User.objects.create_user(username=email, email=email, password=password)
+        tenant = services.create_workspace(business, email)
+        TenantMembership.objects.create(user=user, tenant=tenant, role=TenantMembership.ROLE_OWNER)
+        services.seed_demo_for_tenant(tenant, owner_name="Owner")
+        login(request, user)
+        request.session["active_tenant"] = tenant.slug
+        request.session["show_tour"] = True
+        return redirect("crm:dashboard")
+
+    # mode == login
+    email = (request.POST.get("email") or "").strip()
+    password = (request.POST.get("password") or "").strip()
+    user = authenticate(request, username=email, password=password)
+    if user is None:
+        return render(request, "crm/tenant_login.html", {
+            "tenant": None, "active": "", "slug": slug, "mode": "login",
+            "error": "Invalid email or password.",
+        })
+    membership = TenantMembership.objects.filter(user=user, tenant__active=True).first()
+    if membership is None:
+        return render(request, "crm/tenant_login.html", {
+            "tenant": None, "active": "", "slug": slug, "mode": "login",
+            "error": "No workspace linked to this account.",
+        })
+    login(request, user)
+    request.session["active_tenant"] = membership.tenant.slug
+    return redirect("crm:dashboard")
+
+
+def tenant_logout(request):
+    from django.contrib.auth import logout
+    logout(request)
+    return redirect("crm:dashboard")
+
+
+@require_POST
+def clear_sample_data_view(request):
+    """Bulk-clear the onboarding sample for the active tenant (owner-only)."""
+    tenant = get_tenant(request)
+    services.clear_sample_data(tenant)
+    if is_htmx(request):
+        return HttpResponse(status=204)
+    return redirect("crm:dashboard")
+
+
+def dismiss_tour(request):
+    """Remember that this visitor dismissed the guided tour this session."""
+    request.session["show_tour"] = False
+    if is_htmx(request):
+        return HttpResponse(status=204)
+    return redirect("crm:dashboard")
 
 
 # ---------------------------------------------------------------------------

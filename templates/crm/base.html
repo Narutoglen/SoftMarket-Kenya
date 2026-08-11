@@ -67,7 +67,9 @@
         {% endif %}
         <div class="leading-tight">
           <p class="font-display font-extrabold text-[15px] tracking-tight text-[var(--ink-display)]">{{ tenant.name }} <span class="brand-text">CRM</span></p>
-          <p class="text-[11px] text-[var(--ink-muted)] -mt-0.5">Front office</p>
+          <p class="text-[11px] text-[var(--ink-muted)] -mt-0.5">
+            {% if tenant.is_demo %}Demo workspace{% else %}Front office{% endif %}
+          </p>
         </div>
       </a>
 
@@ -87,9 +89,30 @@
           <i data-lucide="sun" class="hidden dark:inline-block w-4 h-4"></i>
           <i data-lucide="moon" class="inline-block dark:hidden w-4 h-4"></i>
         </button>
+        {% if tenant.has_sample_data and not tenant.is_public %}
+        <form method="post" action="{% url 'crm:clear_sample_data' %}" class="inline">
+          {% csrf_token %}
+          <button type="submit" class="text-xs font-semibold px-3 py-2 rounded-xl border border-[var(--hairline)] text-[var(--ink-muted)] hover:text-[var(--ink-display)] transition">Clear sample data</button>
+        </form>
+        {% endif %}
+        {% if tenant.is_public %}
+        <a href="{% url 'crm:client_access' %}" class="text-xs font-semibold px-3 py-2 rounded-xl border border-[var(--hairline)] text-[var(--ink-muted)] hover:text-[var(--ink-display)] transition">Client login</a>
+        {% else %}
+        <a href="{% url 'crm:tenant_logout' %}" class="text-xs font-semibold px-3 py-2 rounded-xl border border-[var(--hairline)] text-[var(--ink-muted)] hover:text-[var(--ink-display)] transition">Log out</a>
+        {% endif %}
       </div>
     </div>
   </header>
+
+  {% if tenant.is_demo %}
+  <div class="no-print bg-[color-mix(in_srgb,var(--accent)_14%,transparent)] border-b border-[color-mix(in_srgb,var(--accent)_25%,transparent)]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-center gap-3 text-[13px] text-[var(--ink-body)]">
+      <i data-lucide="flask-conical" class="w-4 h-4 text-[var(--accent)]"></i>
+      <span>You're viewing a <span class="font-semibold">demo workspace</span> with sample data.
+        <a href="{% url 'crm:client_access' %}" class="font-semibold text-[var(--accent)] hover:underline">Sign up</a> for your own private CRM.</span>
+    </div>
+  </div>
+  {% endif %}
 
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
 
@@ -125,12 +148,12 @@
     </main>
   </div>
 
-  <footer class="no-print max-w-7xl mx-auto px-4 sm:px-6 py-8 text-center text-xs text-[var(--ink-muted)]">
-    {{ tenant.name }} CRM — white-label front office.
+  <footer class="no-print max-w-7xl mx-auto px-4 sm:px-6 py-6 text-center text-[11px] text-[var(--ink-muted)] opacity-70">
+    Powered by <span class="font-semibold">SoftMarket CRM</span>
   </footer>
 
-  {# Non-blocking confirm modal. Replaces window.confirm() (which freezes the
-     page in headless/embedded browsers) for any element carrying hx-confirm. #}
+  <!-- Non-blocking confirm modal. Replaces window.confirm() (which freezes the
+       page in headless/embedded browsers) for any element carrying hx-confirm. -->
   <div id="confirm-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true">
     <div class="w-full max-w-sm rounded-2xl bg-[var(--surface)] border border-[var(--hairline)] p-5 shadow-2xl">
       <p id="confirm-text" class="text-sm text-[var(--ink-body)] mb-5"></p>
@@ -197,5 +220,29 @@
       }
     })();
   </script>
+
+  {% if request.session.show_tour and not tenant.is_demo %}
+  <div id="tour-card" class="no-print fixed bottom-4 right-4 z-40 w-[min(92vw,22rem)] rounded-2xl bg-[var(--surface)] border border-[var(--hairline)] shadow-2xl p-5">
+    <div class="flex items-start gap-3">
+      <div class="w-9 h-9 rounded-xl brand-grad flex items-center justify-center shrink-0">
+        <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-display font-bold text-[var(--ink-display)]">Welcome to {{ tenant.name }} CRM</p>
+        <p class="text-sm text-[var(--ink-muted)] mt-0.5">We dropped in sample data so you can explore. Work through these:</p>
+        <ol class="mt-3 space-y-1.5 text-sm text-[var(--ink-body)] list-decimal list-inside">
+          <li>Browse the <a class="font-semibold brand-link hover:underline" href="{% url 'crm:pipeline_board' %}">pipeline</a> — sample deals are loaded.</li>
+          <li>Open a deal, then <span class="font-semibold">Generate invoice</span> (queues KRA eTIMS).</li>
+          <li>Hit <span class="font-semibold">Request M-Pesa payment</span> to see the cash loop.</li>
+          <li>Add your <a class="font-semibold brand-link hover:underline" href="{% url 'crm:contact_list' %}">first real contact</a>.</li>
+          <li>When ready, <span class="font-semibold">Clear sample data</span> (top-right) to start fresh.</li>
+        </ol>
+        <button hx-post="{% url 'crm:dismiss_tour' %}" hx-target="#tour-card" hx-swap="outerHTML"
+                class="mt-4 w-full rounded-xl py-2 text-sm font-bold text-white" style="background:var(--accent);">Got it</button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
 </body>
 </html>

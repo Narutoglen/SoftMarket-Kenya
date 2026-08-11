@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Client access · SoftMarket CRM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --accent:#6d28d9; --accent2:#22d3ee; --page:#020617; --surface:#0f172a; --hairline:#1e293b; --ink-display:#f8fafc; --ink-muted:#94a3b8; }
+    body { font-family: 'Manrope', system-ui, sans-serif; }
+    .inp { width:100%; border-radius:0.75rem; background:var(--page); border:1px solid var(--hairline); padding:0.625rem 0.75rem; font-size:0.875rem; color:var(--ink-display); }
+    .inp::placeholder { color:var(--ink-muted); }
+    .inp:focus { outline:none; border-color:var(--accent); }
+  </style>
+  <script>
+    function showTab(tab){
+      document.getElementById('tab-signup').classList.toggle('bg-[var(--surface)]', tab==='signup');
+      document.getElementById('tab-signup').classList.toggle('text-[var(--ink-display)]', tab==='signup');
+      document.getElementById('tab-login').classList.toggle('bg-[var(--surface)]', tab==='login');
+      document.getElementById('tab-login').classList.toggle('text-[var(--ink-display)]', tab==='login');
+      document.getElementById('pane-signup').classList.toggle('hidden', tab!=='signup');
+      document.getElementById('pane-login').classList.toggle('hidden', tab!=='login');
+      document.getElementById('mode').value = tab;
+    }
+  </script>
+</head>
+<body class="bg-[var(--page)] text-[var(--ink-display)] min-h-screen flex items-center justify-center antialiased">
+  <div class="w-full max-w-md">
+    <div class="rounded-2xl border border-[var(--hairline)] bg-[var(--surface)] p-7">
+      <div class="flex items-center gap-2.5 mb-1">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,var(--accent),var(--accent2));">
+          <span class="text-white font-extrabold">S</span>
+        </div>
+        <p class="font-display font-extrabold text-lg">SoftMarket <span style="color:var(--accent2)">CRM</span></p>
+      </div>
+      <p class="text-sm text-[var(--ink-muted)] mb-5">Access your client workspace</p>
+
+      {% if error %}<p class="text-sm text-rose-400 mb-3">{{ error }}</p>{% endif %}
+
+      <div class="grid grid-cols-2 gap-1 p-1 rounded-xl bg-[color-mix(in_srgb,var(--page)_60%,transparent)] border border-[var(--hairline)] mb-5">
+        <button id="tab-signup" type="button" onclick="showTab('signup')"
+                class="py-2 rounded-lg text-sm font-semibold text-[var(--ink-muted)]">Sign up</button>
+        <button id="tab-login" type="button" onclick="showTab('login')"
+                class="py-2 rounded-lg text-sm font-semibold text-[var(--ink-display)] bg-[var(--surface)]">Log in</button>
+      </div>
+
+      <form method="post" action="{% url 'crm:tenant_login_submit' %}" class="space-y-3">
+        {% csrf_token %}
+        <input type="hidden" name="instance" value="{{ slug }}" />
+        <input type="hidden" id="mode" name="mode" value="{{ mode|default:'login' }}" />
+
+        <div id="pane-signup" class="space-y-3 {% if mode != 'signup' %}hidden{% endif %}">
+          <input name="business" type="text" placeholder="Business name" value="{{ business|default:'' }}"
+                 class="inp" />
+          <input name="email" type="email" placeholder="Work email" value="{{ email|default:'' }}"
+                 class="inp" />
+          <input name="password" type="password" placeholder="Create a password" class="inp" />
+          <button type="submit" class="w-full rounded-xl py-2.5 font-bold text-white" style="background:var(--accent);">Create my workspace</button>
+          <p class="text-[11px] text-[var(--ink-muted)] text-center">We'll create your private CRM (your own login, isolated data).</p>
+        </div>
+
+        <div id="pane-login" class="space-y-3 {% if mode == 'signup' %}hidden{% endif %}">
+          <input name="email" type="email" autofocus placeholder="Work email" class="inp" />
+          <input name="password" type="password" placeholder="Password" class="inp" />
+          <button type="submit" class="w-full rounded-xl py-2.5 font-bold text-white" style="background:var(--accent);">Enter workspace</button>
+        </div>
+      </form>
+
+      <a href="{% url 'crm:dashboard' %}" class="block text-center text-xs text-[var(--ink-muted)] mt-4 hover:underline">Back to SoftMarket</a>
+    </div>
+    <p class="text-center text-[11px] text-[var(--ink-muted)] mt-4">Prospects: the public SoftMarket site needs no login.</p>
+  </div>
+
+  <script>showTab('{{ mode|default:"login" }}');</script>
+</body>
+</html>

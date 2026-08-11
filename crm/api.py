@@ -19,7 +19,7 @@ Endpoints (namespaced under /api/crm/):
 """
 
 from rest_framework import serializers
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -35,14 +35,43 @@ from .models import (
     Subject,
     Suggestion,
     Tenant,
+    TenantMembership,
 )
 from . import services
 
 
 def resolve_tenant(request):
-    """Resolve the active CRM instance from header or default 'softmarket'."""
-    slug = request.headers.get("X-CRM-Instance") or request.GET.get("instance") or "softmarket"
-    return Tenant.objects.filter(slug=slug, active=True).first()
+    """Resolve the active CRM instance for the front office (HTML + API).
+
+    Priority:
+      1. Authenticated user -> their pinned active_tenant (session), validated
+         against their actual TenantMembership (never trusts a raw header).
+      2. Explicit ?instance=/X-CRM-Instance header -> only for the PUBLIC
+         softmarket instance (anonymous browsing / public lead intake).
+      3. Default 'softmarket' public tenant.
+    """
+    user = getattr(request, "user", None)
+    if user is not None and user.is_authenticated:
+        slug = request.session.get("active_tenant")
+        if slug:
+            m = TenantMembership.objects.filter(
+                user=user, tenant__slug=slug, tenant__active=True
+            ).select_related("tenant").first()
+            if m:
+                return m.tenant
+        # Fall back to the user's first membership.
+        m = TenantMembership.objects.filter(
+            user=user, tenant__active=True
+        ).select_related("tenant").order_by("tenant__name").first()
+        if m:
+            return m.tenant
+        return None  # authenticated but no tenant -> no access
+
+    # Anonymous: header-driven, public only.
+    slug = request.headers.get("X-CRM-Instance") or request.GET.get("instance")
+    if slug:
+        return Tenant.objects.filter(slug=slug, active=True, is_public=True).first()
+    return Tenant.objects.filter(slug="softmarket", active=True, is_public=True).first()
 
 
 class LeadSerializer(serializers.ModelSerializer):
@@ -191,7 +220,7 @@ class LeadListView(APIView):
 
 
 class ContactListView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         tenant = resolve_tenant(request)
@@ -216,7 +245,7 @@ class ContactListView(APIView):
 
 
 class ContactDetailView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
         tenant = resolve_tenant(request)
@@ -229,7 +258,7 @@ class ContactDetailView(APIView):
 
 
 class ActivityCreateView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     authentication_classes = []
 
     def post(self, request, pk):
@@ -253,7 +282,7 @@ class ActivityCreateView(APIView):
 
 
 class AccountListView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         tenant = resolve_tenant(request)
@@ -264,7 +293,7 @@ class AccountListView(APIView):
 
 
 class OpportunityListView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         tenant = resolve_tenant(request)
@@ -275,7 +304,7 @@ class OpportunityListView(APIView):
 
 
 class PipelineView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         tenant = resolve_tenant(request)
@@ -285,7 +314,7 @@ class PipelineView(APIView):
 
 
 class LeadConvertView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     authentication_classes = []
 
     def post(self, request, pk):
@@ -304,7 +333,7 @@ class LeadConvertView(APIView):
 
 
 class ContactMergeView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     authentication_classes = []
 
     def post(self, request):

@@ -21,12 +21,14 @@ column fires opportunity_move (POST) which persists + re-renders this partial.{%
            draggable="true" data-id="{{ o.pk }}"
            ondragstart="event.dataTransfer.setData('text/plain', '{{ o.pk }}'); this.classList.add('opacity-50');"
            ondragend="this.classList.remove('opacity-50');">
-        <div class="flex items-start justify-between gap-2">
-          <p class="text-sm font-semibold text-[var(--ink-display)] leading-tight">{{ o.name }}</p>
-          <span class="text-[12px] font-bold text-[var(--ink-display)] whitespace-nowrap">KSh {{ o.amount|floatformat:0 }}</span>
-        </div>
-        <p class="text-xs text-[var(--ink-muted)] mt-1 truncate">{{ o.contact.full_name }}{% if o.account %} · {{ o.account.name }}{% endif %}</p>
-        {% if o.owner %}<p class="text-[11px] text-[var(--ink-muted)] mt-0.5">Owner: {{ o.owner }}</p>{% endif %}
+        <a href="{% url 'crm:opportunity_detail' o.pk %}" class="block" onclick="if(event.detail>1) return true;">
+          <div class="flex items-start justify-between gap-2">
+            <p class="text-sm font-semibold text-[var(--ink-display)] leading-tight">{{ o.name }}</p>
+            <span class="text-[12px] font-bold text-[var(--ink-display)] whitespace-nowrap">KSh {{ o.amount|floatformat:0 }}</span>
+          </div>
+          <p class="text-xs text-[var(--ink-muted)] mt-1 truncate">{{ o.contact.full_name }}{% if o.account %} · {{ o.account.name }}{% endif %}</p>
+          {% if o.owner %}<p class="text-[11px] text-[var(--ink-muted)] mt-0.5">Owner: {{ o.owner }}</p>{% endif %}
+        </a>
       </div>
       {% empty %}
       <p class="text-xs text-[var(--ink-muted)] text-center py-3">Drop deals here</p>
