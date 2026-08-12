@@ -510,6 +510,53 @@ def opportunity_move(request, pk):
     return redirect("crm:pipeline_board")
 
 
+def opportunity_detail(request, pk):
+    """Opportunity detail page with deal-linked tasks rail (Bitrix24-style)."""
+    tenant = get_tenant(request)
+    opp = get_object_or_404(Opportunity, tenant=tenant, pk=pk)
+    activities = opp.activities.all()[:50]
+    tasks = Activity.objects.filter(
+        tenant=tenant, type=Activity.Type.TASK, opportunity=opp, done=False
+    ).order_by("due_at")
+    
+    # Pipeline stages + current stage info for the stepper
+    stages = services.tenant_stages(tenant)
+    current_stage = next((s for s in stages if s.key == opp.stage), None)
+    summary = _stage_summary(tenant)
+    weighted = summary.get("weighted", 0)
+    
+    return render(request, "crm/opportunity_detail.html", {
+        "tenant": tenant,
+        "active": "pipeline",
+        "opp": opp,
+        "activities": activities,
+        "tasks": tasks,
+        "stages": stages,
+        "current_stage": current_stage,
+        "weighted": weighted,
+    })
+
+
+@require_POST
+def opportunity_task_create(request, pk):
+    """Create a task linked to an opportunity — renders the _opp_tasks partial."""
+    tenant = get_tenant(request)
+    opp = get_object_or_404(Opportunity, tenant=tenant, pk=pk)
+    subject = (request.POST.get("subject") or "").strip()
+    if subject:
+        Activity.objects.create(
+            tenant=tenant,
+            type=Activity.Type.TASK,
+            opportunity=opp,
+            subject=subject,
+            created_by=request.user if request.user.is_authenticated else None,
+        )
+    tasks = Activity.objects.filter(
+        tenant=tenant, type=Activity.Type.TASK, opportunity=opp, done=False
+    ).order_by("due_at")
+    return render(request, "crm/_opp_tasks.html", {"tenant": tenant, "opp": opp, "tasks": tasks})
+
+
 # ---------------------------------------------------------------------------
 # Follow-ups + churn (Milestone 5 — to-do list, check-off, churn radar)
 # ---------------------------------------------------------------------------
