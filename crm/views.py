@@ -19,7 +19,7 @@ from .api import resolve_tenant
 from .forms import AccountForm, ActivityForm, ContactForm, PublicLeadForm
 from .models import (
     Account, Activity, AgentQuestion, AgentRun, AgentTask, Contact, DealRoom,
-    IntegrationConfig, IntegrationMessage, Lead, Opportunity, PaymentEvent,
+    IntegrationConfig, IntegrationMessage, Invoice, Lead, Opportunity, PaymentEvent,
     Subject, Suggestion, Tenant, TenantStage,
 )
 from . import dealroom as dealroom_service
@@ -555,6 +555,76 @@ def opportunity_task_create(request, pk):
         tenant=tenant, type=Activity.Type.TASK, opportunity=opp, done=False
     ).order_by("due_at")
     return render(request, "crm/_opp_tasks.html", {"tenant": tenant, "opp": opp, "tasks": tasks})
+
+
+@require_POST
+def opportunity_invoice_create(request, pk):
+    """Create a deal-linked invoice from the Invoices tab and enqueue the KRA
+    eTIMS submission (reuses the M6 IntegrationMessage queue contract). No live
+    third-party call yet — we prove the model + enqueue path."""
+    tenant = get_tenant(request)
+    opp = get_object_or_404(Opportunity, tenant=tenant, pk=pk)
+    try:
+        amount = Decimal(request.POST.get("amount") or "0")
+    except Exception:
+        amount = Decimal("0")
+    amount = max(amount, Decimal("0"))
+    if amount > 0:
+        count = opp.invoices.count() + 1
+        number = f"INV-{opp.pk}-{count:03d}"
+        inv = Invoice.objects.create(
+            tenant=tenant, opportunity=opp, contact=opp.contact,
+            number=number, amount_excl_vat=amount, status=Invoice.Status.DRAFT,
+        )
+        # Enqueue the eTIMS payload (worker posts it later).
+        services.enqueue_integration_message(
+            tenant, "etims", recipient=opp.contact.email or "",
+            payload={
+                "invoice_number": inv.number,
+                "buyer_pin": opp.contact.billing_pin or "",
+                "amount_excl_vat": str(inv.amount_excl_vat),
+                "vat_rate": str(inv.vat_rate),
+                "total": str(inv.total),
+            },
+        )
+        inv.etims_status = Invoice.ETIMSStatus.QUEUED
+        inv.save(update_fields=["etims_status"])
+    if is_htmx(request):
+        return render(request, "crm/_opp_invoices.html", {
+            "tenant": tenant, "opp": opp,
+            "invoices": opp.invoices.all(),
+        })
+    return redirect("crm:opportunity_detail", pk=opp.pk)
+
+
+@require_POST
+def opportunity_pay_request(request, pk, invoice_pk):
+    """Request M-Pesa STK push for an invoice. Enqueues IntegrationMessage(mpesa)
+    with amount + phone (reuses the M6 queue contract). Live STK call = later worker.
+    The buyer phone comes from the contact; the tenant's shortcode lives in its
+    IntegrationConfig(mpesa).config_json."""
+    tenant = get_tenant(request)
+    opp = get_object_or_404(Opportunity, tenant=tenant, pk=pk)
+    inv = get_object_or_404(Invoice, tenant=tenant, pk=invoice_pk, opportunity=opp)
+    phone = (opp.contact.phone or "").strip().replace(" ", "")
+    if phone and inv.total > 0:
+        services.enqueue_integration_message(
+            tenant, "mpesa", recipient=phone,
+            payload={
+                "invoice_number": inv.number,
+                "phone": phone,
+                "amount": str(inv.total),
+                "opportunity": opp.name,
+            },
+        )
+        inv.status = Invoice.Status.SENT
+        inv.save(update_fields=["status"])
+    if is_htmx(request):
+        return render(request, "crm/_opp_invoices.html", {
+            "tenant": tenant, "opp": opp,
+            "invoices": opp.invoices.all(),
+        })
+    return redirect("crm:opportunity_detail", pk=opp.pk)
 
 
 # ---------------------------------------------------------------------------
