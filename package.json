@@ -1,0 +1,32 @@
+{
+  "name": "softmarket-kenya",
+  "version": "1.0.0",
+  "description": "SoftMarket Kenya — Tech Talent Marketplace & White-Label CRM with M-Pesa Integration",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "mpesa",
+    "kenya",
+    "daraja",
+    "marketplace",
+    "crm",
+    "fintech",
+    "ecommerce"
+  ],
+  "author": "SoftMarket Collective",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.8"
+  }
+}

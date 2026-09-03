@@ -1,46 +1,51 @@
 {
   "schema": "hermes.findings.v6",
-  "run_id": "hermes-2026-07-27-v6-SoftMarket-Kenya",
+  "run_id": "hermes-2026-08-14-v6-SoftMarket-Kenya",
   "project": "SoftMarket-Kenya",
-  "phase": "4.0",
-  "produced_at": "2026-07-27T23:45:35.337887",
+  "phase": "6.0",
+  "produced_at": "2026-08-14T22:07:30.000000",
   "runner_tier": "T1",
-  "mode": "static-only",
+  "mode": "audit-and-fix",
   "findings": [
     {
       "id": "F-V6-001",
       "title": "Missing 'test' Script in package.json",
       "severity": "medium",
-      "confidence_tier": "E2-P",
-      "actionability": "P2",
-      "fix_class": "config",
-      "confidence": 0.99,
+      "status": "resolved",
+      "category": "config",
+      "fix": "Configured package.json with standard vitest run, test:watch, test:coverage, and build scripts."
+    },
+    {
+      "id": "F-V6-002",
+      "title": "Unauthenticated & Replayable M-Pesa Callbacks",
+      "severity": "critical",
+      "status": "resolved",
+      "category": "security",
+      "fix": "Implemented constant-time token comparison (timingSafeEqual / constant_time_compare), idempotency state machine, receipt collision protection, and amount matching."
+    },
+    {
+      "id": "F-V6-003",
+      "title": "Kenyan Phone Number Formatting & Carrier Routing",
+      "severity": "medium",
+      "status": "resolved",
       "category": "correctness",
-      "cwe": "CWE-1025",
-      "locations": [
-        {
-          "file": "package.json",
-          "line": 5,
-          "symbol": "scripts"
-        }
-      ],
-      "impact": "Automated test harness cannot invoke test suite via npm test.",
-      "recommended_fix": "Add 'test': 'vitest run' to package.json scripts.",
-      "falsification": {
-        "status": "survived",
-        "by": "falsifier_agent#1",
-        "note": "Verified missing script in package.json."
-      },
-      "blast_radius": {
-        "reachable_from_internet": false,
-        "requires_auth": false,
-        "data_classes": []
-      },
-      "acceptance": {
-        "previously_accepted": false,
-        "context_hash": null,
-        "accepted_reason": null
-      }
+      "fix": "Implemented comprehensive phone normalization covering 07xx, 01xx, +254, 254, national formatting, and Safaricom/Airtel/Telkom carrier detection."
+    },
+    {
+      "id": "F-V6-004",
+      "title": "Currency Floating Point Inaccuracy & Leakage in Payout Splits",
+      "severity": "high",
+      "status": "resolved",
+      "category": "fintech",
+      "fix": "Implemented integer-cent KES currency arithmetic, 16% Kenya VAT calculator, coupon allocation, and zero-leakage vendor commission splitting."
+    },
+    {
+      "id": "F-V6-005",
+      "title": "Inventory Stock Reservation Race Conditions",
+      "severity": "high",
+      "status": "resolved",
+      "category": "reliability",
+      "fix": "Implemented atomic inventory locking, timeout auto-expiry, payment failure rollback, and commit mechanics."
     }
   ]
 }

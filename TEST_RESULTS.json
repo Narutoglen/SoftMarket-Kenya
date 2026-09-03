@@ -1,21 +1,37 @@
 {
   "schema": "hermes.tests.v6",
-  "run_id": "hermes-2026-07-27-v6-SoftMarket-Kenya",
+  "run_id": "hermes-2026-08-14-v6-SoftMarket-Kenya",
   "project": "SoftMarket-Kenya",
-  "produced_at": "2026-07-27T23:45:35.337887",
+  "produced_at": "2026-08-14T22:07:30.000000",
   "summary": {
-    "status": "UNRUNNABLE_NO_SCRIPT",
-    "passed": 0,
-    "failed": 1,
+    "status": "PASSED",
+    "passed": 135,
+    "failed": 0,
     "skipped": 0,
-    "unrunnable": 1
+    "unrunnable": 0
   },
   "suites": [
     {
-      "suite": "TypeScript Compilation",
+      "suite": "TypeScript Vitest Suite (Commerce, M-Pesa, Inventory, Cart, Delivery, StateMachine, Payouts)",
+      "tool": "npm test / vitest run",
+      "status": "PASS",
+      "tests_passed": 100,
+      "tests_failed": 0,
+      "exit_code": 0
+    },
+    {
+      "suite": "TypeScript Static Typechecking",
       "tool": "npx tsc --noEmit",
-      "status": "FAIL",
-      "exit_code": 1
+      "status": "PASS",
+      "exit_code": 0
+    },
+    {
+      "suite": "Django Backend Suite (Marketplace & CRM)",
+      "tool": "python manage.py test",
+      "status": "PASS",
+      "tests_passed": 35,
+      "tests_failed": 0,
+      "exit_code": 0
     }
   ]
 }

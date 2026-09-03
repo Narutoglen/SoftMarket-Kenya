@@ -114,10 +114,23 @@ def initiate_mpesa_deposit(request, project_id):
     return JsonResponse({"payment_id": payment.id, "result": result})
 
 
+from django.conf import settings
+from django.utils.crypto import constant_time_compare
+
+
 @csrf_exempt
 @require_POST
 def mpesa_callback(request):
+    expected_token = getattr(settings, "MPESA_CALLBACK_TOKEN", "")
+    if expected_token:
+        provided_token = request.GET.get("token") or request.headers.get("X-Mpesa-Token", "")
+        if not provided_token or not constant_time_compare(provided_token, expected_token):
+            return JsonResponse({"error": "Unauthorized callback"}, status=401)
+
     payload = parsed_json_body(request)
+    if not payload:
+        return JsonResponse({"error": "Invalid or empty payload"}, status=400)
+
     payment = handle_mpesa_callback(payload)
     return JsonResponse({"ok": True, "payment_id": payment.id if payment else None})
 

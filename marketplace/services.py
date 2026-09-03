@@ -311,21 +311,36 @@ class MpesaClient:
 
 
 def normalize_phone(phone):
-    digits = "".join(ch for ch in phone if ch.isdigit())
-    if digits.startswith("0"):
+    if not phone:
+        return ""
+    digits = "".join(ch for ch in str(phone) if ch.isdigit())
+    if digits.startswith("2540") and len(digits) == 13:
+        digits = f"254{digits[4:]}"
+    if digits.startswith("0") and len(digits) == 10:
         return f"254{digits[1:]}"
-    if digits.startswith("7") and len(digits) == 9:
+    if len(digits) == 9 and (digits.startswith("7") or digits.startswith("1")):
         return f"254{digits}"
+    if digits.startswith("254") and len(digits) == 12:
+        return digits
     return digits
 
 
 def handle_mpesa_callback(payload):
+    if not payload or not isinstance(payload, dict):
+        return None
     body = payload.get("Body", {})
     stk = body.get("stkCallback", {})
-    checkout_id = stk.get("CheckoutRequestID", "")
+    checkout_id = str(stk.get("CheckoutRequestID", "")).strip()
+    if not checkout_id:
+        return None
+
     payment = Payment.objects.filter(checkout_request_id=checkout_id).first()
     if not payment:
         return None
+
+    # State machine protection: once PAID, do not downgrade to FAILED
+    if payment.status == Payment.Status.PAID:
+        return payment
 
     result_code = str(stk.get("ResultCode", ""))
     payment.result_code = result_code
@@ -333,10 +348,10 @@ def handle_mpesa_callback(payload):
     payment.callback_payload = payload
 
     metadata = stk.get("CallbackMetadata", {}).get("Item", [])
-    values = {item.get("Name"): item.get("Value") for item in metadata}
+    values = {item.get("Name"): item.get("Value") for item in metadata if isinstance(item, dict)}
     if result_code == "0":
         payment.status = Payment.Status.PAID
-        payment.mpesa_receipt = values.get("MpesaReceiptNumber", "")
+        payment.mpesa_receipt = str(values.get("MpesaReceiptNumber", "") or "")
         payment.project.status = ProjectRequest.Status.DEPOSIT_PAID
         payment.project.save(update_fields=["status", "updated_at"])
     else:
@@ -348,6 +363,17 @@ def handle_mpesa_callback(payload):
 def create_deposit_payment(project):
     amount = project.deposit_amount or 0
     return Payment.objects.create(project=project, amount=amount, phone=project.phone)
+
+
+def sanitize_cell_value(val):
+    if val is None:
+        return ""
+    if isinstance(val, (int, float)):
+        return val
+    s = str(val)
+    if s and s[0] in ("=", "+", "-", "@", "\t", "\r"):
+        return f"'{s}"
+    return s
 
 
 def analytics_summary():
@@ -402,20 +428,20 @@ def project_requests_csv():
         writer.writerow(
             [
                 timezone.localtime(project.created_at).isoformat(),
-                project.name,
-                project.phone,
-                project.email,
-                project.service_label,
-                project.budget,
-                project.timeline,
+                sanitize_cell_value(project.name),
+                sanitize_cell_value(project.phone),
+                sanitize_cell_value(project.email),
+                sanitize_cell_value(project.service_label),
+                sanitize_cell_value(project.budget),
+                sanitize_cell_value(project.timeline),
                 project.estimated_min,
                 project.estimated_max,
                 project.deposit_amount,
-                project.status,
-                project.utm_source,
-                project.utm_medium,
-                project.utm_campaign,
-                project.details,
+                sanitize_cell_value(project.status),
+                sanitize_cell_value(project.utm_source),
+                sanitize_cell_value(project.utm_medium),
+                sanitize_cell_value(project.utm_campaign),
+                sanitize_cell_value(project.details),
             ]
         )
     return buffer.getvalue()
@@ -444,20 +470,20 @@ def project_requests_xlsx():
         rows.append(
             [
                 timezone.localtime(project.created_at).isoformat(),
-                project.name,
-                project.phone,
-                project.email,
-                project.service_label,
-                project.budget,
-                project.timeline,
+                sanitize_cell_value(project.name),
+                sanitize_cell_value(project.phone),
+                sanitize_cell_value(project.email),
+                sanitize_cell_value(project.service_label),
+                sanitize_cell_value(project.budget),
+                sanitize_cell_value(project.timeline),
                 project.estimated_min or "",
                 project.estimated_max or "",
                 project.deposit_amount or "",
-                project.status,
-                project.utm_source,
-                project.utm_medium,
-                project.utm_campaign,
-                project.details,
+                sanitize_cell_value(project.status),
+                sanitize_cell_value(project.utm_source),
+                sanitize_cell_value(project.utm_medium),
+                sanitize_cell_value(project.utm_campaign),
+                sanitize_cell_value(project.details),
             ]
         )
 
@@ -530,4 +556,7 @@ def xlsx_column(index):
 def parsed_json_body(request):
     if not request.body:
         return {}
-    return json.loads(request.body.decode("utf-8"))
+    try:
+        return json.loads(request.body.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return {}
