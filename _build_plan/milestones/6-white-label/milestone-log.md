@@ -36,7 +36,7 @@ different title/colors, custom stages, GreenVault-only data (1 contact, KSh
   four channels), `IntegrationMessage` (outbound queue: channel/recipient/
   payload/status).
 - `crm/migrations/0003_*` (new models) + `0004_*` (channel unique_together fix).
-- `crm/services.py` — `ensure_integration_configs(tenant)`,
+- `crm/services.py` — `ensuyour_resend_api_key_here(tenant)`,
   `enqueue_integration_message(tenant, channel, recipient, payload)`,
   `tenant_stages(tenant)` (falls back to a default 6-stage pipeline for new
   tenants). Removed now-unused `DEFAULT_STAGE_PROBABILITY` (pipeline uses
